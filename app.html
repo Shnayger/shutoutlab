@@ -205,54 +205,36 @@
       font-size: 20px;
     }
 
-    /* Контейнеры контента - ИСПРАВЛЕННЫЙ ВАРИАНТ */
-.content-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: none; /* По умолчанию скрыты */
-}
+    /* Контейнеры контента - ПРАВИЛЬНО */
+    .content-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
 
-.content-container.active {
-  display: block; /* Показываем активный */
-  opacity: 1;
-  pointer-events: all;
-}
+    /* Скрываем неактивные вкладки */
+    .content-container:not(.active) {
+      display: none;
+    }
 
+    .content-container.active {
+      display: block;
+    }
+
+    /* Контейнер схемы */
     #fieldContainer {
-  background: #0d47a1;
-  position: relative;
-  overflow: hidden;
-}
-    
-    /* Контейнер для изображения схемы */
-    #fieldImageContainer {
-  width: 100%;
-  height: 100vh; /* Важно! */
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+      background: #0d47a1;
+    }
 
-#fieldImage {
-  display: block;
-  max-width: 90%;
-  max-height: 90%;
-  width: auto;
-  height: auto;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  object-fit: contain;
-  user-select: none;
-  -webkit-user-drag: none;
-  pointer-events: none;
-  border: 2px solid white; /* Временно для отладки */
-}
+    /* Изображение схемы - НА ВЕСЬ ЭКРАН */
+    #fieldImage {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
 
     /* Активная точка на схеме */
     .marker-point {
@@ -402,17 +384,6 @@
     #returnToVideoBtn:active {
       transform: translateX(-50%) scale(0.95);
     }
-
-    /* Анимации */
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @keyframes slideIn {
-      from { transform: translateX(-100%) translateY(-50%); }
-      to { transform: translateX(0) translateY(-50%); }
-    }
   </style>
 </head>
 <body>
@@ -460,13 +431,9 @@
     </div>
 
     <!-- Контейнер схемы -->
-    <div id="fieldContainer" class="content-container" style="opacity: 1; pointer-events: all;">
-      <!-- Контейнер для изображения схемы -->
-      <div id="fieldImageContainer" style="width:100%;height:100vh;background:red;display:flex;align-items:center;justify-content:center;">
-  <img id="fieldImage" src="1769507389.png" alt="Хоккейная площадка" 
-       style="max-width:90%;max-height:90%;border:5px solid white;">
-  <div id="fieldInstruction" style="position:absolute;bottom:20px;color:white;">Нажмите на поле</div>
-</div>
+    <div id="fieldContainer" class="content-container">
+      <img id="fieldImage" src="1769507389.png" alt="Хоккейная площадка">
+      <div id="fieldInstruction">Нажмите на поле, чтобы поставить точку</div>
       
       <!-- Кнопка возврата на видео -->
       <button id="returnToVideoBtn">Вернуться к видео</button>
@@ -500,7 +467,6 @@
     const videoFrame = document.getElementById('videoFrame');
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
-    const fieldImageContainer = document.getElementById('fieldImageContainer');
     const fieldImage = document.getElementById('fieldImage');
     const fieldInstruction = document.getElementById('fieldInstruction');
     const recordingIndicator = document.getElementById('recordingIndicator');
@@ -517,17 +483,13 @@
     let recordingStartTime = null;
     let timerInterval = null;
     let events = [];
-    let currentTab = 'video'; // 'video' или 'field'
-    
-    // Для работы с точкой
+    let currentTab = 'video';
     let currentMarker = null;
     let isDragging = false;
     let dragStartX = 0;
     let dragStartY = 0;
     let markerStartX = 0;
     let markerStartY = 0;
-    
-    // Время остановки записи (для продолжения)
     let recordingStopTime = 0;
     let videoCurrentTime = 0;
     let isVideoPaused = false;
@@ -535,15 +497,10 @@
     // Параметры из URL
     const urlParams = new URLSearchParams(window.location.search);
     const videoUrl = urlParams.get('video');
-    const date = urlParams.get('date');
-    const opponent = urlParams.get('opponent');
-    const iceTime = urlParams.get('ice_time');
 
     // Загружаем видео
     if (videoUrl) {
       let finalUrl = videoUrl;
-      
-      // YouTube
       if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
         let videoId;
         if (videoUrl.includes('youtu.be/')) {
@@ -554,13 +511,10 @@
         if (videoId) {
           finalUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&controls=1&enablejsapi=1`;
         }
-      }
-      // Vimeo
-      else if (videoUrl.includes('vimeo.com')) {
+      } else if (videoUrl.includes('vimeo.com')) {
         const vimeoId = videoUrl.split('/').pop();
         finalUrl = `https://player.vimeo.com/video/${vimeoId}?autoplay=0`;
       }
-      
       videoFrame.src = finalUrl;
     }
 
@@ -570,7 +524,6 @@
       rotateScreen.style.display = isLandscape ? 'none' : 'flex';
       mainInterface.style.display = isLandscape ? 'block' : 'none';
     }
-
     window.addEventListener('resize', checkOrientation);
     checkOrientation();
 
@@ -580,7 +533,6 @@
       const hours = Math.floor(totalSeconds / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);
       const seconds = totalSeconds % 60;
-      
       return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
 
@@ -592,30 +544,18 @@
       }
     }
 
-    // Пауза видео (для YouTube)
+    // Пауза видео
     function pauseYouTubeVideo() {
       try {
         if (videoFrame.contentWindow) {
-          // Отправляем команду паузы через YouTube API
           videoFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-          console.log('Команда паузы отправлена YouTube');
         }
-      } catch (e) {
-        console.log('Не удалось поставить YouTube видео на паузу:', e);
-      }
-    }
-
-    // Получить текущее время видео
-    function getVideoCurrentTime() {
-      return videoCurrentTime;
+      } catch (e) {}
     }
 
     // Переключение вкладок
     function switchTab(tabName) {
-      // Обновляем текущую вкладку
       currentTab = tabName;
-      
-      // Обновляем активные классы на вкладках
       tabs.forEach(tab => {
         if (tab.getAttribute('data-tab') === tabName) {
           tab.classList.add('active');
@@ -624,26 +564,19 @@
         }
       });
       
-      // Показываем/скрываем контейнеры
       if (tabName === 'video') {
         videoContainer.classList.add('active');
         fieldContainer.classList.remove('active');
         currentTabTitle.textContent = '🎥 Видео матча';
         currentTabTitle.style.display = 'block';
         returnToVideoBtn.style.display = 'none';
-        
-        // Если видео было на паузе, ставим его на паузу
-        if (isVideoPaused) {
-          pauseYouTubeVideo();
-        }
+        if (isVideoPaused) pauseYouTubeVideo();
       } else {
         videoContainer.classList.remove('active');
         fieldContainer.classList.add('active');
         currentTabTitle.textContent = '🏒 Схема поля';
         currentTabTitle.style.display = 'block';
         returnToVideoBtn.style.display = 'block';
-        
-        // Ставим видео на паузу при переключении на схему
         pauseYouTubeVideo();
         isVideoPaused = true;
       }
@@ -651,152 +584,102 @@
 
     // Создание точки
     function createMarker(x, y) {
-      // Удаляем старую точку, если есть
-      if (currentMarker) {
-        currentMarker.remove();
-      }
+      if (currentMarker) currentMarker.remove();
       
-      // Создаем новую точку
       currentMarker = document.createElement('div');
       currentMarker.className = 'marker-point';
       currentMarker.style.left = x + 'px';
       currentMarker.style.top = y + 'px';
       
-      // Добавляем обработчики для перетаскивания
       currentMarker.addEventListener('mousedown', startDrag);
       currentMarker.addEventListener('touchstart', startDragTouch);
       
-      // Добавляем на схему
-      fieldImageContainer.appendChild(currentMarker);
+      fieldContainer.appendChild(currentMarker);
       
-      console.log('Точка создана в позиции:', {x, y});
-      
-      // Показываем модальное окно выбора
       setTimeout(() => {
         choiceModal.classList.add('visible');
       }, 300);
     }
 
-    // Начало перетаскивания (мышь)
+    // Перетаскивание точки
     function startDrag(e) {
       e.preventDefault();
       e.stopPropagation();
-      
       isDragging = true;
       currentMarker.classList.add('dragging');
-      
       dragStartX = e.clientX;
       dragStartY = e.clientY;
       markerStartX = currentMarker.offsetLeft;
       markerStartY = currentMarker.offsetTop;
-      
       document.addEventListener('mousemove', drag);
       document.addEventListener('mouseup', stopDrag);
     }
 
-    // Начало перетаскивания (тач)
     function startDragTouch(e) {
       e.preventDefault();
       e.stopPropagation();
-      
       if (e.touches.length !== 1) return;
-      
       isDragging = true;
       currentMarker.classList.add('dragging');
-      
       const touch = e.touches[0];
       dragStartX = touch.clientX;
       dragStartY = touch.clientY;
       markerStartX = currentMarker.offsetLeft;
       markerStartY = currentMarker.offsetTop;
-      
       document.addEventListener('touchmove', dragTouch);
       document.addEventListener('touchend', stopDragTouch);
     }
 
-    // Перетаскивание (мышь)
     function drag(e) {
       if (!isDragging) return;
-      
       const deltaX = e.clientX - dragStartX;
       const deltaY = e.clientY - dragStartY;
-      
       const newX = markerStartX + deltaX;
       const newY = markerStartY + deltaY;
-      
-      // Ограничиваем перемещение в пределах контейнера
-      const containerRect = fieldImageContainer.getBoundingClientRect();
-      const maxX = containerRect.width;
-      const maxY = containerRect.height;
-      
+      const rect = fieldContainer.getBoundingClientRect();
+      const maxX = rect.width;
+      const maxY = rect.height;
       const clampedX = Math.max(0, Math.min(newX, maxX));
       const clampedY = Math.max(0, Math.min(newY, maxY));
-      
       currentMarker.style.left = clampedX + 'px';
       currentMarker.style.top = clampedY + 'px';
     }
 
-    // Перетаскивание (тач)
     function dragTouch(e) {
       if (!isDragging || e.touches.length !== 1) return;
-      
       const touch = e.touches[0];
       const deltaX = touch.clientX - dragStartX;
       const deltaY = touch.clientY - dragStartY;
-      
       const newX = markerStartX + deltaX;
       const newY = markerStartY + deltaY;
-      
-      // Ограничиваем перемещение в пределах контейнера
-      const containerRect = fieldImageContainer.getBoundingClientRect();
-      const maxX = containerRect.width;
-      const maxY = containerRect.height;
-      
+      const rect = fieldContainer.getBoundingClientRect();
+      const maxX = rect.width;
+      const maxY = rect.height;
       const clampedX = Math.max(0, Math.min(newX, maxX));
       const clampedY = Math.max(0, Math.min(newY, maxY));
-      
       currentMarker.style.left = clampedX + 'px';
       currentMarker.style.top = clampedY + 'px';
     }
 
-    // Остановка перетаскивания (мышь)
     function stopDrag() {
       isDragging = false;
-      if (currentMarker) {
-        currentMarker.classList.remove('dragging');
-      }
-      
+      if (currentMarker) currentMarker.classList.remove('dragging');
       document.removeEventListener('mousemove', drag);
       document.removeEventListener('mouseup', stopDrag);
-      
-      console.log('Точка перемещена в позицию:', {
-        x: currentMarker.offsetLeft,
-        y: currentMarker.offsetTop
-      });
     }
 
-    // Остановка перетаскивания (тач)
     function stopDragTouch() {
       isDragging = false;
-      if (currentMarker) {
-        currentMarker.classList.remove('dragging');
-      }
-      
+      if (currentMarker) currentMarker.classList.remove('dragging');
       document.removeEventListener('touchmove', dragTouch);
       document.removeEventListener('touchend', stopDragTouch);
     }
 
     // Обработка кликов по схеме
     function handleFieldClick(e) {
-      // Если кликнули по точке, не создаем новую
-      if (e.target.classList.contains('marker-point')) {
-        return;
-      }
-      
-      // Получаем координаты клика относительно контейнера
-      const rect = fieldImageContainer.getBoundingClientRect();
+      if (e.target.classList.contains('marker-point')) return;
+      const rect = fieldContainer.getBoundingClientRect();
       let x, y;
-      
       if (e.type === 'click' || e.type === 'mousedown') {
         x = e.clientX - rect.left;
         y = e.clientY - rect.top;
@@ -805,74 +688,43 @@
         x = touch.clientX - rect.left;
         y = touch.clientY - rect.top;
       }
-      
-      // Создаем новую точку
       createMarker(x, y);
     }
 
     // Начало записи
     function startRecording() {
       if (isRecording) return;
-      
       isRecording = true;
       recordingStartTime = Date.now();
       events = [];
-      
-      // Показываем индикаторы
       recordingIndicator.style.display = 'flex';
       recordingTimer.style.display = 'block';
-      
-      // Обновляем кнопки
       startBtn.style.display = 'none';
       stopBtn.style.display = 'block';
-      
-      // Запускаем таймер
       updateTimer();
       timerInterval = setInterval(updateTimer, 1000);
-      
-      console.log('Запись начата в', new Date().toLocaleTimeString());
     }
 
     // Остановка записи
     function stopRecording() {
       if (!isRecording) return;
-      
       isRecording = false;
       recordingStopTime = Date.now();
-      
-      // Сохраняем текущее время видео
-      videoCurrentTime = getVideoCurrentTime();
-      
-      // Останавливаем таймер
       if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
       }
-      
-      // Скрываем индикаторы
       recordingIndicator.style.display = 'none';
       recordingTimer.style.display = 'none';
-      
-      // Ставим видео на паузу
       pauseYouTubeVideo();
       isVideoPaused = true;
-      
-      // Показываем панель вкладок
       tabsPanel.classList.add('visible');
-      
-      // Переключаемся на вкладку со схемой
       switchTab('field');
-      
-      console.log('Запись остановлена. Событий:', events.length);
-      console.log('Текущее время видео:', videoCurrentTime);
     }
 
     // Обработка выбора гол/сэйв
     function handleChoice(type) {
-      // Скрываем модальное окно
       choiceModal.classList.remove('visible');
-      
-      // Сохраняем событие
       const eventData = {
         type: type,
         timestamp: Date.now() - recordingStartTime,
@@ -882,24 +734,17 @@
           y: currentMarker.offsetTop
         } : null
       };
-      
       events.push(eventData);
-      
-      // Удаляем точку
       if (currentMarker) {
         currentMarker.remove();
         currentMarker = null;
       }
-      
-      // Показываем кнопку "Начать запись" и возвращаемся на видео
       setTimeout(() => {
         switchTab('video');
         startBtn.style.display = 'block';
         stopBtn.style.display = 'none';
         isVideoPaused = false;
       }, 300);
-      
-      console.log(`Событие сохранено: ${type}`, eventData);
     }
 
     // Обработчики кнопок
@@ -916,11 +761,11 @@
     });
 
     // Обработчики для схемы
-    fieldImageContainer.addEventListener('click', handleFieldClick);
-    fieldImageContainer.addEventListener('touchstart', function(e) {
+    fieldContainer.addEventListener('click', handleFieldClick);
+    fieldContainer.addEventListener('touchstart', function(e) {
       e.preventDefault();
       const touch = e.touches[0];
-      const rect = fieldImageContainer.getBoundingClientRect();
+      const rect = fieldContainer.getBoundingClientRect();
       const x = touch.clientX - rect.left;
       const y = touch.clientY - rect.top;
       createMarker(x, y);
@@ -935,122 +780,37 @@
       window.addEventListener('message', (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('Получено сообщение от видео:', data);
-          
           if (data.event === 'onReady') {
             startBtn.disabled = false;
-            console.log('Видео готово');
           }
-          
-          // Получаем текущее время видео от YouTube API
           if (data.info && data.info.currentTime !== undefined) {
             videoCurrentTime = data.info.currentTime;
-            console.log('Текущее время видео:', videoCurrentTime);
           }
-          
-          // Обработка событий от YouTube
           if (data.event === 'infoDelivery' && data.info && data.info.currentTime !== undefined) {
             videoCurrentTime = data.info.currentTime;
           }
-        } catch (e) {
-          // Не JSON сообщение
-        }
+        } catch (e) {}
       });
-      
-      // Альтернативный способ проверки готовности
       setTimeout(() => {
         startBtn.disabled = false;
-        console.log('Видео готово (таймаут)');
       }, 3000);
     }
-
-    // Запускаем проверку
     checkVideoReady();
 
-    // Оптимизация изображения при загрузке
-    window.addEventListener('load', () => {
-      // Адаптация изображения под экран
-      function optimizeImage() {
-        const img = fieldImage;
-        
-        console.log('Изображение загружено, размеры:', img.naturalWidth, 'x', img.naturalHeight);
-        
-        if (img.naturalWidth && img.naturalHeight) {
-          if (img.naturalHeight > img.naturalWidth) {
-            // Вертикальное изображение - делаем горизонтальным
-            img.style.transform = 'rotate(90deg)';
-            img.style.width = 'auto';
-            img.style.height = '100%';
-            img.style.maxWidth = '100%';
-            img.style.maxHeight = '100%';
-            console.log('Изображение повернуто');
-          } else {
-            // Горизонтальное изображение - оставляем как есть
-            img.style.transform = 'none';
-            img.style.width = '100%';
-            img.style.height = 'auto';
-            img.style.maxWidth = '100%';
-            img.style.maxHeight = '100%';
-            console.log('Изображение оставлено как есть');
-          }
-        } else {
-          console.log('Не удалось получить размеры изображения');
-          // Если не удалось получить размеры, используем адаптивный подход
-          img.style.width = '100%';
-          img.style.height = 'auto';
-          img.style.maxWidth = '100%';
-          img.style.maxHeight = '100%';
-        }
-      }
-      
-      // Когда изображение загружено
-      fieldImage.onload = optimizeImage;
-      
-      // Если изображение уже загружено
-      if (fieldImage.complete) {
-        optimizeImage();
-      } else {
-        // Если изображение не загружается, показываем сообщение
-        setTimeout(() => {
-          if (fieldImage.naturalWidth === 0) {
-            console.error('Изображение не загрузилось');
-            fieldInstruction.textContent = 'Изображение не загрузилось. Проверьте ссылку.';
-            fieldInstruction.style.backgroundColor = 'rgba(198, 40, 40, 0.9)';
-          }
-        }, 3000);
-      }
-    });
+    // Загрузка изображения
+    fieldImage.onload = function() {
+      console.log('Изображение загружено:', this.naturalWidth, 'x', this.naturalHeight);
+    };
+    fieldImage.onerror = function() {
+      console.error('Ошибка загрузки изображения');
+      fieldInstruction.textContent = 'Изображение не загрузилось';
+      fieldInstruction.style.backgroundColor = 'rgba(198, 40, 40, 0.9)';
+    };
 
-    // Инициализация после загрузки страницы
+    // Инициализация
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('DOM загружен, инициализация...');
-      console.log('URL видео:', videoUrl);
-      console.log('URL изображения:', fieldImage.src);
-      
-      // Запускаем проверку ориентации
-      checkOrientation();
-      
-      // Показываем заголовок вкладки
       currentTabTitle.style.display = 'block';
     });
-
-    // ДОБАВЬ В КОНЕЦ СКРИПТА ПОСЛЕ ВСЕГО КОДА:
-// Принудительно показываем контейнер схемы
-setTimeout(() => {
-  fieldContainer.style.display = 'block';
-  fieldContainer.style.opacity = '1';
-  fieldContainer.style.visibility = 'visible';
-  fieldContainer.style.zIndex = '10';
-  
-  console.log('fieldContainer стили:', {
-    display: fieldContainer.style.display,
-    opacity: fieldContainer.style.opacity,
-    visibility: fieldContainer.style.visibility,
-    className: fieldContainer.className
-  });
-}, 100);
-    fieldContainer.style.display = 'block';
-fieldContainer.classList.add('active');
   </script>
 </body>
 </html>
