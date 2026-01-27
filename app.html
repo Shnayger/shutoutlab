@@ -13,15 +13,14 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #000;
       color: white;
       overflow: hidden;
       height: 100vh;
       width: 100vw;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
 
-    /* Экран с просьбой повернуть устройство */
     #rotateScreen {
       display: flex;
       flex-direction: column;
@@ -33,35 +32,26 @@
       padding: 20px;
     }
 
-    #rotateScreen img {
-      width: 60px;
-      margin-bottom: 20px;
-      transform: rotate(90deg);
-    }
-
-    #rotateScreen p {
-      font-size: 18px;
-      line-height: 1.4;
-    }
-
-    /* Основной интерфейс (скрыт по умолчанию) */
     #mainInterface {
       display: none;
-      flex-direction: column;
-      height: 100vh;
+      position: relative;
       width: 100vw;
+      height: 100vh;
     }
 
     #videoContainer {
-      flex: 1;
-      position: relative;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
     }
 
     #videoFrame {
       width: 100%;
       height: 100%;
-      background: #000;
       border: none;
+      background: #000;
     }
 
     #controls {
@@ -70,83 +60,123 @@
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 15px;
+      gap: 20px;
+      z-index: 10;
     }
 
     .control-btn {
-      padding: 12px 24px;
+      padding: 14px 28px;
       font-size: 18px;
       font-weight: bold;
       border: none;
-      border-radius: 30px;
+      border-radius: 32px;
       cursor: pointer;
       color: white;
+      min-width: 100px;
     }
 
-    #startBtn {
-      background: #2e7d32; /* зелёный */
-    }
+    #startBtn { background: #2e7d32; }
+    #stopBtn { background: #c62828; display: none; }
 
-    #stopBtn {
-      background: #c62828; /* красный */
-      display: none; /* скрыт до старта */
-    }
-
-    /* Схема поля */
+    /* Схема поля — полноэкранная */
     #fieldOverlay {
       position: absolute;
-      bottom: 0;
+      top: 0;
       left: 0;
       width: 100%;
-      height: 0;
-      background: rgba(0, 0, 0, 0.9);
-      transition: height 0.4s ease-out;
-      display: flex;
-      justify-content: center;
-      align-items: flex-end;
-      padding: 20px 0;
-      overflow: hidden;
+      height: 100%;
+      background: #0a3d62;
+      display: none;
+      z-index: 20;
     }
 
     #hockeyField {
-      width: 90%;
-      max-width: 600px;
-      height: auto;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Подсветка при клике */
+    .highlight {
+      fill: rgba(255, 255, 255, 0.3);
+      stroke: white;
+      stroke-width: 2;
     }
   </style>
 </head>
 <body>
-  <!-- Экран "поверните устройство" -->
+  <!-- Экран поворота -->
   <div id="rotateScreen">
-    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+PHBhdGggZD0iTTE5IDEyaGEtMS41Yy0uODIgMC0xLjUtLjY4LTEuNS0xLjVWNS41QzE2IDQuNjcgMTYuNjcgNCAxNy41IDRIMTljLjgzIDAgMS41LjY3IDEuNSAxLjV2My41YzAgLjgzLS42NyAxLjUtMS41IDEuNUgxbC4wMSA5YzAgMS4xLjg5IDIgMiAySDIxYzEuMSAwIDItLjkgMi0ybC0uMDEtN0gxOVptLTUuNS05SDguNVY4aDRWNHptNiAxNEgydjJIMjB2LTJ6Ii8+PC9zdmc+" alt="Поверните" />
-    <p>Пожалуйста, поверните устройство в&nbsp;горизонтальное положение для анализа матча.</p>
+    <svg viewBox="0 0 24 24" fill="white" width="60" height="60">
+      <path d="M19 12h-1.5c-.82 0-1.5-.68-1.5-1.5V5.5C16 4.67 16.67 4 17.5 4H19c.83 0 1.5.67 1.5 1.5v3.5c0 .83-.67 1.5-1.5 1.5H1L1.01 21c0 1.1.89 2 2 2H21c1.1 0 2-.9 2-2L22.99 14H19zm-5.5-9H8.5V8h4V4zm6 14H2v2h18v-2z"/>
+    </svg>
+    <p>Пожалуйста, поверните устройство в горизонтальное положение.</p>
   </div>
 
   <!-- Основной интерфейс -->
   <div id="mainInterface">
     <div id="videoContainer">
       <iframe id="videoFrame" allowfullscreen></iframe>
-      <div id="controls">
-        <button id="startBtn" class="control-btn">Старт</button>
-        <button id="stopBtn" class="control-btn">Стоп</button>
-      </div>
-      <div id="fieldOverlay">
-        <!-- Простая схема хоккейного поля (SVG) -->
-        <svg id="hockeyField" viewBox="0 0 200 85" xmlns="http://www.w3.org/2000/svg">
-          <!-- Поле -->
-          <rect x="0" y="0" width="200" height="85" fill="none" stroke="white" stroke-width="1"/>
-          <!-- Центральная линия -->
-          <line x1="100" y1="0" x2="100" y2="85" stroke="white" stroke-width="1" stroke-dasharray="4,4"/>
-          <!-- Центральный круг -->
-          <circle cx="100" cy="42.5" r="12" fill="none" stroke="white" stroke-width="1"/>
-          <!-- Зоны ворот -->
-          <rect x="0" y="27.5" width="15" height="30" fill="none" stroke="white" stroke-width="1"/>
-          <rect x="185" y="27.5" width="15" height="30" fill="none" stroke="white" stroke-width="1"/>
-          <!-- Полукруги у ворот -->
-          <path d="M15,42.5 a15,15 0 0,1 0,0" fill="none" stroke="white" stroke-width="1"/>
-          <path d="M185,42.5 a15,15 0 0,0 0,0" fill="none" stroke="white" stroke-width="1"/>
-        </svg>
-      </div>
+    </div>
+    <div id="controls">
+      <button id="startBtn" class="control-btn">Старт</button>
+      <button id="stopBtn" class="control-btn">Стоп</button>
+    </div>
+    <div id="fieldOverlay">
+      <svg id="hockeyField" viewBox="0 0 200 85" xmlns="http://www.w3.org/2000/svg">
+        <!-- Борта (закруглённые) -->
+        <path d="M10,5 C5,5 0,10 0,15 L0,70 C0,75 5,80 10,80 L190,80 C195,80 200,75 200,70 L200,15 C200,10 195,5 190,5 Z" 
+              fill="none" stroke="white" stroke-width="1.2"/>
+
+        <!-- Центральная красная линия -->
+        <line x1="100" y1="0" x2="100" y2="85" stroke="red" stroke-width="1.5"/>
+
+        <!-- Центральный круг -->
+        <circle cx="100" cy="42.5" r="12" fill="none" stroke="red" stroke-width="1.5"/>
+
+        <!-- Синие линии зон -->
+        <line x1="50" y1="0" x2="50" y2="85" stroke="blue" stroke-width="1.5"/>
+        <line x1="150" y1="0" x2="150" y2="85" stroke="blue" stroke-width="1.5"/>
+
+        <!-- Ворота (левые) -->
+        <rect x="8" y="35" width="4" height="15" fill="none" stroke="white" stroke-width="1"/>
+        <!-- Ворота (правые) -->
+        <rect x="188" y="35" width="4" height="15" fill="none" stroke="white" stroke-width="1"/>
+
+        <!-- Зоны атаки (красные круги у ворот) -->
+        <circle cx="25" cy="25" r="10" fill="none" stroke="red" stroke-width="1.5" id="zone-left-attack"/>
+        <circle cx="25" cy="60" r="10" fill="none" stroke="red" stroke-width="1.5" id="zone-left-defense"/>
+        <circle cx="175" cy="25" r="10" fill="none" stroke="red" stroke-width="1.5" id="zone-right-attack"/>
+        <circle cx="175" cy="60" r="10" fill="none" stroke="red" stroke-width="1.5" id="zone-right-defense"/>
+
+        <!-- Лиц-офы (точки) -->
+        <circle cx="50" cy="42.5" r="1.5" fill="white"/>
+        <circle cx="100" cy="42.5" r="1.5" fill="white"/>
+        <circle cx="150" cy="42.5" r="1.5" fill="white"/>
+        <circle cx="25" cy="42.5" r="1.5" fill="white"/>
+        <circle cx="175" cy="42.5" r="1.5" fill="white"/>
+        <circle cx="25" cy="25" r="1.5" fill="white"/>
+        <circle cx="25" cy="60" r="1.5" fill="white"/>
+        <circle cx="175" cy="25" r="1.5" fill="white"/>
+        <circle cx="175" cy="60" r="1.5" fill="white"/>
+
+        <!-- Метки "X" в зонах атаки (как на твоём изображении) -->
+        <g id="cross-left-top" stroke="white" stroke-width="1.2" fill="none">
+          <line x1="20" y1="20" x2="30" y2="30"/>
+          <line x1="30" y1="20" x2="20" y2="30"/>
+        </g>
+        <g id="cross-left-bottom" stroke="white" stroke-width="1.2" fill="none">
+          <line x1="20" y1="55" x2="30" y2="65"/>
+          <line x1="30" y1="55" x2="20" y2="65"/>
+        </g>
+        <g id="cross-right-top" stroke="white" stroke-width="1.2" fill="none">
+          <line x1="170" y1="20" x2="180" y2="30"/>
+          <line x1="180" y1="20" x2="170" y2="30"/>
+        </g>
+        <g id="cross-right-bottom" stroke="white" stroke-width="1.2" fill="none">
+          <line x1="170" y1="55" x2="180" y2="65"/>
+          <line x1="180" y1="55" x2="170" y2="65"/>
+        </g>
+      </svg>
     </div>
   </div>
 
@@ -157,12 +187,12 @@
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
     const fieldOverlay = document.getElementById('fieldOverlay');
+    const hockeyField = document.getElementById('hockeyField');
 
-    // Получаем параметры из URL
+    // Получаем видео из URL
     const urlParams = new URLSearchParams(window.location.search);
     const videoUrl = urlParams.get('video');
 
-    // Загружаем видео
     if (videoUrl) {
       if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
         let videoId;
@@ -172,33 +202,26 @@
           videoId = videoUrl.split('v=')[1]?.split('&')[0];
         }
         if (videoId) {
-          videoFrame.src = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0`;
+          videoFrame.src = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&controls=1`;
         }
       } else if (videoUrl.includes('vimeo.com')) {
         const vimeoId = videoUrl.split('/').pop();
-        videoFrame.src = `https://player.vimeo.com/video/${vimeoId}`;
+        videoFrame.src = `https://player.vimeo.com/video/${vimeoId}?autoplay=0`;
       } else {
         videoFrame.src = videoUrl;
       }
     }
 
-    // Проверка ориентации
     function checkOrientation() {
       const isLandscape = window.innerWidth > window.innerHeight;
-      if (isLandscape) {
-        rotateScreen.style.display = 'none';
-        mainInterface.style.display = 'flex';
-      } else {
-        rotateScreen.style.display = 'flex';
-        mainInterface.style.display = 'none';
-      }
+      rotateScreen.style.display = isLandscape ? 'none' : 'flex';
+      mainInterface.style.display = isLandscape ? 'block' : 'none';
     }
 
-    // Слушаем изменения ориентации и размера
     window.addEventListener('resize', checkOrientation);
-    checkOrientation(); // при первом запуске
+    checkOrientation();
 
-    // Логика записи
+    // Управление записью
     let startTime = null;
 
     startBtn.addEventListener('click', () => {
@@ -208,29 +231,81 @@
     });
 
     stopBtn.addEventListener('click', () => {
-      const endTime = Date.now();
-      const duration = Math.round((endTime - startTime) / 1000); // секунды
-
-      // Показываем схему поля
-      fieldOverlay.style.height = '40%';
-
-      // Можно отправить данные обратно в бот
-      const result = {
-        action: "moment_recorded",
-        start_time_ms: startTime,
-        end_time_ms: endTime,
-        duration_sec: duration,
-        video_url: videoUrl
-      };
-
-      if (window.Telegram?.WebApp) {
-        Telegram.WebApp.sendData(JSON.stringify(result));
-        // Не закрываем сразу — даём пользователю поработать со схемой
+      // Пауза YouTube
+      if (videoUrl?.includes('youtube.com') || videoUrl?.includes('youtu.be')) {
+        videoFrame.contentWindow.postMessage(
+          '{"event":"command","func":"pauseVideo","args":""}',
+          '*'
+        );
       }
 
-      // Скрываем кнопки после записи
+      fieldOverlay.style.display = 'block';
       startBtn.style.display = 'none';
       stopBtn.style.display = 'none';
+    });
+
+    // === КЛИК ПО ПОЛЮ ===
+    const zones = {
+      'zone-left-attack': 'Зона атаки (слева, верх)',
+      'zone-left-defense': 'Зона обороны (слева, низ)',
+      'zone-right-attack': 'Зона атаки (справа, верх)',
+      'zone-right-defense': 'Зона обороны (справа, низ)',
+      'cross-left-top': 'Лиц-оф (слева, верх)',
+      'cross-left-bottom': 'Лиц-оф (слева, низ)',
+      'cross-right-top': 'Лиц-оф (справа, верх)',
+      'cross-right-bottom': 'Лиц-оф (справа, низ)',
+      // Центральные точки — можно добавить отдельно
+    };
+
+    hockeyField.addEventListener('click', (e) => {
+      const target = e.target;
+      const id = target.id;
+
+      if (zones[id]) {
+        // Подсветка
+        target.classList.add('highlight');
+
+        // Отправка в бот
+        const result = {
+          action: "zone_clicked",
+          zone_id: id,
+          zone_name: zones[id],
+          timestamp: Date.now(),
+          video_url: videoUrl
+        };
+
+        if (window.Telegram?.WebApp) {
+          Telegram.WebApp.sendData(JSON.stringify(result));
+          console.log("Отправлено:", result);
+        }
+
+        // Убираем подсветку через 1 сек
+        setTimeout(() => {
+          target.classList.remove('highlight');
+        }, 1000);
+      }
+    });
+
+    // Также можно кликать по пустому полю → центральная зона
+    hockeyField.addEventListener('click', (e) => {
+      if (e.target.tagName === 'SVG') {
+        const rect = hockeyField.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        // Пример: если клик в центре (в пределах 10px от центра)
+        if (Math.abs(x - 100) < 10 && Math.abs(y - 42.5) < 10) {
+          const result = {
+            action: "zone_clicked",
+            zone_id: "center_circle",
+            zone_name: "Центральный круг",
+            timestamp: Date.now()
+          };
+          if (window.Telegram?.WebApp) {
+            Telegram.WebApp.sendData(JSON.stringify(result));
+          }
+        }
+      }
     });
   </script>
 </body>
