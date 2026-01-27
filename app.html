@@ -20,7 +20,6 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       height: 100vh;
       overflow: hidden;
-      touch-action: none;
     }
 
     /* Экран поворота */
@@ -47,7 +46,65 @@
       position: relative;
     }
 
-    /* Индикатор записи */
+    /* Верхняя панель с вкладками */
+    #tabsContainer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 50px;
+      background: #1a1a1a;
+      display: flex;
+      z-index: 100;
+      border-bottom: 1px solid #333;
+    }
+
+    .tab {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 500;
+      color: #999;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-bottom: 3px solid transparent;
+    }
+
+    .tab.active {
+      color: white;
+      border-bottom-color: #4CAF50;
+      background: rgba(76, 175, 80, 0.1);
+    }
+
+    /* Контент вкладок */
+    .tab-content {
+      display: none;
+      position: absolute;
+      top: 50px;
+      left: 0;
+      width: 100%;
+      height: calc(100vh - 50px);
+      background: #000;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Вкладка "Видео" */
+    #videoTabContent {
+      background: #000;
+    }
+
+    /* Вкладка "Схема" */
+    #fieldTabContent {
+      background: #1a237e;
+      overflow: hidden;
+    }
+
+    /* Индикатор записи (только на вкладке видео) */
     #recordingIndicator {
       position: absolute;
       top: 10px;
@@ -97,14 +154,12 @@
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
-    /* Контейнер для видео */
+    /* Видео контейнер */
     #videoContainer {
       width: 100%;
-      height: 70vh; /* Начальная высота */
+      height: 100%;
       background: #000;
       position: relative;
-      transition: height 0.3s ease;
-      overflow: hidden;
     }
 
     #videoFrame {
@@ -114,7 +169,7 @@
       display: block;
     }
 
-    /* Управление */
+    /* Управление (только на вкладке видео) */
     #controls {
       position: absolute;
       bottom: 20px;
@@ -156,61 +211,6 @@
       transform: scale(0.95);
     }
 
-    /* Разделитель между видео и схемой */
-    #divider {
-      position: absolute;
-      left: 0;
-      width: 100%;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.3);
-      cursor: ns-resize;
-      z-index: 60;
-      transition: background 0.2s;
-    }
-
-    #divider:hover {
-      background: rgba(255, 255, 255, 0.6);
-    }
-
-    #dividerHandle {
-      position: absolute;
-      top: -10px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 40px;
-      height: 24px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    #dividerHandle::after {
-      content: "";
-      width: 20px;
-      height: 3px;
-      background: rgba(255, 255, 255, 0.6);
-      border-radius: 2px;
-    }
-
-    /* Панель со схемой (Bottom Sheet) */
-    #fieldPanel {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 30vh; /* Начальная высота */
-      background: #1a237e;
-      z-index: 30;
-      border-top-left-radius: 20px;
-      border-top-right-radius: 20px;
-      overflow: hidden;
-      display: none;
-      box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.5);
-      transition: height 0.3s ease;
-    }
-
     /* Контейнер для схемы */
     #fieldContainer {
       width: 100%;
@@ -219,7 +219,7 @@
       touch-action: none;
     }
 
-    /* Схема поля (КХЛ) */
+    /* Схема поля (реалистичная как на примере) */
     #hockeyField {
       width: 100%;
       height: 100%;
@@ -229,11 +229,11 @@
     /* Активная точка */
     .marker-point {
       position: absolute;
-      width: 24px;
-      height: 24px;
+      width: 20px;
+      height: 20px;
       background: #FF0000;
       border-radius: 50%;
-      border: 3px solid white;
+      border: 2px solid white;
       box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
       transform: translate(-50%, -50%);
       z-index: 100;
@@ -243,13 +243,13 @@
     }
 
     .marker-point.dragging {
-      transform: translate(-50%, -50%) scale(1.2);
+      transform: translate(-50%, -50%) scale(1.3);
       z-index: 101;
       box-shadow: 0 0 20px rgba(255, 0, 0, 1);
     }
 
-    /* Инструкция */
-    #instruction {
+    /* Инструкция на схеме */
+    #fieldInstruction {
       position: absolute;
       top: 10px;
       left: 50%;
@@ -264,28 +264,17 @@
       border: 1px solid rgba(255, 255, 255, 0.2);
       text-align: center;
       max-width: 90%;
-      display: none;
     }
 
-    /* Кнопка закрытия схемы */
-    #closeFieldBtn {
+    /* Badge на вкладке схемы при наличии точки */
+    .tab-badge {
       position: absolute;
-      top: 10px;
-      right: 10px;
-      background: rgba(0, 0, 0, 0.7);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 20px;
-      padding: 6px 12px;
-      font-size: 12px;
-      cursor: pointer;
-      z-index: 45;
-      backdrop-filter: blur(10px);
-      transition: all 0.2s;
-    }
-
-    #closeFieldBtn:active {
-      transform: scale(0.95);
+      top: 5px;
+      right: 5px;
+      width: 8px;
+      height: 8px;
+      background: #FF0000;
+      border-radius: 50%;
     }
   </style>
 </head>
@@ -300,97 +289,148 @@
 
   <!-- Основной интерфейс -->
   <div id="mainInterface">
-    <!-- Индикатор записи -->
-    <div id="recordingIndicator">
-      <div class="recordingDot"></div>
-      <span>Идет запись</span>
-    </div>
-
-    <!-- Таймер записи -->
-    <div id="recordingTimer">00:00:00</div>
-
-    <!-- Контейнер для видео -->
-    <div id="videoContainer">
-      <iframe id="videoFrame" allowfullscreen></iframe>
-    </div>
-
-    <!-- Разделитель -->
-    <div id="divider" style="display: none;">
-      <div id="dividerHandle"></div>
-    </div>
-
-    <!-- Панель со схемой -->
-    <div id="fieldPanel">
-      <div id="instruction">Нажмите на поле, чтобы поставить точку. Нажмите на точку, чтобы перетащить</div>
-      <button id="closeFieldBtn">Скрыть схему</button>
-      <div id="fieldContainer">
-        <svg id="hockeyField" viewBox="0 0 200 85" xmlns="http://www.w3.org/2000/svg">
-          <!-- Лёд -->
-          <rect width="200" height="85" fill="#87CEEB"/>
-          
-          <!-- Борта (красные) -->
-          <rect x="0" y="0" width="200" height="85" fill="none" stroke="#FF0000" stroke-width="0.5"/>
-          
-          <!-- Центральная красная линия -->
-          <line x1="100" y1="0" x2="100" y2="85" stroke="#FF0000" stroke-width="1"/>
-          
-          <!-- Центральный круг -->
-          <circle cx="100" cy="42.5" r="15" fill="none" stroke="#FF0000" stroke-width="1"/>
-          <circle cx="100" cy="42.5" r="0.5" fill="#FF0000"/>
-          
-          <!-- Синие линии -->
-          <rect x="25" y="0" width="1" height="85" fill="#0000FF"/>
-          <rect x="174" y="0" width="1" height="85" fill="#0000FF"/>
-          
-          <!-- Зоны ворот -->
-          <rect x="0" y="30" width="11" height="25" fill="none" stroke="#000000" stroke-width="1"/>
-          <rect x="189" y="30" width="11" height="25" fill="none" stroke="#000000" stroke-width="1"/>
-          
-          <!-- Круги вбрасывания -->
-          <!-- Центральный -->
-          <circle cx="100" cy="42.5" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
-          
-          <!-- В зонах -->
-          <circle cx="25" cy="42.5" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
-          <circle cx="175" cy="42.5" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
-          
-          <!-- В зоне защиты слева -->
-          <circle cx="25" cy="20" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
-          <circle cx="25" cy="65" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
-          
-          <!-- В зоне защиты справа -->
-          <circle cx="175" cy="20" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
-          <circle cx="175" cy="65" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
-          
-          <!-- В зоне атаки слева -->
-          <circle cx="60" cy="20" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
-          <circle cx="60" cy="65" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
-          
-          <!-- В зоне атаки справа -->
-          <circle cx="140" cy="20" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
-          <circle cx="140" cy="65" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
-          
-          <!-- Точки вбрасывания (белые) -->
-          <circle cx="100" cy="42.5" r="0.5" fill="white"/>
-          <circle cx="25" cy="42.5" r="0.5" fill="white"/>
-          <circle cx="175" cy="42.5" r="0.5" fill="white"/>
-          <circle cx="25" cy="20" r="0.5" fill="white"/>
-          <circle cx="25" cy="65" r="0.5" fill="white"/>
-          <circle cx="175" cy="20" r="0.5" fill="white"/>
-          <circle cx="175" cy="65" r="0.5" fill="white"/>
-          <circle cx="60" cy="20" r="0.5" fill="white"/>
-          <circle cx="60" cy="65" r="0.5" fill="white"/>
-          <circle cx="140" cy="20" r="0.5" fill="white"/>
-          <circle cx="140" cy="65" r="0.5" fill="white"/>
-        </svg>
-        <!-- Здесь будет появляться точка -->
+    <!-- Верхняя панель с вкладками -->
+    <div id="tabsContainer">
+      <div class="tab active" id="videoTab" data-tab="video">
+        <span>🎥 Видео</span>
+      </div>
+      <div class="tab" id="fieldTab" data-tab="field">
+        <span>🏒 Схема</span>
       </div>
     </div>
 
-    <!-- Управление -->
-    <div id="controls">
-      <button id="startBtn" class="control-btn" disabled>Начать запись</button>
-      <button id="stopBtn" class="control-btn">Стоп</button>
+    <!-- Контент вкладки "Видео" -->
+    <div id="videoTabContent" class="tab-content active">
+      <!-- Индикатор записи -->
+      <div id="recordingIndicator">
+        <div class="recordingDot"></div>
+        <span>Идет запись</span>
+      </div>
+
+      <!-- Таймер записи -->
+      <div id="recordingTimer">00:00:00</div>
+
+      <!-- Видео -->
+      <div id="videoContainer">
+        <iframe id="videoFrame" allowfullscreen></iframe>
+      </div>
+
+      <!-- Управление -->
+      <div id="controls">
+        <button id="startBtn" class="control-btn" disabled>Начать запись</button>
+        <button id="stopBtn" class="control-btn">Стоп</button>
+      </div>
+    </div>
+
+    <!-- Контент вкладки "Схема" -->
+    <div id="fieldTabContent" class="tab-content">
+      <div id="fieldInstruction">Нажмите на поле, чтобы поставить точку. Нажмите на точку, чтобы перетащить</div>
+      
+      <div id="fieldContainer">
+        <svg id="hockeyField" viewBox="0 0 400 170" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+          <!-- Лёд (светло-голубой) -->
+          <rect width="400" height="170" fill="#e0f7fa"/>
+          
+          <!-- Борта (красные) -->
+          <rect x="0" y="0" width="400" height="170" fill="none" stroke="#d32f2f" stroke-width="2"/>
+          
+          <!-- Центральная красная линия -->
+          <line x1="200" y1="0" x2="200" y2="170" stroke="#d32f2f" stroke-width="2"/>
+          
+          <!-- Центральный круг -->
+          <circle cx="200" cy="85" r="30" fill="none" stroke="#d32f2f" stroke-width="2"/>
+          <circle cx="200" cy="85" r="1" fill="#d32f2f"/>
+          
+          <!-- Синие линии зон -->
+          <rect x="50" y="0" width="2" height="170" fill="#1976d2"/>
+          <rect x="348" y="0" width="2" height="170" fill="#1976d2"/>
+          
+          <!-- Зоны ворот -->
+          <!-- Левые ворота -->
+          <rect x="0" y="60" width="15" height="50" fill="none" stroke="#212121" stroke-width="2"/>
+          <rect x="15" y="70" width="5" height="30" fill="none" stroke="#212121" stroke-width="1" stroke-dasharray="2,2"/>
+          
+          <!-- Правые ворота -->
+          <rect x="385" y="60" width="15" height="50" fill="none" stroke="#212121" stroke-width="2"/>
+          <rect x="380" y="70" width="5" height="30" fill="none" stroke="#212121" stroke-width="1" stroke-dasharray="2,2"/>
+          
+          <!-- Зоны ворот (полукруги) -->
+          <!-- Левые ворота -->
+          <path d="M15,85 a30,30 0 0,1 0,60" fill="none" stroke="#d32f2f" stroke-width="2"/>
+          <path d="M15,85 a30,30 0 0,0 0,-60" fill="none" stroke="#d32f2f" stroke-width="2"/>
+          
+          <!-- Правые ворота -->
+          <path d="M385,85 a30,30 0 0,0 0,60" fill="none" stroke="#d32f2f" stroke-width="2"/>
+          <path d="M385,85 a30,30 0 0,1 0,-60" fill="none" stroke="#d32f2f" stroke-width="2"/>
+          
+          <!-- Круги вбрасывания -->
+          <!-- Центральный -->
+          <circle cx="200" cy="85" r="6" fill="none" stroke="#d32f2f" stroke-width="1"/>
+          
+          <!-- В зонах -->
+          <circle cx="50" cy="85" r="6" fill="none" stroke="#d32f2f" stroke-width="1"/>
+          <circle cx="350" cy="85" r="6" fill="none" stroke="#d32f2f" stroke-width="1"/>
+          
+          <!-- В зоне защиты слева -->
+          <circle cx="50" cy="40" r="6" fill="none" stroke="#d32f2f" stroke-width="1"/>
+          <circle cx="50" cy="130" r="6" fill="none" stroke="#d32f2f" stroke-width="1"/>
+          
+          <!-- В зоне защиты справа -->
+          <circle cx="350" cy="40" r="6" fill="none" stroke="#d32f2f" stroke-width="1"/>
+          <circle cx="350" cy="130" r="6" fill="none" stroke="#d32f2f" stroke-width="1"/>
+          
+          <!-- В зоне атаки слева -->
+          <circle cx="120" cy="40" r="6" fill="none" stroke="#d32f2f" stroke-width="1"/>
+          <circle cx="120" cy="130" r="6" fill="none" stroke="#d32f2f" stroke-width="1"/>
+          
+          <!-- В зоне атаки справа -->
+          <circle cx="280" cy="40" r="6" fill="none" stroke="#d32f2f" stroke-width="1"/>
+          <circle cx="280" cy="130" r="6" fill="none" stroke="#d32f2f" stroke-width="1"/>
+          
+          <!-- Точки вбрасывания (красные) -->
+          <circle cx="200" cy="85" r="1" fill="#d32f2f"/>
+          <circle cx="50" cy="85" r="1" fill="#d32f2f"/>
+          <circle cx="350" cy="85" r="1" fill="#d32f2f"/>
+          <circle cx="50" cy="40" r="1" fill="#d32f2f"/>
+          <circle cx="50" cy="130" r="1" fill="#d32f2f"/>
+          <circle cx="350" cy="40" r="1" fill="#d32f2f"/>
+          <circle cx="350" cy="130" r="1" fill="#d32f2f"/>
+          <circle cx="120" cy="40" r="1" fill="#d32f2f"/>
+          <circle cx="120" cy="130" r="1" fill="#d32f2f"/>
+          <circle cx="280" cy="40" r="1" fill="#d32f2f"/>
+          <circle cx="280" cy="130" r="1" fill="#d32f2f"/>
+          
+          <!-- Зоны (прозрачные для кликов) -->
+          <!-- Левая зона защиты -->
+          <rect x="0" y="0" width="50" height="170" fill="transparent" class="clickable-zone" id="zone-defense-left"/>
+          
+          <!-- Правая зона защиты -->
+          <rect x="350" y="0" width="50" height="170" fill="transparent" class="clickable-zone" id="zone-defense-right"/>
+          
+          <!-- Левая зона атаки -->
+          <rect x="50" y="0" width="100" height="170" fill="transparent" class="clickable-zone" id="zone-attack-left"/>
+          
+          <!-- Правая зона атаки -->
+          <rect x="250" y="0" width="100" height="170" fill="transparent" class="clickable-zone" id="zone-attack-right"/>
+          
+          <!-- Центральная зона -->
+          <rect x="150" y="0" width="100" height="170" fill="transparent" class="clickable-zone" id="zone-center"/>
+          
+          <!-- Левые ворота -->
+          <rect x="0" y="60" width="15" height="50" fill="transparent" class="clickable-zone" id="goal-left"/>
+          
+          <!-- Правые ворота -->
+          <rect x="385" y="60" width="15" height="50" fill="transparent" class="clickable-zone" id="goal-right"/>
+          
+          <!-- Надписи зон -->
+          <text x="25" y="20" text-anchor="middle" fill="#1976d2" font-size="8" font-weight="bold">Зона защиты</text>
+          <text x="375" y="20" text-anchor="middle" fill="#1976d2" font-size="8" font-weight="bold">Зона защиты</text>
+          <text x="100" y="20" text-anchor="middle" fill="#1976d2" font-size="8" font-weight="bold">Зона атаки</text>
+          <text x="300" y="20" text-anchor="middle" fill="#1976d2" font-size="8" font-weight="bold">Зона атаки</text>
+          <text x="200" y="20" text-anchor="middle" fill="#d32f2f" font-size="8" font-weight="bold">Центральная зона</text>
+        </svg>
+        <!-- Здесь будет появляться точка -->
+      </div>
     </div>
   </div>
 
@@ -405,17 +445,19 @@
     const rotateScreen = document.getElementById('rotateScreen');
     const mainInterface = document.getElementById('mainInterface');
     const videoFrame = document.getElementById('videoFrame');
-    const videoContainer = document.getElementById('videoContainer');
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
-    const fieldPanel = document.getElementById('fieldPanel');
     const fieldContainer = document.getElementById('fieldContainer');
     const hockeyField = document.getElementById('hockeyField');
     const recordingIndicator = document.getElementById('recordingIndicator');
     const recordingTimer = document.getElementById('recordingTimer');
-    const divider = document.getElementById('divider');
-    const instruction = document.getElementById('instruction');
-    const closeFieldBtn = document.getElementById('closeFieldBtn');
+    const fieldInstruction = document.getElementById('fieldInstruction');
+    
+    // Вкладки
+    const videoTab = document.getElementById('videoTab');
+    const fieldTab = document.getElementById('fieldTab');
+    const videoTabContent = document.getElementById('videoTabContent');
+    const fieldTabContent = document.getElementById('fieldTabContent');
 
     // Переменные состояния
     let isRecording = false;
@@ -431,13 +473,6 @@
     let markerStartX = 0;
     let markerStartY = 0;
     
-    // Для работы с разделителем
-    let isResizing = false;
-    let startHeight = 0;
-    let startY = 0;
-    const minVideoHeight = 30; // минимальная высота видео в %
-    const maxVideoHeight = 90; // максимальная высота видео в %
-
     // Параметры из URL
     const urlParams = new URLSearchParams(window.location.search);
     const videoUrl = urlParams.get('video');
@@ -480,6 +515,44 @@
     window.addEventListener('resize', checkOrientation);
     checkOrientation();
 
+    // Переключение вкладок
+    function switchTab(tabName) {
+      // Обновляем активные классы вкладок
+      videoTab.classList.toggle('active', tabName === 'video');
+      fieldTab.classList.toggle('active', tabName === 'field');
+      
+      videoTabContent.classList.toggle('active', tabName === 'video');
+      fieldTabContent.classList.toggle('active', tabName === 'field');
+      
+      // Если переключаемся на схему и есть запись - останавливаем видео
+      if (tabName === 'field' && isRecording) {
+        pauseVideo();
+      }
+      
+      // Обновляем badge на вкладке схемы
+      updateFieldTabBadge();
+    }
+
+    // Обработчики вкладок
+    videoTab.addEventListener('click', () => switchTab('video'));
+    fieldTab.addEventListener('click', () => switchTab('field'));
+
+    // Обновление badge на вкладке схемы
+    function updateFieldTabBadge() {
+      // Удаляем старый badge
+      const oldBadge = fieldTab.querySelector('.tab-badge');
+      if (oldBadge) {
+        oldBadge.remove();
+      }
+      
+      // Добавляем новый, если есть точка
+      if (currentMarker) {
+        const badge = document.createElement('div');
+        badge.className = 'tab-badge';
+        fieldTab.appendChild(badge);
+      }
+    }
+
     // Форматирование времени
     function formatTime(ms) {
       const totalSeconds = Math.floor(ms / 1000);
@@ -495,6 +568,17 @@
       if (recordingStartTime) {
         const elapsed = Date.now() - recordingStartTime;
         recordingTimer.textContent = formatTime(elapsed);
+      }
+    }
+
+    // Пауза видео
+    function pauseVideo() {
+      if (videoFrame.contentWindow) {
+        try {
+          videoFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+        } catch (e) {
+          console.log('Не удалось поставить видео на паузу');
+        }
       }
     }
 
@@ -517,6 +601,9 @@
       
       // Добавляем на схему
       fieldContainer.appendChild(currentMarker);
+      
+      // Обновляем badge
+      updateFieldTabBadge();
       
       console.log('Точка создана в позиции:', {x, y});
     }
@@ -662,97 +749,6 @@
       }
     }
 
-    // Показ схемы поля
-    function showField() {
-      // Останавливаем видео
-      if (videoFrame.contentWindow) {
-        try {
-          videoFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-        } catch (e) {}
-      }
-      
-      // Показываем панель со схемой
-      fieldPanel.style.display = 'block';
-      instruction.style.display = 'block';
-      divider.style.display = 'block';
-      
-      // Анимация появления
-      setTimeout(() => {
-        fieldPanel.style.height = '30vh';
-        videoContainer.style.height = '70vh';
-        divider.style.top = 'calc(70vh - 2px)';
-      }, 10);
-      
-      console.log('Схема поля показана');
-    }
-
-    // Скрытие схемы поля
-    function hideField() {
-      // Анимация скрытия
-      fieldPanel.style.height = '0';
-      
-      setTimeout(() => {
-        fieldPanel.style.display = 'none';
-        instruction.style.display = 'none';
-        divider.style.display = 'none';
-        videoContainer.style.height = '100vh';
-      }, 300);
-      
-      console.log('Схема поля скрыта');
-    }
-
-    // Начало изменения размера
-    function startResize(e) {
-      isResizing = true;
-      startHeight = parseInt(videoContainer.style.height) || 70;
-      startY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
-      
-      document.addEventListener('mousemove', resize);
-      document.addEventListener('touchmove', resizeTouch);
-      document.addEventListener('mouseup', stopResize);
-      document.addEventListener('touchend', stopResize);
-    }
-
-    // Изменение размера (мышь)
-    function resize(e) {
-      if (!isResizing) return;
-      
-      const deltaY = startY - e.clientY;
-      const newHeightPercent = startHeight + (deltaY / window.innerHeight) * 100;
-      
-      // Ограничиваем высоту
-      const clampedHeight = Math.max(minVideoHeight, Math.min(newHeightPercent, maxVideoHeight));
-      
-      videoContainer.style.height = clampedHeight + 'vh';
-      fieldPanel.style.height = (100 - clampedHeight) + 'vh';
-      divider.style.top = `calc(${clampedHeight}vh - 2px)`;
-    }
-
-    // Изменение размера (тач)
-    function resizeTouch(e) {
-      if (!isResizing || e.touches.length !== 1) return;
-      
-      const touch = e.touches[0];
-      const deltaY = startY - touch.clientY;
-      const newHeightPercent = startHeight + (deltaY / window.innerHeight) * 100;
-      
-      // Ограничиваем высоту
-      const clampedHeight = Math.max(minVideoHeight, Math.min(newHeightPercent, maxVideoHeight));
-      
-      videoContainer.style.height = clampedHeight + 'vh';
-      fieldPanel.style.height = (100 - clampedHeight) + 'vh';
-      divider.style.top = `calc(${clampedHeight}vh - 2px)`;
-    }
-
-    // Остановка изменения размера
-    function stopResize() {
-      isResizing = false;
-      document.removeEventListener('mousemove', resize);
-      document.removeEventListener('touchmove', resizeTouch);
-      document.removeEventListener('mouseup', stopResize);
-      document.removeEventListener('touchend', stopResize);
-    }
-
     // Начало записи
     function startRecording() {
       if (isRecording) return;
@@ -792,8 +788,11 @@
       recordingIndicator.style.display = 'none';
       recordingTimer.style.display = 'none';
       
-      // Показываем схему
-      showField();
+      // Переключаемся на вкладку схемы
+      switchTab('field');
+      
+      // Ставим видео на паузу
+      pauseVideo();
       
       console.log('Запись остановлена. Событий:', events.length);
     }
@@ -805,11 +804,6 @@
     // Обработчики для схемы
     fieldContainer.addEventListener('click', handleFieldClick);
     fieldContainer.addEventListener('touchstart', handleFieldClick);
-    closeFieldBtn.addEventListener('click', hideField);
-
-    // Обработчики для разделителя
-    divider.addEventListener('mousedown', startResize);
-    divider.addEventListener('touchstart', startResize);
 
     // Проверяем, когда видео готово
     function checkVideoReady() {
