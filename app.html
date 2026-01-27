@@ -40,18 +40,54 @@
       position: relative;
     }
 
-    /* Панель информации (маленькая) */
-    #infoPanel {
+    /* Индикатор записи */
+    #recordingIndicator {
       position: absolute;
       top: 10px;
       left: 10px;
+      background: #c62828;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: bold;
+      z-index: 15;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .recordingDot {
+      width: 10px;
+      height: 10px;
+      background: #ff4444;
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.3; }
+      50% { opacity: 1; }
+      100% { opacity: 0.3; }
+    }
+
+    /* Таймер записи */
+    #recordingTimer {
+      position: absolute;
+      top: 10px;
+      right: 10px;
       background: rgba(0, 0, 0, 0.7);
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 12px;
-      z-index: 5;
-      max-width: 200px;
-      backdrop-filter: blur(5px);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: bold;
+      z-index: 15;
+      display: none;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     /* Видео контейнер */
@@ -79,28 +115,44 @@
     }
 
     .control-btn {
-      padding: 12px 24px;
+      padding: 14px 28px;
       font-size: 16px;
       font-weight: bold;
       border: none;
       border-radius: 25px;
       cursor: pointer;
       color: white;
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(10px);
+      min-width: 140px;
+      transition: all 0.2s;
     }
 
-    #startBtn { background: #2e7d32; }
-    #stopBtn { background: #c62828; display: none; }
+    #startBtn { 
+      background: linear-gradient(135deg, #2e7d32, #4caf50);
+    }
 
-    /* Поле для разметки */
+    #startBtn:disabled {
+      background: #555;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    #stopBtn { 
+      background: linear-gradient(135deg, #c62828, #f44336);
+      display: none;
+    }
+
+    .control-btn:active:not(:disabled) {
+      transform: scale(0.95);
+    }
+
+    /* Поле для разметки (КХЛ) */
     #fieldOverlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: #0a3d62;
+      background: #1a237e;
       display: none;
       z-index: 20;
     }
@@ -110,10 +162,20 @@
       height: 100%;
     }
 
+    /* Зоны для клика */
+    .clickable-zone {
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .clickable-zone:hover {
+      opacity: 0.8;
+    }
+
     .highlight {
-      fill: rgba(255, 255, 255, 0.3);
-      stroke: white;
-      stroke-width: 2;
+      fill: rgba(255, 255, 255, 0.4) !important;
+      stroke: white !important;
+      stroke-width: 3px !important;
     }
   </style>
 </head>
@@ -128,12 +190,14 @@
 
   <!-- Основной интерфейс -->
   <div id="mainInterface">
-    <!-- Панель информации -->
-    <div id="infoPanel">
-      <div id="matchDate"></div>
-      <div id="matchOpponent"></div>
-      <div id="matchIceTime"></div>
+    <!-- Индикатор записи -->
+    <div id="recordingIndicator">
+      <div class="recordingDot"></div>
+      <span>Идет запись</span>
     </div>
+
+    <!-- Таймер записи -->
+    <div id="recordingTimer">00:00:00</div>
 
     <!-- Видео -->
     <div id="videoContainer">
@@ -142,61 +206,92 @@
 
     <!-- Управление -->
     <div id="controls">
-      <button id="startBtn" class="control-btn">Старт</button>
+      <button id="startBtn" class="control-btn" disabled>Начать запись</button>
       <button id="stopBtn" class="control-btn">Стоп</button>
     </div>
 
-    <!-- Поле для разметки -->
+    <!-- Поле для разметки (КХЛ) -->
     <div id="fieldOverlay">
       <svg id="hockeyField" viewBox="0 0 200 85" xmlns="http://www.w3.org/2000/svg">
-        <!-- Борта -->
-        <path d="M10,5 C5,5 0,10 0,15 L0,70 C0,75 5,80 10,80 L190,80 C195,80 200,75 200,70 L200,15 C200,10 195,5 190,5 Z" 
-              fill="none" stroke="white" stroke-width="1.2"/>
-
-        <!-- Линии -->
-        <line x1="100" y1="0" x2="100" y2="85" stroke="red" stroke-width="1.5"/>
-        <circle cx="100" cy="42.5" r="12" fill="none" stroke="red" stroke-width="1.5"/>
-        <line x1="50" y1="0" x2="50" y2="85" stroke="blue" stroke-width="1.5"/>
-        <line x1="150" y1="0" x2="150" y2="85" stroke="blue" stroke-width="1.5"/>
-
-        <!-- Ворота -->
-        <rect x="8" y="35" width="4" height="15" fill="none" stroke="white" stroke-width="1"/>
-        <rect x="188" y="35" width="4" height="15" fill="none" stroke="white" stroke-width="1"/>
-
-        <!-- Зоны -->
-        <circle cx="25" cy="25" r="10" fill="none" stroke="red" stroke-width="1.5" id="zone-left-attack"/>
-        <circle cx="25" cy="60" r="10" fill="none" stroke="red" stroke-width="1.5" id="zone-left-defense"/>
-        <circle cx="175" cy="25" r="10" fill="none" stroke="red" stroke-width="1.5" id="zone-right-attack"/>
-        <circle cx="175" cy="60" r="10" fill="none" stroke="red" stroke-width="1.5" id="zone-right-defense"/>
-
-        <!-- Лицофы -->
-        <circle cx="50" cy="42.5" r="1.5" fill="white"/>
-        <circle cx="100" cy="42.5" r="1.5" fill="white"/>
-        <circle cx="150" cy="42.5" r="1.5" fill="white"/>
-        <circle cx="25" cy="42.5" r="1.5" fill="white"/>
-        <circle cx="175" cy="42.5" r="1.5" fill="white"/>
-        <circle cx="25" cy="25" r="1.5" fill="white"/>
-        <circle cx="25" cy="60" r="1.5" fill="white"/>
-        <circle cx="175" cy="25" r="1.5" fill="white"/>
-        <circle cx="175" cy="60" r="1.5" fill="white"/>
-
-        <!-- Крестики -->
-        <g id="cross-left-top" stroke="white" stroke-width="1.2" fill="none">
-          <line x1="20" y1="20" x2="30" y2="30"/>
-          <line x1="30" y1="20" x2="20" y2="30"/>
-        </g>
-        <g id="cross-left-bottom" stroke="white" stroke-width="1.2" fill="none">
-          <line x1="20" y1="55" x2="30" y2="65"/>
-          <line x1="30" y1="55" x2="20" y2="65"/>
-        </g>
-        <g id="cross-right-top" stroke="white" stroke-width="1.2" fill="none">
-          <line x1="170" y1="20" x2="180" y2="30"/>
-          <line x1="180" y1="20" x2="170" y2="30"/>
-        </g>
-        <g id="cross-right-bottom" stroke="white" stroke-width="1.2" fill="none">
-          <line x1="170" y1="55" x2="180" y2="65"/>
-          <line x1="180" y1="55" x2="170" y2="65"/>
-        </g>
+        <!-- Лёд -->
+        <rect width="200" height="85" fill="#87CEEB"/>
+        
+        <!-- Борта (красные) -->
+        <rect x="0" y="0" width="200" height="85" fill="none" stroke="#FF0000" stroke-width="0.5"/>
+        
+        <!-- Центральная красная линия -->
+        <line x1="100" y1="0" x2="100" y2="85" stroke="#FF0000" stroke-width="1"/>
+        
+        <!-- Центральный круг -->
+        <circle cx="100" cy="42.5" r="15" fill="none" stroke="#FF0000" stroke-width="1"/>
+        <circle cx="100" cy="42.5" r="0.5" fill="#FF0000"/>
+        
+        <!-- Синие линии -->
+        <rect x="25" y="0" width="1" height="85" fill="#0000FF"/>
+        <rect x="174" y="0" width="1" height="85" fill="#0000FF"/>
+        
+        <!-- Зоны ворот -->
+        <rect x="0" y="30" width="11" height="25" fill="none" stroke="#000000" stroke-width="1"/>
+        <rect x="189" y="30" width="11" height="25" fill="none" stroke="#000000" stroke-width="1"/>
+        
+        <!-- Круги вбрасывания -->
+        <!-- Центральный -->
+        <circle cx="100" cy="42.5" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
+        
+        <!-- В зонах -->
+        <circle cx="25" cy="42.5" r="3" fill="none" stroke="#FF0000" stroke-width="0.5" class="clickable-zone" id="faceoff-center-left"/>
+        <circle cx="175" cy="42.5" r="3" fill="none" stroke="#FF0000" stroke-width="0.5" class="clickable-zone" id="faceoff-center-right"/>
+        
+        <!-- В зоне защиты слева -->
+        <circle cx="25" cy="20" r="3" fill="none" stroke="#FF0000" stroke-width="0.5" class="clickable-zone" id="faceoff-def-left-top"/>
+        <circle cx="25" cy="65" r="3" fill="none" stroke="#FF0000" stroke-width="0.5" class="clickable-zone" id="faceoff-def-left-bottom"/>
+        
+        <!-- В зоне защиты справа -->
+        <circle cx="175" cy="20" r="3" fill="none" stroke="#FF0000" stroke-width="0.5" class="clickable-zone" id="faceoff-def-right-top"/>
+        <circle cx="175" cy="65" r="3" fill="none" stroke="#FF0000" stroke-width="0.5" class="clickable-zone" id="faceoff-def-right-bottom"/>
+        
+        <!-- В зоне атаки слева -->
+        <circle cx="60" cy="20" r="3" fill="none" stroke="#FF0000" stroke-width="0.5" class="clickable-zone" id="faceoff-att-left-top"/>
+        <circle cx="60" cy="65" r="3" fill="none" stroke="#FF0000" stroke-width="0.5" class="clickable-zone" id="faceoff-att-left-bottom"/>
+        
+        <!-- В зоне атаки справа -->
+        <circle cx="140" cy="20" r="3" fill="none" stroke="#FF0000" stroke-width="0.5" class="clickable-zone" id="faceoff-att-right-top"/>
+        <circle cx="140" cy="65" r="3" fill="none" stroke="#FF0000" stroke-width="0.5" class="clickable-zone" id="faceoff-att-right-bottom"/>
+        
+        <!-- Зоны для кликов (невидимые прямоугольники для удобства) -->
+        <!-- Левая зона защиты -->
+        <rect x="0" y="0" width="50" height="85" fill="transparent" class="clickable-zone" id="zone-defense-left"/>
+        
+        <!-- Правая зона защиты -->
+        <rect x="150" y="0" width="50" height="85" fill="transparent" class="clickable-zone" id="zone-defense-right"/>
+        
+        <!-- Левая зона атаки -->
+        <rect x="50" y="0" width="50" height="85" fill="transparent" class="clickable-zone" id="zone-attack-left"/>
+        
+        <!-- Правая зона атаки -->
+        <rect x="100" y="0" width="50" height="85" fill="transparent" class="clickable-zone" id="zone-attack-right"/>
+        
+        <!-- Центральная зона -->
+        <rect x="75" y="0" width="50" height="85" fill="transparent" class="clickable-zone" id="zone-center"/>
+        
+        <!-- Левые ворота -->
+        <rect x="0" y="30" width="11" height="25" fill="transparent" class="clickable-zone" id="goal-left"/>
+        
+        <!-- Правые ворота -->
+        <rect x="189" y="30" width="11" height="25" fill="transparent" class="clickable-zone" id="goal-right"/>
+        
+        <!-- Точки вбрасывания (белые) -->
+        <circle cx="100" cy="42.5" r="0.5" fill="white"/>
+        <circle cx="25" cy="42.5" r="0.5" fill="white"/>
+        <circle cx="175" cy="42.5" r="0.5" fill="white"/>
+        <circle cx="25" cy="20" r="0.5" fill="white"/>
+        <circle cx="25" cy="65" r="0.5" fill="white"/>
+        <circle cx="175" cy="20" r="0.5" fill="white"/>
+        <circle cx="175" cy="65" r="0.5" fill="white"/>
+        <circle cx="60" cy="20" r="0.5" fill="white"/>
+        <circle cx="60" cy="65" r="0.5" fill="white"/>
+        <circle cx="140" cy="20" r="0.5" fill="white"/>
+        <circle cx="140" cy="65" r="0.5" fill="white"/>
       </svg>
     </div>
   </div>
@@ -205,7 +300,7 @@
     // Инициализация Telegram Web App
     if (window.Telegram?.WebApp) {
       Telegram.WebApp.ready();
-      Telegram.WebApp.expand(); // Пытаемся скрыть верхнюю панель
+      Telegram.WebApp.expand();
     }
 
     // Элементы
@@ -216,6 +311,14 @@
     const stopBtn = document.getElementById('stopBtn');
     const fieldOverlay = document.getElementById('fieldOverlay');
     const hockeyField = document.getElementById('hockeyField');
+    const recordingIndicator = document.getElementById('recordingIndicator');
+    const recordingTimer = document.getElementById('recordingTimer');
+
+    // Переменные состояния
+    let isRecording = false;
+    let recordingStartTime = null;
+    let timerInterval = null;
+    let events = [];
 
     // Параметры из URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -223,11 +326,6 @@
     const date = urlParams.get('date');
     const opponent = urlParams.get('opponent');
     const iceTime = urlParams.get('ice_time');
-
-    // Заполняем информацию
-    document.getElementById('matchDate').textContent = date;
-    document.getElementById('matchOpponent').textContent = opponent;
-    document.getElementById('matchIceTime').textContent = `${iceTime} мин`;
 
     // Загружаем видео
     if (videoUrl) {
@@ -242,7 +340,7 @@
           videoId = videoUrl.split('v=')[1]?.split('&')[0];
         }
         if (videoId) {
-          finalUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&controls=1`;
+          finalUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&controls=1&enablejsapi=1`;
         }
       }
       // Vimeo
@@ -264,56 +362,151 @@
     window.addEventListener('resize', checkOrientation);
     checkOrientation();
 
-    // Управление записью
-    let startTime = null;
-    let events = [];
+    // Форматирование времени
+    function formatTime(ms) {
+      const totalSeconds = Math.floor(ms / 1000);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
 
-    startBtn.addEventListener('click', () => {
-      startTime = Date.now();
+    // Обновление таймера
+    function updateTimer() {
+      if (recordingStartTime) {
+        const elapsed = Date.now() - recordingStartTime;
+        recordingTimer.textContent = formatTime(elapsed);
+      }
+    }
+
+    // Начало записи
+    function startRecording() {
+      if (isRecording) return;
+      
+      isRecording = true;
+      recordingStartTime = Date.now();
+      events = [];
+      
+      // Показываем индикаторы
+      recordingIndicator.style.display = 'flex';
+      recordingTimer.style.display = 'block';
+      
+      // Обновляем кнопки
       startBtn.style.display = 'none';
       stopBtn.style.display = 'block';
-      events = [];
-    });
+      
+      // Запускаем таймер
+      updateTimer();
+      timerInterval = setInterval(updateTimer, 1000);
+      
+      console.log('Запись начата в', new Date().toLocaleTimeString());
+    }
 
-    stopBtn.addEventListener('click', () => {
-      // Пауза видео
+    // Остановка записи
+    function stopRecording() {
+      if (!isRecording) return;
+      
+      isRecording = false;
+      
+      // Останавливаем видео
       if (videoFrame.contentWindow) {
         try {
           videoFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-        } catch (e) {}
+        } catch (e) {
+          console.log('Не удалось остановить видео');
+        }
       }
-
+      
+      // Останавливаем таймер
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      
+      // Скрываем индикаторы
+      recordingIndicator.style.display = 'none';
+      recordingTimer.style.display = 'none';
+      
+      // Показываем поле
       fieldOverlay.style.display = 'block';
-      startBtn.style.display = 'none';
-      stopBtn.style.display = 'none';
-    });
+      
+      console.log('Запись остановлена. Событий:', events.length);
+      console.log('Все события:', events);
+    }
+
+    // Обработчики кнопок
+    startBtn.addEventListener('click', startRecording);
+    stopBtn.addEventListener('click', stopRecording);
+
+    // Проверяем, когда видео готово (для YouTube)
+    function checkVideoReady() {
+      // Для YouTube можно слушать сообщения
+      window.addEventListener('message', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.event === 'onReady') {
+            startBtn.disabled = false;
+          }
+        } catch (e) {
+          // Не JSON сообщение
+        }
+      });
+      
+      // Общий таймаут
+      setTimeout(() => {
+        startBtn.disabled = false;
+      }, 3000);
+    }
+
+    // Запускаем проверку
+    checkVideoReady();
 
     // Клики по полю
     const zones = {
-      'zone-left-attack': 'Зона атаки (слева, верх)',
-      'zone-left-defense': 'Зона обороны (слева, низ)',
-      'zone-right-attack': 'Зона атаки (справа, верх)',
-      'zone-right-defense': 'Зона обороны (справа, низ)',
-      'cross-left-top': 'Лиц-оф (слева, верх)',
-      'cross-left-bottom': 'Лиц-оф (слева, низ)',
-      'cross-right-top': 'Лиц-оф (справа, верх)',
-      'cross-right-bottom': 'Лиц-оф (справа, низ)',
+      // Лицевые вбрасывания
+      'faceoff-center-left': 'Лицевое вбрасывание (центр, слева)',
+      'faceoff-center-right': 'Лицевое вбрасывание (центр, справа)',
+      'faceoff-def-left-top': 'Лицевое вбрасывание (зона защиты, слева, верх)',
+      'faceoff-def-left-bottom': 'Лицевое вбрасывание (зона защиты, слева, низ)',
+      'faceoff-def-right-top': 'Лицевое вбрасывание (зона защиты, справа, верх)',
+      'faceoff-def-right-bottom': 'Лицевое вбрасывание (зона защиты, справа, низ)',
+      'faceoff-att-left-top': 'Лицевое вбрасывание (зона атаки, слева, верх)',
+      'faceoff-att-left-bottom': 'Лицевое вбрасывание (зона атаки, слева, низ)',
+      'faceoff-att-right-top': 'Лицевое вбрасывание (зона атаки, справа, верх)',
+      'faceoff-att-right-bottom': 'Лицевое вбрасывание (зона атаки, справа, низ)',
+      
+      // Зоны
+      'zone-defense-left': 'Зона защиты (слева)',
+      'zone-defense-right': 'Зона защиты (справа)',
+      'zone-attack-left': 'Зона атаки (слева)',
+      'zone-attack-right': 'Зона атаки (справа)',
+      'zone-center': 'Центральная зона',
+      
+      // Ворота
+      'goal-left': 'Ворота (слева)',
+      'goal-right': 'Ворота (справа)',
     };
 
     hockeyField.addEventListener('click', (e) => {
+      if (!isRecording) return;
+      
       const target = e.target;
       const id = target.id;
-
+      
       if (zones[id]) {
+        // Подсветка
         target.classList.add('highlight');
-
+        
+        // Данные события
         const eventData = {
           zone_id: id,
           zone_name: zones[id],
-          timestamp: startTime ? Date.now() - startTime : 0,
+          timestamp: Date.now() - recordingStartTime,
           video_time: videoFrame.currentTime || 0,
-          date: date,
-          opponent: opponent
+          match_date: date,
+          opponent: opponent,
+          ice_time: iceTime
         };
         
         events.push(eventData);
@@ -322,10 +515,13 @@
         if (window.Telegram?.WebApp) {
           Telegram.WebApp.sendData(JSON.stringify(eventData));
         }
-
+        
+        // Убираем подсветку
         setTimeout(() => {
           target.classList.remove('highlight');
         }, 800);
+        
+        console.log('Записано событие:', eventData);
       }
     });
   </script>
