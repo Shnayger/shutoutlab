@@ -222,16 +222,12 @@
       pointer-events: all;
     }
 
-    /* Контейнер схемы */
     #fieldContainer {
-      background: #0d47a1;
-      position: relative;
-      overflow: hidden;
-      fieldContainer.classList.add('active');
-      fieldContainer.style.opacity = '1';
-      fieldContainer.style.pointerEvents = 'all';
-    }
-
+  background: #0d47a1;
+  position: relative;
+  overflow: hidden;
+}
+    
     /* Контейнер для изображения схемы */
     #fieldImageContainer {
   width: 100%;
@@ -1038,26 +1034,22 @@
       // Показываем заголовок вкладки
       currentTabTitle.style.display = 'block';
     });
+
+    // ДОБАВЬ В КОНЕЦ СКРИПТА ПОСЛЕ ВСЕГО КОДА:
+// Принудительно показываем контейнер схемы
+setTimeout(() => {
+  fieldContainer.style.display = 'block';
+  fieldContainer.style.opacity = '1';
+  fieldContainer.style.visibility = 'visible';
+  fieldContainer.style.zIndex = '10';
+  
+  console.log('fieldContainer стили:', {
+    display: fieldContainer.style.display,
+    opacity: fieldContainer.style.opacity,
+    visibility: fieldContainer.style.visibility,
+    className: fieldContainer.className
+  });
+}, 100);
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
