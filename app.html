@@ -204,9 +204,20 @@
     // Инициализация Telegram Web App
     if (window.Telegram?.WebApp) {
       Telegram.WebApp.ready();
-      Telegram.WebApp.expand(); // Скрываем верхнюю панель
-      Telegram.WebApp.setHeaderColor('#000000'); // Черный цвет заголовка
-      Telegram.WebApp.setBackgroundColor('#000000'); // Черный фон
+      
+      // Пробуем все методы скрытия панели
+      Telegram.WebApp.expand(); // Основной метод
+      
+      // Альтернативные методы
+      Telegram.WebApp.setHeaderColor('#000000'); 
+      Telegram.WebApp.setBackgroundColor('#000000');
+      
+      // Для старых версий
+      setTimeout(() => {
+        if (Telegram.WebApp.platform !== 'unknown') {
+          Telegram.WebApp.expand();
+        }
+      }, 100);
     }
 
     const rotateScreen = document.getElementById('rotateScreen');
@@ -348,3 +359,4 @@
   </script>
 </body>
 </html>
+
