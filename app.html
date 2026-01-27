@@ -707,45 +707,75 @@
 
     // Остановка записи
     function stopRecording() {
-      if (!isRecording) return;
-      isRecording = false;
-      recordingStopTime = Date.now();
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-      }
-      recordingIndicator.style.display = 'none';
-      recordingTimer.style.display = 'none';
-      pauseYouTubeVideo();
-      isVideoPaused = true;
-      tabsPanel.classList.add('visible');
-      switchTab('field');
-    }
-
+  if (!isRecording) return;
+  
+  isRecording = false;
+  recordingStopTime = Date.now();
+  
+  // Сохраняем текущее время видео
+  videoCurrentTime = getVideoCurrentTime();
+  
+  // Останавливаем таймер
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  
+  // Скрываем индикаторы
+  recordingIndicator.style.display = 'none';
+  recordingTimer.style.display = 'none';
+  
+  // Ставим видео на паузу
+  pauseYouTubeVideo();
+  isVideoPaused = true;
+  
+  // Показываем панель вкладок
+  tabsPanel.classList.add('visible');
+  
+  // Переключаемся на вкладку со схемой
+  switchTab('field');
+  
+  console.log('Запись остановлена. Событий:', events.length);
+}
     // Обработка выбора гол/сэйв
     function handleChoice(type) {
-      choiceModal.classList.remove('visible');
-      const eventData = {
-        type: type,
-        timestamp: Date.now() - recordingStartTime,
-        videoTime: videoCurrentTime,
-        markerPosition: currentMarker ? {
-          x: currentMarker.offsetLeft,
-          y: currentMarker.offsetTop
-        } : null
-      };
-      events.push(eventData);
-      if (currentMarker) {
-        currentMarker.remove();
-        currentMarker = null;
-      }
-      setTimeout(() => {
-        switchTab('video');
-        startBtn.style.display = 'block';
-        stopBtn.style.display = 'none';
-        isVideoPaused = false;
-      }, 300);
-    }
+  // Скрываем модальное окно
+  choiceModal.classList.remove('visible');
+  
+  // Сохраняем событие
+  const eventData = {
+    type: type,
+    timestamp: Date.now() - recordingStartTime,
+    videoTime: videoCurrentTime,
+    markerPosition: currentMarker ? {
+      x: currentMarker.offsetLeft,
+      y: currentMarker.offsetTop
+    } : null
+  };
+  
+  events.push(eventData);
+  
+  // Удаляем точку
+  if (currentMarker) {
+    currentMarker.remove();
+    currentMarker = null;
+  }
+  
+  // 1. Переключаемся на видео
+  switchTab('video');
+  
+  // 2. Скрываем панель вкладок
+  tabsPanel.classList.remove('visible');
+  
+  // 3. Показываем кнопку "Начать запись"
+  startBtn.style.display = 'block';
+  stopBtn.style.display = 'none';
+  
+  // 4. Снимаем паузу с видео
+  isVideoPaused = false;
+  
+  console.log(`Событие сохранено: ${type}`, eventData);
+}
 
     // Обработчики кнопок
     startBtn.addEventListener('click', startRecording);
@@ -814,4 +844,5 @@
   </script>
 </body>
 </html>
+
 
