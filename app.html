@@ -3,73 +3,59 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  
-  <!-- Мета-теги для полноэкранного режима -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#000000">
-  <meta name="full-screen" content="yes">
-  <meta name="screen-orientation" content="landscape">
-  
-  <title>Анализ хоккейного матча</title>
-  
+  <title>Анализ матча</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    /* Сброс всех отступов */
+    /* Сброс */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-      -webkit-user-select: none;
-      user-select: none;
     }
 
-    html, body {
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-      position: fixed;
-      top: 0;
-      left: 0;
+    body {
       background: #000;
       color: white;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      touch-action: manipulation;
+      height: 100vh;
+      overflow: hidden;
     }
 
     /* Экран поворота */
     #rotateScreen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: #111;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      height: 100vh;
       text-align: center;
       padding: 20px;
-      z-index: 1000;
+      background: #111;
     }
 
     /* Основной интерфейс */
     #mainInterface {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
       display: none;
+      height: 100vh;
+      position: relative;
     }
 
-    /* Видео контейнер на весь экран */
-    #videoContainer {
+    /* Панель информации (маленькая) */
+    #infoPanel {
       position: absolute;
-      top: 0;
-      left: 0;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      z-index: 5;
+      max-width: 200px;
+      backdrop-filter: blur(5px);
+    }
+
+    /* Видео контейнер */
+    #videoContainer {
       width: 100%;
       height: 100%;
       background: #000;
@@ -79,10 +65,9 @@
       width: 100%;
       height: 100%;
       border: none;
-      background: #000;
     }
 
-    /* Контролы */
+    /* Управление */
     #controls {
       position: absolute;
       bottom: 20px;
@@ -101,28 +86,21 @@
       border-radius: 25px;
       cursor: pointer;
       color: white;
-      min-width: 90px;
       background: rgba(0, 0, 0, 0.8);
       backdrop-filter: blur(10px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-      transition: transform 0.2s;
     }
 
-    .control-btn:active {
-      transform: scale(0.95);
-    }
+    #startBtn { background: #2e7d32; }
+    #stopBtn { background: #c62828; display: none; }
 
-    #startBtn { background: linear-gradient(135deg, #2e7d32, #4caf50); }
-    #stopBtn { background: linear-gradient(135deg, #c62828, #f44336); display: none; }
-
-    /* Схема поля */
+    /* Поле для разметки */
     #fieldOverlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(10, 61, 98, 0.95);
+      background: #0a3d62;
       display: none;
       z-index: 20;
     }
@@ -132,66 +110,10 @@
       height: 100%;
     }
 
-    /* Подсветка */
     .highlight {
-      fill: rgba(255, 255, 255, 0.4);
+      fill: rgba(255, 255, 255, 0.3);
       stroke: white;
-      stroke-width: 3;
-      transition: all 0.3s;
-    }
-
-    /* Информация о матче - минимальная и скрываемая */
-    #matchInfo {
-      position: absolute;
-      top: 5px;
-      left: 5px;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-size: 11px;
-      z-index: 5;
-      max-width: 180px;
-      backdrop-filter: blur(5px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      opacity: 0.8;
-      transition: opacity 0.3s;
-    }
-
-    #matchInfo:hover {
-      opacity: 1;
-    }
-
-    /* Кнопка полноэкранного режима */
-    #fullscreenToggle {
-      position: absolute;
-      top: 5px;
-      right: 5px;
-      background: rgba(0, 0, 0, 0.7);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 6px;
-      padding: 6px 10px;
-      cursor: pointer;
-      z-index: 5;
-      font-size: 11px;
-      backdrop-filter: blur(5px);
-    }
-
-    /* Скрываем элементы браузера при полноэкранном режиме */
-    :-webkit-full-screen {
-      background-color: #000;
-    }
-    
-    :-moz-full-screen {
-      background-color: #000;
-    }
-    
-    :-ms-fullscreen {
-      background-color: #000;
-    }
-    
-    :fullscreen {
-      background-color: #000;
+      stroke-width: 2;
     }
   </style>
 </head>
@@ -201,45 +123,53 @@
     <svg viewBox="0 0 24 24" fill="white" width="60" height="60">
       <path d="M19 12h-1.5c-.82 0-1.5-.68-1.5-1.5V5.5C16 4.67 16.67 4 17.5 4H19c.83 0 1.5.67 1.5 1.5v3.5c0 .83-.67 1.5-1.5 1.5H1L1.01 21c0 1.1.89 2 2 2H21c1.1 0 2-.9 2-2L22.99 14H19zm-5.5-9H8.5V8h4V4zm6 14H2v2h18v-2z"/>
     </svg>
-    <p style="margin-top: 20px; font-size: 16px;">Пожалуйста, поверните устройство в горизонтальное положение.</p>
+    <p style="margin-top: 20px;">Пожалуйста, поверните устройство в горизонтальное положение.</p>
   </div>
 
   <!-- Основной интерфейс -->
   <div id="mainInterface">
-    <!-- Информация о матче -->
-    <div id="matchInfo">
-      <div id="infoDate"></div>
-      <div id="infoOpponent"></div>
-      <div id="infoIceTime"></div>
+    <!-- Панель информации -->
+    <div id="infoPanel">
+      <div id="matchDate"></div>
+      <div id="matchOpponent"></div>
+      <div id="matchIceTime"></div>
     </div>
-    
-    <!-- Кнопка полноэкранного режима -->
-    <button id="fullscreenToggle" onclick="toggleFullScreen()">⛶ Полный экран</button>
-    
+
+    <!-- Видео -->
     <div id="videoContainer">
       <iframe id="videoFrame" allowfullscreen></iframe>
     </div>
-    
+
+    <!-- Управление -->
     <div id="controls">
       <button id="startBtn" class="control-btn">Старт</button>
       <button id="stopBtn" class="control-btn">Стоп</button>
     </div>
-    
+
+    <!-- Поле для разметки -->
     <div id="fieldOverlay">
       <svg id="hockeyField" viewBox="0 0 200 85" xmlns="http://www.w3.org/2000/svg">
-        <!-- SVG код поля (такой же как раньше) -->
+        <!-- Борта -->
         <path d="M10,5 C5,5 0,10 0,15 L0,70 C0,75 5,80 10,80 L190,80 C195,80 200,75 200,70 L200,15 C200,10 195,5 190,5 Z" 
               fill="none" stroke="white" stroke-width="1.2"/>
+
+        <!-- Линии -->
         <line x1="100" y1="0" x2="100" y2="85" stroke="red" stroke-width="1.5"/>
         <circle cx="100" cy="42.5" r="12" fill="none" stroke="red" stroke-width="1.5"/>
         <line x1="50" y1="0" x2="50" y2="85" stroke="blue" stroke-width="1.5"/>
         <line x1="150" y1="0" x2="150" y2="85" stroke="blue" stroke-width="1.5"/>
+
+        <!-- Ворота -->
         <rect x="8" y="35" width="4" height="15" fill="none" stroke="white" stroke-width="1"/>
         <rect x="188" y="35" width="4" height="15" fill="none" stroke="white" stroke-width="1"/>
+
+        <!-- Зоны -->
         <circle cx="25" cy="25" r="10" fill="none" stroke="red" stroke-width="1.5" id="zone-left-attack"/>
         <circle cx="25" cy="60" r="10" fill="none" stroke="red" stroke-width="1.5" id="zone-left-defense"/>
         <circle cx="175" cy="25" r="10" fill="none" stroke="red" stroke-width="1.5" id="zone-right-attack"/>
         <circle cx="175" cy="60" r="10" fill="none" stroke="red" stroke-width="1.5" id="zone-right-defense"/>
+
+        <!-- Лицофы -->
         <circle cx="50" cy="42.5" r="1.5" fill="white"/>
         <circle cx="100" cy="42.5" r="1.5" fill="white"/>
         <circle cx="150" cy="42.5" r="1.5" fill="white"/>
@@ -249,6 +179,8 @@
         <circle cx="25" cy="60" r="1.5" fill="white"/>
         <circle cx="175" cy="25" r="1.5" fill="white"/>
         <circle cx="175" cy="60" r="1.5" fill="white"/>
+
+        <!-- Крестики -->
         <g id="cross-left-top" stroke="white" stroke-width="1.2" fill="none">
           <line x1="20" y1="20" x2="30" y2="30"/>
           <line x1="30" y1="20" x2="20" y2="30"/>
@@ -270,34 +202,13 @@
   </div>
 
   <script>
-    // === ПОЛНОЭКРАННЫЙ РЕЖИМ ===
-    function toggleFullScreen() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(err => {
-          console.log(`Ошибка полноэкранного режима: ${err.message}`);
-        });
-        document.getElementById('fullscreenToggle').textContent = '✕ Выйти';
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-          document.getElementById('fullscreenToggle').textContent = '⛶ Полный экран';
-        }
-      }
+    // Инициализация Telegram Web App
+    if (window.Telegram?.WebApp) {
+      Telegram.WebApp.ready();
+      Telegram.WebApp.expand(); // Пытаемся скрыть верхнюю панель
     }
 
-    // Автоматически включаем полноэкранный режим на мобильных
-    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      setTimeout(() => {
-        if (!document.fullscreenElement) {
-          document.documentElement.requestFullscreen().catch(e => {
-            // Если не получается, показываем кнопку
-            document.getElementById('fullscreenToggle').style.display = 'block';
-          });
-        }
-      }, 500);
-    }
-
-    // === ОСНОВНАЯ ЛОГИКА ===
+    // Элементы
     const rotateScreen = document.getElementById('rotateScreen');
     const mainInterface = document.getElementById('mainInterface');
     const videoFrame = document.getElementById('videoFrame');
@@ -306,22 +217,23 @@
     const fieldOverlay = document.getElementById('fieldOverlay');
     const hockeyField = document.getElementById('hockeyField');
 
-    // Получаем параметры из URL
+    // Параметры из URL
     const urlParams = new URLSearchParams(window.location.search);
     const videoUrl = urlParams.get('video');
     const date = urlParams.get('date');
     const opponent = urlParams.get('opponent');
     const iceTime = urlParams.get('ice_time');
 
-    // Отображаем информацию о матче
-    if (date) document.getElementById('infoDate').textContent = `${date}`;
-    if (opponent) document.getElementById('infoOpponent').textContent = `vs ${opponent}`;
-    if (iceTime) document.getElementById('infoIceTime').textContent = `${iceTime} мин`;
+    // Заполняем информацию
+    document.getElementById('matchDate').textContent = date;
+    document.getElementById('matchOpponent').textContent = opponent;
+    document.getElementById('matchIceTime').textContent = `${iceTime} мин`;
 
     // Загружаем видео
     if (videoUrl) {
       let finalUrl = videoUrl;
       
+      // YouTube
       if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
         let videoId;
         if (videoUrl.includes('youtu.be/')) {
@@ -330,11 +242,13 @@
           videoId = videoUrl.split('v=')[1]?.split('&')[0];
         }
         if (videoId) {
-          finalUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&controls=1&modestbranding=1&playsinline=1&fs=1`;
+          finalUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&controls=1`;
         }
-      } else if (videoUrl.includes('vimeo.com')) {
+      }
+      // Vimeo
+      else if (videoUrl.includes('vimeo.com')) {
         const vimeoId = videoUrl.split('/').pop();
-        finalUrl = `https://player.vimeo.com/video/${vimeoId}?autoplay=0&playsinline=1`;
+        finalUrl = `https://player.vimeo.com/video/${vimeoId}?autoplay=0`;
       }
       
       videoFrame.src = finalUrl;
@@ -343,24 +257,11 @@
     // Проверка ориентации
     function checkOrientation() {
       const isLandscape = window.innerWidth > window.innerHeight;
-      
-      if (isLandscape) {
-        rotateScreen.style.display = 'none';
-        mainInterface.style.display = 'block';
-        
-        // Скрываем элементы на очень маленьких экранах
-        if (window.innerHeight < 450) {
-          document.getElementById('matchInfo').style.opacity = '0.3';
-          document.getElementById('fullscreenToggle').style.opacity = '0.5';
-        }
-      } else {
-        rotateScreen.style.display = 'flex';
-        mainInterface.style.display = 'none';
-      }
+      rotateScreen.style.display = isLandscape ? 'none' : 'flex';
+      mainInterface.style.display = isLandscape ? 'block' : 'none';
     }
 
     window.addEventListener('resize', checkOrientation);
-    window.addEventListener('orientationchange', checkOrientation);
     checkOrientation();
 
     // Управление записью
@@ -379,20 +280,15 @@
       if (videoFrame.contentWindow) {
         try {
           videoFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-        } catch (e) {
-          console.log("Не удалось поставить на паузу");
-        }
+        } catch (e) {}
       }
 
       fieldOverlay.style.display = 'block';
       startBtn.style.display = 'none';
       stopBtn.style.display = 'none';
-      
-      // Показываем результат
-      console.log('События:', events);
     });
 
-    // === КЛИК ПО ПОЛЮ ===
+    // Клики по полю
     const zones = {
       'zone-left-attack': 'Зона атаки (слева, верх)',
       'zone-left-defense': 'Зона обороны (слева, низ)',
@@ -409,44 +305,29 @@
       const id = target.id;
 
       if (zones[id]) {
-        // Подсветка
         target.classList.add('highlight');
 
         const eventData = {
           zone_id: id,
           zone_name: zones[id],
           timestamp: startTime ? Date.now() - startTime : 0,
-          video_time: videoFrame.currentTime || 0
+          video_time: videoFrame.currentTime || 0,
+          date: date,
+          opponent: opponent
         };
         
         events.push(eventData);
         
-        // Отправляем данные
+        // Отправляем в Telegram
         if (window.Telegram?.WebApp) {
           Telegram.WebApp.sendData(JSON.stringify(eventData));
-        } else {
-          // Альтернативная отправка
-          fetch('https://ваш-сервер.com/api/events', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-              ...eventData,
-              match_date: date,
-              opponent: opponent,
-              video_url: videoUrl
-            })
-          }).catch(console.error);
         }
 
-        // Убираем подсветку
         setTimeout(() => {
           target.classList.remove('highlight');
         }, 800);
       }
     });
-
-    // Двойной клик по полю - переключение полноэкранного режима
-    hockeyField.addEventListener('dblclick', toggleFullScreen);
   </script>
 </body>
 </html>
