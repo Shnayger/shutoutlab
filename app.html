@@ -181,6 +181,12 @@
   </div>
 
   <script>
+    // Инициализация Telegram Web App
+    if (window.Telegram?.WebApp) {
+      Telegram.WebApp.ready();
+      Telegram.WebApp.expand(); // Скрываем верхнюю панель
+    }
+
     const rotateScreen = document.getElementById('rotateScreen');
     const mainInterface = document.getElementById('mainInterface');
     const videoFrame = document.getElementById('videoFrame');
