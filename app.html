@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>Анализ матча</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
@@ -10,15 +13,25 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    body {
-      background: #000;
-      color: white;
-      overflow: hidden;
-      height: 100vh;
+    html, body {
       width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #000;
+      position: fixed;
+      top: 0;
+      left: 0;
+      color: white;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    /* Скрываем панель Telegram */
+    body {
+      margin-top: env(safe-area-inset-top, 0px) !important;
+      padding-top: env(safe-area-inset-top, 0px) !important;
     }
 
     #rotateScreen {
@@ -27,24 +40,29 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
+      width: 100vw;
       background: #111;
       text-align: center;
       padding: 20px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
     }
 
     #mainInterface {
       display: none;
-      position: relative;
       width: 100vw;
       height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
     }
 
     #videoContainer {
-      position: absolute;
-      top: 0;
-      left: 0;
       width: 100%;
       height: 100%;
+      background: #000;
     }
 
     #videoFrame {
@@ -52,10 +70,11 @@
       height: 100%;
       border: none;
       background: #000;
+      display: block;
     }
 
     #controls {
-      position: absolute;
+      position: fixed;
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
@@ -73,18 +92,20 @@
       cursor: pointer;
       color: white;
       min-width: 100px;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
     }
 
-    #startBtn { background: #2e7d32; }
-    #stopBtn { background: #c62828; display: none; }
+    #startBtn { background: rgba(46, 125, 50, 0.9); }
+    #stopBtn { background: rgba(198, 40, 40, 0.9); display: none; }
 
     /* Схема поля — полноэкранная */
     #fieldOverlay {
-      position: absolute;
+      position: fixed;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
       background: #0a3d62;
       display: none;
       z-index: 20;
@@ -102,17 +123,40 @@
       stroke-width: 2;
     }
 
-    /* Информация о матче */
+    /* Информация о матче - минимальная */
     #matchInfo {
-      position: absolute;
+      position: fixed;
       top: 10px;
       left: 10px;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 10px 15px;
-      border-radius: 10px;
-      font-size: 14px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
       z-index: 5;
-      max-width: 300px;
+      max-width: 200px;
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Кнопка для перехода в полноэкранный режим */
+    #fullscreenBtn {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      z-index: 5;
+      font-size: 12px;
+      backdrop-filter: blur(5px);
+    }
+
+    /* Скрываем элементы Telegram Web App */
+    .tg-webapp {
+      display: none !important;
     }
   </style>
 </head>
@@ -122,7 +166,7 @@
     <svg viewBox="0 0 24 24" fill="white" width="60" height="60">
       <path d="M19 12h-1.5c-.82 0-1.5-.68-1.5-1.5V5.5C16 4.67 16.67 4 17.5 4H19c.83 0 1.5.67 1.5 1.5v3.5c0 .83-.67 1.5-1.5 1.5H1L1.01 21c0 1.1.89 2 2 2H21c1.1 0 2-.9 2-2L22.99 14H19zm-5.5-9H8.5V8h4V4zm6 14H2v2h18v-2z"/>
     </svg>
-    <p>Пожалуйста, поверните устройство в горизонтальное положение.</p>
+    <p style="margin-top: 20px; font-size: 16px;">Пожалуйста, поверните устройство в горизонтальное положение.</p>
   </div>
 
   <!-- Основной интерфейс -->
@@ -133,6 +177,9 @@
       <div id="infoOpponent"></div>
       <div id="infoIceTime"></div>
     </div>
+    
+    <!-- Кнопка полноэкранного режима -->
+    <button id="fullscreenBtn" onclick="toggleFullScreen()">⛶ Полный экран</button>
     
     <div id="videoContainer">
       <iframe id="videoFrame" allowfullscreen></iframe>
@@ -201,25 +248,63 @@
   </div>
 
   <script>
-    // Инициализация Telegram Web App
+    // === ПОЛНОЭКРАННЫЙ РЕЖИМ ===
+    function toggleFullScreen() {
+      const elem = document.documentElement;
+      if (!document.fullscreenElement) {
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) { /* Safari */
+          elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) { /* IE11 */
+          elem.msRequestFullscreen();
+        }
+        document.getElementById('fullscreenBtn').textContent = '✕ Выйти';
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) { /* Safari */
+          document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { /* IE11 */
+          document.msExitFullscreen();
+        }
+        document.getElementById('fullscreenBtn').textContent = '⛶ Полный экран';
+      }
+    }
+
+    // Авто-полноэкранный режим на мобильных
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      setTimeout(() => {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen().catch(e => console.log("Fullscreen error:", e));
+        }
+      }, 1000);
+    }
+
+    // === TELEGRAM WEB APP ===
     if (window.Telegram?.WebApp) {
       Telegram.WebApp.ready();
       
-      // Пробуем все методы скрытия панели
-      Telegram.WebApp.expand(); // Основной метод
-      
-      // Альтернативные методы
-      Telegram.WebApp.setHeaderColor('#000000'); 
-      Telegram.WebApp.setBackgroundColor('#000000');
-      
-      // Для старых версий
-      setTimeout(() => {
-        if (Telegram.WebApp.platform !== 'unknown') {
-          Telegram.WebApp.expand();
-        }
-      }, 100);
+      // Пытаемся скрыть панель
+      try {
+        Telegram.WebApp.expand();
+        Telegram.WebApp.setHeaderColor('#000000');
+        Telegram.WebApp.setBackgroundColor('#000000');
+        
+        // Если не сработало, скрываем через CSS
+        setTimeout(() => {
+          document.documentElement.style.paddingTop = '0';
+          document.body.style.paddingTop = '0';
+          document.body.style.marginTop = '-50px';
+          document.body.style.height = 'calc(100vh + 50px)';
+        }, 300);
+      } catch (e) {
+        console.log("Telegram Web App error:", e);
+      }
     }
 
+    // === ОСНОВНАЯ ЛОГИКА ===
     const rotateScreen = document.getElementById('rotateScreen');
     const mainInterface = document.getElementById('mainInterface');
     const videoFrame = document.getElementById('videoFrame');
@@ -236,10 +321,11 @@
     const iceTime = urlParams.get('ice_time');
 
     // Отображаем информацию о матче
-    if (date) document.getElementById('infoDate').textContent = `Дата: ${date}`;
-    if (opponent) document.getElementById('infoOpponent').textContent = `Соперник: ${opponent}`;
-    if (iceTime) document.getElementById('infoIceTime').textContent = `Лёд: ${iceTime} мин`;
+    if (date) document.getElementById('infoDate').textContent = `${date}`;
+    if (opponent) document.getElementById('infoOpponent').textContent = `vs ${opponent}`;
+    if (iceTime) document.getElementById('infoIceTime').textContent = `${iceTime} мин`;
 
+    // Загружаем видео
     if (videoUrl) {
       if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
         let videoId;
@@ -249,23 +335,31 @@
           videoId = videoUrl.split('v=')[1]?.split('&')[0];
         }
         if (videoId) {
-          videoFrame.src = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&controls=1&enablejsapi=1`;
+          videoFrame.src = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&controls=1&modestbranding=1&playsinline=1`;
         }
       } else if (videoUrl.includes('vimeo.com')) {
         const vimeoId = videoUrl.split('/').pop();
-        videoFrame.src = `https://player.vimeo.com/video/${vimeoId}?autoplay=0`;
+        videoFrame.src = `https://player.vimeo.com/video/${vimeoId}?autoplay=0&playsinline=1`;
       } else {
         videoFrame.src = videoUrl;
       }
     }
 
+    // Проверка ориентации
     function checkOrientation() {
       const isLandscape = window.innerWidth > window.innerHeight;
       rotateScreen.style.display = isLandscape ? 'none' : 'flex';
       mainInterface.style.display = isLandscape ? 'block' : 'none';
+      
+      // На маленьких экранах скрываем инфо
+      if (window.innerHeight < 500) {
+        document.getElementById('matchInfo').style.display = 'none';
+        document.getElementById('fullscreenBtn').style.display = 'none';
+      }
     }
 
     window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
     checkOrientation();
 
     // Управление записью
@@ -323,9 +417,13 @@
           video_url: videoUrl
         };
 
+        // Отправляем через Telegram или обычным запросом
         if (window.Telegram?.WebApp) {
           Telegram.WebApp.sendData(JSON.stringify(result));
-          console.log("Отправлено в бот:", result);
+        } else {
+          // Альтернативный способ отправки (через fetch)
+          console.log("Данные для отправки:", result);
+          // Здесь можно добавить fetch запрос к вашему боту
         }
 
         // Убираем подсветку через 1 сек
@@ -359,4 +457,3 @@
   </script>
 </body>
 </html>
-
