@@ -527,6 +527,7 @@
     // Время остановки записи (для продолжения)
     let recordingStopTime = 0;
     let videoCurrentTime = 0;
+    let isVideoPaused = false;
 
     // Параметры из URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -588,6 +589,24 @@
       }
     }
 
+    // Пауза видео (для YouTube)
+    function pauseYouTubeVideo() {
+      try {
+        if (videoFrame.contentWindow) {
+          // Отправляем команду паузы через YouTube API
+          videoFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+          console.log('Команда паузы отправлена YouTube');
+        }
+      } catch (e) {
+        console.log('Не удалось поставить YouTube видео на паузу:', e);
+      }
+    }
+
+    // Получить текущее время видео
+    function getVideoCurrentTime() {
+      return videoCurrentTime;
+    }
+
     // Переключение вкладок
     function switchTab(tabName) {
       // Обновляем текущую вкладку
@@ -609,12 +628,21 @@
         currentTabTitle.textContent = '🎥 Видео матча';
         currentTabTitle.style.display = 'block';
         returnToVideoBtn.style.display = 'none';
+        
+        // Если видео было на паузе, ставим его на паузу
+        if (isVideoPaused) {
+          pauseYouTubeVideo();
+        }
       } else {
         videoContainer.classList.remove('active');
         fieldContainer.classList.add('active');
         currentTabTitle.textContent = '🏒 Схема поля';
         currentTabTitle.style.display = 'block';
         returnToVideoBtn.style.display = 'block';
+        
+        // Ставим видео на паузу при переключении на схему
+        pauseYouTubeVideo();
+        isVideoPaused = true;
       }
     }
 
@@ -810,12 +838,7 @@
       recordingStopTime = Date.now();
       
       // Сохраняем текущее время видео
-      try {
-        if (videoFrame.contentWindow) {
-          // Для YouTube API
-          videoFrame.contentWindow.postMessage('{"event":"command","func":"getCurrentTime","args":""}', '*');
-        }
-      } catch (e) {}
+      videoCurrentTime = getVideoCurrentTime();
       
       // Останавливаем таймер
       if (timerInterval) {
@@ -827,6 +850,10 @@
       recordingIndicator.style.display = 'none';
       recordingTimer.style.display = 'none';
       
+      // Ставим видео на паузу
+      pauseYouTubeVideo();
+      isVideoPaused = true;
+      
       // Показываем панель вкладок
       tabsPanel.classList.add('visible');
       
@@ -834,6 +861,7 @@
       switchTab('field');
       
       console.log('Запись остановлена. Событий:', events.length);
+      console.log('Текущее время видео:', videoCurrentTime);
     }
 
     // Обработка выбора гол/сэйв
@@ -865,6 +893,7 @@
         switchTab('video');
         startBtn.style.display = 'block';
         stopBtn.style.display = 'none';
+        isVideoPaused = false;
       }, 300);
       
       console.log(`Событие сохранено: ${type}`, eventData);
@@ -885,7 +914,14 @@
 
     // Обработчики для схемы
     fieldImageContainer.addEventListener('click', handleFieldClick);
-    fieldImageContainer.addEventListener('touchstart', handleFieldClick);
+    fieldImageContainer.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const rect = fieldImageContainer.getBoundingClientRect();
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      createMarker(x, y);
+    });
 
     // Обработчики для выбора
     goalBtn.addEventListener('click', () => handleChoice('goal'));
@@ -896,19 +932,32 @@
       window.addEventListener('message', (event) => {
         try {
           const data = JSON.parse(event.data);
+          console.log('Получено сообщение от видео:', data);
+          
           if (data.event === 'onReady') {
             startBtn.disabled = false;
+            console.log('Видео готово');
           }
-          // Получаем текущее время видео
-          if (data.info && data.info.currentTime) {
+          
+          // Получаем текущее время видео от YouTube API
+          if (data.info && data.info.currentTime !== undefined) {
+            videoCurrentTime = data.info.currentTime;
+            console.log('Текущее время видео:', videoCurrentTime);
+          }
+          
+          // Обработка событий от YouTube
+          if (data.event === 'infoDelivery' && data.info && data.info.currentTime !== undefined) {
             videoCurrentTime = data.info.currentTime;
           }
-        } catch (e) {}
+        } catch (e) {
+          // Не JSON сообщение
+        }
       });
       
       // Альтернативный способ проверки готовности
       setTimeout(() => {
         startBtn.disabled = false;
+        console.log('Видео готово (таймаут)');
       }, 3000);
     }
 
@@ -919,10 +968,10 @@
     window.addEventListener('load', () => {
       // Адаптация изображения под экран
       function optimizeImage() {
-        const container = fieldImageContainer;
         const img = fieldImage;
         
-        // Если изображение вертикальное, поворачиваем его
+        console.log('Изображение загружено, размеры:', img.naturalWidth, 'x', img.naturalHeight);
+        
         if (img.naturalWidth && img.naturalHeight) {
           if (img.naturalHeight > img.naturalWidth) {
             // Вертикальное изображение - делаем горизонтальным
@@ -931,6 +980,7 @@
             img.style.height = '100%';
             img.style.maxWidth = '100%';
             img.style.maxHeight = '100%';
+            console.log('Изображение повернуто');
           } else {
             // Горизонтальное изображение - оставляем как есть
             img.style.transform = 'none';
@@ -938,7 +988,15 @@
             img.style.height = 'auto';
             img.style.maxWidth = '100%';
             img.style.maxHeight = '100%';
+            console.log('Изображение оставлено как есть');
           }
+        } else {
+          console.log('Не удалось получить размеры изображения');
+          // Если не удалось получить размеры, используем адаптивный подход
+          img.style.width = '100%';
+          img.style.height = 'auto';
+          img.style.maxWidth = '100%';
+          img.style.maxHeight = '100%';
         }
       }
       
@@ -948,17 +1006,29 @@
       // Если изображение уже загружено
       if (fieldImage.complete) {
         optimizeImage();
+      } else {
+        // Если изображение не загружается, показываем сообщение
+        setTimeout(() => {
+          if (fieldImage.naturalWidth === 0) {
+            console.error('Изображение не загрузилось');
+            fieldInstruction.textContent = 'Изображение не загрузилось. Проверьте ссылку.';
+            fieldInstruction.style.backgroundColor = 'rgba(198, 40, 40, 0.9)';
+          }
+        }, 3000);
       }
     });
 
-    // Слушаем сообщения от видео плеера для получения времени
-    window.addEventListener('message', function(event) {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.event === 'infoDelivery' && data.info && data.info.currentTime) {
-          videoCurrentTime = data.info.currentTime;
-        }
-      } catch (e) {}
+    // Инициализация после загрузки страницы
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM загружен, инициализация...');
+      console.log('URL видео:', videoUrl);
+      console.log('URL изображения:', fieldImage.src);
+      
+      // Запускаем проверку ориентации
+      checkOrientation();
+      
+      // Показываем заголовок вкладки
+      currentTabTitle.style.display = 'block';
     });
   </script>
 </body>
