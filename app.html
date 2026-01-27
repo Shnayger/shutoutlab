@@ -269,7 +269,7 @@
 
     /* Карточка схемы (активная) */
     #fieldCard {
-      background: #1a237e;
+      background: #1a1a1a;
       transform: translateY(0);
       opacity: 1;
       z-index: 2;
@@ -299,21 +299,39 @@
       transform: scale(1.2);
     }
 
-    /* Контейнер для изображения схемы */
+    /* Контейнер для изображения схемы с горизонтальной ориентацией */
     #fieldImageContainer {
       width: 100%;
       height: 100%;
       position: relative;
       touch-action: none;
       overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0d47a1; /* Темно-синий фон как у льда */
     }
 
+    /* Изображение схемы - делаем горизонтальным */
     #fieldImage {
-      width: 100%;
+      width: auto;
       height: 100%;
+      max-width: 100%;
       object-fit: contain;
+      transform: rotate(90deg); /* Поворачиваем на 90 градусов */
+      transform-origin: center;
       user-select: none;
       -webkit-user-drag: none;
+      pointer-events: none; /* Клики будут проходить через изображение к контейнеру */
+    }
+
+    /* Альтернатива: если нужно сохранить пропорции без обрезки */
+    #fieldImage.keep-aspect {
+      width: 100%;
+      height: auto;
+      max-height: 100%;
+      object-fit: contain;
+      transform: rotate(90deg);
     }
 
     /* Активная точка на схеме */
@@ -434,8 +452,9 @@
         <div class="card-content">
           <!-- Контейнер для изображения схемы -->
           <div id="fieldImageContainer">
-            <!-- Вставьте URL изображения схемы вместо hockey-pitch.png -->
-            <img id="fieldImage" src="https://images.unsplash.com/photo-1546519638-68e109498ffc?ixlib=rb-1.2.1&auto=format&fit=crop&w=1600&q=80" alt="Хоккейная площадка">
+            <!-- ЗАМЕНИТЕ ЭТУ ССЫЛКУ НА ВАШЕ ИЗОБРАЖЕНИЕ -->
+            <!-- Пример: https://raw.githubusercontent.com/username/repo/main/hockey-field.jpg -->
+            <img id="fieldImage" src="hockey-field.jpg" alt="Хоккейная площадка" class="keep-aspect">
             <div id="fieldInstruction">Нажмите на поле, чтобы поставить точку. Нажмите на точку, чтобы перетащить</div>
             <!-- Здесь будет появляться точка -->
           </div>
@@ -645,7 +664,7 @@
       });
     }
 
-    // Создание точки
+    // Создание точки с учетом повернутого изображения
     function createMarker(x, y) {
       // Удаляем старую точку, если есть
       if (currentMarker) {
@@ -655,8 +674,17 @@
       // Создаем новую точку
       currentMarker = document.createElement('div');
       currentMarker.className = 'marker-point';
-      currentMarker.style.left = x + 'px';
-      currentMarker.style.top = y + 'px';
+      
+      // Корректируем координаты с учетом поворота изображения
+      const containerRect = fieldImageContainer.getBoundingClientRect();
+      const imageRect = fieldImage.getBoundingClientRect();
+      
+      // Так как изображение повернуто на 90 градусов, нужно преобразовать координаты
+      const correctedX = x;
+      const correctedY = y;
+      
+      currentMarker.style.left = correctedX + 'px';
+      currentMarker.style.top = correctedY + 'px';
       
       // Добавляем обработчики для перетаскивания
       currentMarker.addEventListener('mousedown', startDrag);
@@ -665,7 +693,7 @@
       // Добавляем на схему
       fieldImageContainer.appendChild(currentMarker);
       
-      console.log('Точка создана в позиции:', {x, y});
+      console.log('Точка создана в позиции:', {x: correctedX, y: correctedY});
     }
 
     // Начало перетаскивания (мышь)
@@ -715,10 +743,10 @@
       const newX = markerStartX + deltaX;
       const newY = markerStartY + deltaY;
       
-      // Ограничиваем перемещение в пределах схемы
-      const fieldRect = fieldImageContainer.getBoundingClientRect();
-      const maxX = fieldRect.width;
-      const maxY = fieldRect.height;
+      // Ограничиваем перемещение в пределах контейнера
+      const containerRect = fieldImageContainer.getBoundingClientRect();
+      const maxX = containerRect.width;
+      const maxY = containerRect.height;
       
       const clampedX = Math.max(0, Math.min(newX, maxX));
       const clampedY = Math.max(0, Math.min(newY, maxY));
@@ -738,10 +766,10 @@
       const newX = markerStartX + deltaX;
       const newY = markerStartY + deltaY;
       
-      // Ограничиваем перемещение в пределах схемы
-      const fieldRect = fieldImageContainer.getBoundingClientRect();
-      const maxX = fieldRect.width;
-      const maxY = fieldRect.height;
+      // Ограничиваем перемещение в пределах контейнера
+      const containerRect = fieldImageContainer.getBoundingClientRect();
+      const maxX = containerRect.width;
+      const maxY = containerRect.height;
       
       const clampedX = Math.max(0, Math.min(newX, maxX));
       const clampedY = Math.max(0, Math.min(newY, maxY));
@@ -784,7 +812,7 @@
         return;
       }
       
-      // Получаем координаты клика относительно схемы
+      // Получаем координаты клика относительно контейнера
       const rect = fieldImageContainer.getBoundingClientRect();
       let x, y;
       
@@ -958,6 +986,9 @@
     // Инициализация при загрузке
     window.addEventListener('load', () => {
       updateCardPositions();
+      
+      // Загружаем изображение (если нужно изменить путь)
+      // fieldImage.src = 'https://raw.githubusercontent.com/username/repo/main/hockey-field.jpg';
     });
   </script>
 </body>
