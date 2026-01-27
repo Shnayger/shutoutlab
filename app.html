@@ -221,10 +221,15 @@
   pointer-events: all;
 }
 
-    #fieldContainer {
+  /* КОНТЕЙНЕР СХЕМЫ - СДЕЛАЙ ТАК */
+#fieldContainer {
   background: #0d47a1;
-  position: relative;
-  overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block !important;
 }
     
     /* Контейнер для изображения схемы */
@@ -237,21 +242,12 @@
   justify-content: center;
 }
 
+/* ИЗОБРАЖЕНИЕ - НА ВЕСЬ ЭКРАН */
 #fieldImage {
-  display: block;
-  max-width: 90%;
-  max-height: 90%;
-  width: auto;
-  height: auto;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  user-select: none;
-  -webkit-user-drag: none;
-  pointer-events: none;
-  border: 2px solid white; /* Временно для отладки */
+  display: block;
 }
 
     /* Активная точка на схеме */
@@ -462,10 +458,8 @@
     <!-- Контейнер схемы -->
     <div id="fieldContainer" class="content-container" style="opacity: 1; pointer-events: all;">
       <!-- Контейнер для изображения схемы -->
-      <div id="fieldImageContainer" style="width:100%;height:100vh;background:red;display:flex;align-items:center;justify-content:center;">
-  <img id="fieldImage" src="1769507389.png" alt="Хоккейная площадка" 
-       style="max-width:90%;max-height:90%;border:5px solid white;">
-  <div id="fieldInstruction" style="position:absolute;bottom:20px;color:white;">Нажмите на поле</div>
+  <img id="fieldImage" src="1769507389.png" alt="Хоккейная площадка">
+  <div id="fieldInstruction">Нажмите на поле, чтобы поставить точку</div>
 </div>
       
       <!-- Кнопка возврата на видео -->
@@ -1051,7 +1045,29 @@ setTimeout(() => {
 }, 100);
     fieldContainer.style.display = 'block';
 fieldContainer.classList.add('active');
+
+    // ПОСЛЕ ВСЕГО КОДА В СКРИПТЕ
+setTimeout(() => {
+  fieldContainer.style.cssText = `
+    display: block !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: #0d47a1 !important;
+    z-index: 1000 !important;
+  `;
+  
+  fieldImage.style.cssText = `
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    display: block !important;
+  `;
+}, 100);
   </script>
 </body>
 </html>
+
 
