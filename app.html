@@ -45,6 +45,7 @@
       display: none;
       height: 100vh;
       position: relative;
+      background: #000;
     }
 
     /* Индикатор записи */
@@ -110,6 +111,7 @@
       height: 100%;
       border: none;
       display: block;
+      background: #000;
     }
 
     /* Управление */
@@ -177,7 +179,7 @@
       transform: translateX(-50%) scale(0.95);
     }
 
-    /* Контейнер для вертикального скролла с нахлестом (iOS стиль) */
+    /* iOS карусель - УПРОЩЕННАЯ ВЕРСИЯ */
     #iosCarousel {
       position: fixed;
       top: 0;
@@ -187,37 +189,39 @@
       background: #000;
       display: none;
       z-index: 200;
-      overflow: hidden;
     }
 
-    /* Вертикальная карусель */
-    #verticalCarousel {
+    /* Упрощенная карусель - только переключение между экранами */
+    .carousel-screen {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      will-change: transform;
+      transition: transform 0.4s ease;
     }
 
-    /* Карточка приложения */
-    .app-card {
-      position: absolute;
-      width: 90%;
-      height: 85%;
-      left: 5%;
-      background: #1a1a1a;
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-      transition: transform 0.4s, opacity 0.4s;
-      display: flex;
-      flex-direction: column;
+    #videoScreen {
+      transform: translateY(0);
+      background: #000;
     }
 
-    /* Заголовок карточки */
-    .card-header {
+    #fieldScreen {
+      transform: translateY(100%);
+      background: #0d47a1;
+    }
+
+    /* Показать карусель */
+    #iosCarousel.show #videoScreen {
+      transform: translateY(-100%);
+    }
+    
+    #iosCarousel.show #fieldScreen {
+      transform: translateY(0);
+    }
+
+    /* Заголовок экрана */
+    .screen-header {
       height: 50px;
       background: rgba(0, 0, 0, 0.8);
       display: flex;
@@ -229,6 +233,7 @@
       backdrop-filter: blur(10px);
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       position: relative;
+      z-index: 10;
     }
 
     /* Кнопка закрыть */
@@ -252,97 +257,45 @@
       background: rgba(255, 255, 255, 0.1);
     }
 
-    /* Контент карточки */
-    .card-content {
-      flex: 1;
-      overflow: hidden;
+    /* Контент экрана */
+    .screen-content {
+      height: calc(100% - 50px);
       position: relative;
+      overflow: hidden;
     }
 
-    /* Карточка видео */
-    #videoCard {
-      background: #000;
-      transform: translateY(10%);
-      opacity: 0.9;
-      z-index: 1;
-    }
-
-    /* Карточка схемы (активная) */
-    #fieldCard {
-      background: #1a1a1a;
-      transform: translateY(0);
-      opacity: 1;
-      z-index: 2;
-    }
-
-    /* Индикатор скролла */
-    #scrollIndicator {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 6px;
-      z-index: 300;
-    }
-
-    .scroll-dot {
-      width: 6px;
-      height: 6px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      transition: all 0.3s;
-    }
-
-    .scroll-dot.active {
-      background: white;
-      transform: scale(1.2);
-    }
-
-    /* Контейнер для изображения схемы с горизонтальной ориентацией */
+    /* Контейнер для изображения схемы - НА ВЕСЬ ЭКРАН */
     #fieldImageContainer {
       width: 100%;
       height: 100%;
       position: relative;
       touch-action: none;
-      overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #0d47a1; /* Темно-синий фон как у льда */
+      background: #0d47a1;
     }
 
-    /* Изображение схемы - делаем горизонтальным */
+    /* Изображение схемы - оптимизированное */
     #fieldImage {
-      width: auto;
-      height: 100%;
-      max-width: 100%;
-      object-fit: contain;
-      transform: rotate(90deg); /* Поворачиваем на 90 градусов */
-      transform-origin: center;
-      user-select: none;
-      -webkit-user-drag: none;
-      pointer-events: none; /* Клики будут проходить через изображение к контейнеру */
-    }
-
-    /* Альтернатива: если нужно сохранить пропорции без обрезки */
-    #fieldImage.keep-aspect {
       width: 100%;
       height: auto;
       max-height: 100%;
       object-fit: contain;
-      transform: rotate(90deg);
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
     }
 
     /* Активная точка на схеме */
     .marker-point {
       position: absolute;
-      width: 24px;
-      height: 24px;
+      width: 28px;
+      height: 28px;
       background: #FF0000;
       border-radius: 50%;
       border: 3px solid white;
-      box-shadow: 0 0 15px rgba(255, 0, 0, 0.9);
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.9);
       transform: translate(-50%, -50%);
       z-index: 100;
       cursor: move;
@@ -351,45 +304,76 @@
     }
 
     .marker-point.dragging {
-      transform: translate(-50%, -50%) scale(1.3);
+      transform: translate(-50%, -50%) scale(1.4);
       z-index: 101;
-      box-shadow: 0 0 25px rgba(255, 0, 0, 1);
+      box-shadow: 0 0 30px rgba(255, 0, 0, 1);
     }
 
     /* Инструкция на схеме */
     #fieldInstruction {
       position: absolute;
-      bottom: 10px;
+      bottom: 15px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.8);
       color: white;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 12px;
+      padding: 10px 20px;
+      border-radius: 25px;
+      font-size: 14px;
       z-index: 45;
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
       text-align: center;
       max-width: 90%;
       white-space: nowrap;
     }
 
-    /* Анимация появления карусели */
-    @keyframes slideUp {
-      from {
-        transform: translateY(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
+    /* Индикатор переключения */
+    #screenIndicator {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      z-index: 300;
+    }
+
+    .screen-dot {
+      width: 8px;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      transition: all 0.3s;
+    }
+
+    .screen-dot.active {
+      background: white;
+      transform: scale(1.3);
+    }
+
+    /* Анимация появления */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
     #iosCarousel.show {
       display: block;
-      animation: slideUp 0.3s ease-out;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    /* Полоска для свайпа */
+    .swipe-handle {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 2px;
+      z-index: 11;
     }
   </style>
 </head>
@@ -428,44 +412,44 @@
     </div>
   </div>
 
-  <!-- iOS стиль карусели (вертикальный скролл с нахлестом) -->
+  <!-- Упрощенная iOS карусель -->
   <div id="iosCarousel">
-    <!-- Вертикальная карусель -->
-    <div id="verticalCarousel">
-      <!-- Карточка видео -->
-      <div class="app-card" id="videoCard">
-        <div class="card-header">
-          <span>🎥 Видео матча</span>
-          <button class="close-btn" onclick="hideCarousel()">×</button>
-        </div>
-        <div class="card-content">
-          <!-- Видео будет здесь -->
-        </div>
+    <!-- Полоска для свайпа -->
+    <div class="swipe-handle"></div>
+    
+    <!-- Экран видео -->
+    <div class="carousel-screen" id="videoScreen">
+      <div class="screen-header">
+        <span>🎥 Видео матча</span>
+        <button class="close-btn" onclick="hideCarousel()">×</button>
       </div>
+      <div class="screen-content">
+        <!-- Видео будет здесь -->
+        <iframe id="carouselVideoFrame" allowfullscreen style="width:100%; height:100%; border:none;"></iframe>
+      </div>
+    </div>
 
-      <!-- Карточка схемы -->
-      <div class="app-card" id="fieldCard">
-        <div class="card-header">
-          <span>🏒 Схема поля</span>
-          <button class="close-btn" onclick="hideCarousel()">×</button>
-        </div>
-        <div class="card-content">
-          <!-- Контейнер для изображения схемы -->
-          <div id="fieldImageContainer">
-            <!-- ЗАМЕНИТЕ ЭТУ ССЫЛКУ НА ВАШЕ ИЗОБРАЖЕНИЕ -->
-            <!-- Пример: https://raw.githubusercontent.com/username/repo/main/hockey-field.jpg -->
-            <img id="fieldImage" src="1769507389.png" alt="Хоккейная площадка" class="keep-aspect">
-            <div id="fieldInstruction">Нажмите на поле, чтобы поставить точку. Нажмите на точку, чтобы перетащить</div>
-            <!-- Здесь будет появляться точка -->
-          </div>
+    <!-- Экран схемы -->
+    <div class="carousel-screen" id="fieldScreen">
+      <div class="screen-header">
+        <span>🏒 Схема поля</span>
+        <button class="close-btn" onclick="hideCarousel()">×</button>
+      </div>
+      <div class="screen-content">
+        <!-- Контейнер для изображения схемы -->
+        <div id="fieldImageContainer">
+          <!-- ЗАМЕНИТЕ ЭТУ ССЫЛКУ НА ВАШЕ ИЗОБРАЖЕНИЕ -->
+          <img id="fieldImage" src="hockey-field.jpg" alt="Хоккейная площадка">
+          <div id="fieldInstruction">Нажмите на поле, чтобы поставить точку. Нажмите на точку, чтобы перетащить</div>
+          <!-- Здесь будет появляться точка -->
         </div>
       </div>
     </div>
 
-    <!-- Индикатор скролла -->
-    <div id="scrollIndicator">
-      <div class="scroll-dot" data-index="0"></div>
-      <div class="scroll-dot active" data-index="1"></div>
+    <!-- Индикатор экрана -->
+    <div id="screenIndicator">
+      <div class="screen-dot" data-screen="video"></div>
+      <div class="screen-dot active" data-screen="field"></div>
     </div>
   </div>
 
@@ -480,10 +464,10 @@
     const rotateScreen = document.getElementById('rotateScreen');
     const mainInterface = document.getElementById('mainInterface');
     const iosCarousel = document.getElementById('iosCarousel');
-    const verticalCarousel = document.getElementById('verticalCarousel');
-    const videoCard = document.getElementById('videoCard');
-    const fieldCard = document.getElementById('fieldCard');
+    const videoScreen = document.getElementById('videoScreen');
+    const fieldScreen = document.getElementById('fieldScreen');
     const videoFrame = document.getElementById('videoFrame');
+    const carouselVideoFrame = document.getElementById('carouselVideoFrame');
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
     const showFieldBtn = document.getElementById('showFieldBtn');
@@ -492,7 +476,7 @@
     const fieldInstruction = document.getElementById('fieldInstruction');
     const recordingIndicator = document.getElementById('recordingIndicator');
     const recordingTimer = document.getElementById('recordingTimer');
-    const scrollDots = document.querySelectorAll('.scroll-dot');
+    const screenDots = document.querySelectorAll('.screen-dot');
 
     // Переменные состояния
     let isRecording = false;
@@ -508,13 +492,11 @@
     let markerStartX = 0;
     let markerStartY = 0;
     
-    // Для вертикального скролла
-    let isScrolling = false;
+    // Для свайпа
+    let isSwiping = false;
     let startTouchY = 0;
-    let startCarouselY = 0;
-    let currentIndex = 1; // 0 = видео, 1 = схема
-    let cardHeight = 0;
-    let cardSpacing = 20; // Расстояние между карточками
+    let startSwipeTime = 0;
+    let currentScreen = 'field'; // 'video' или 'field'
 
     // Параметры из URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -546,6 +528,7 @@
       }
       
       videoFrame.src = finalUrl;
+      carouselVideoFrame.src = finalUrl;
     }
 
     // Проверка ориентации
@@ -596,8 +579,9 @@
       iosCarousel.classList.add('show');
       mainInterface.style.display = 'none';
       
-      // Обновляем позиции карточек
-      updateCardPositions();
+      // Устанавливаем схему как активный экран
+      currentScreen = 'field';
+      updateScreenIndicator();
       
       // Показываем кнопку "Перейти к схеме" в основном интерфейсе
       showFieldBtn.style.display = 'block';
@@ -609,62 +593,30 @@
       mainInterface.style.display = 'block';
     }
 
-    // Обновить позиции карточек
-    function updateCardPositions() {
-      cardHeight = window.innerHeight * 0.85; // 85% от высоты экрана
+    // Переключить экран
+    function switchScreen(screenName) {
+      currentScreen = screenName;
       
-      // Позиция для видео (ниже)
-      videoCard.style.transform = `translateY(${cardHeight + cardSpacing}px)`;
-      videoCard.style.opacity = '0.7';
-      videoCard.style.zIndex = '1';
-      
-      // Позиция для схемы (сверху)
-      fieldCard.style.transform = 'translateY(0)';
-      fieldCard.style.opacity = '1';
-      fieldCard.style.zIndex = '2';
-      
-      // Позиция карусели
-      verticalCarousel.style.transform = `translateY(${-currentIndex * (cardHeight + cardSpacing)}px)`;
-      
-      // Обновляем индикатор
-      scrollDots.forEach((dot, index) => {
-        dot.classList.toggle('active', index === currentIndex);
-      });
-    }
-
-    // Перейти к карточке
-    function goToCard(index) {
-      currentIndex = Math.max(0, Math.min(index, 1));
-      verticalCarousel.style.transform = `translateY(${-currentIndex * (cardHeight + cardSpacing)}px)`;
-      
-      // Обновляем позиции и стили карточек
-      if (currentIndex === 0) {
-        // Видео активно
-        videoCard.style.transform = 'translateY(0)';
-        videoCard.style.opacity = '1';
-        videoCard.style.zIndex = '2';
-        
-        fieldCard.style.transform = `translateY(${cardHeight + cardSpacing}px)`;
-        fieldCard.style.opacity = '0.7';
-        fieldCard.style.zIndex = '1';
+      if (screenName === 'field') {
+        fieldScreen.style.transform = 'translateY(0)';
+        videoScreen.style.transform = 'translateY(-100%)';
       } else {
-        // Схема активна
-        fieldCard.style.transform = 'translateY(0)';
-        fieldCard.style.opacity = '1';
-        fieldCard.style.zIndex = '2';
-        
-        videoCard.style.transform = `translateY(${cardHeight + cardSpacing}px)`;
-        videoCard.style.opacity = '0.7';
-        videoCard.style.zIndex = '1';
+        fieldScreen.style.transform = 'translateY(100%)';
+        videoScreen.style.transform = 'translateY(0)';
       }
       
-      // Обновляем индикатор
-      scrollDots.forEach((dot, i) => {
-        dot.classList.toggle('active', i === currentIndex);
+      updateScreenIndicator();
+    }
+
+    // Обновить индикатор экрана
+    function updateScreenIndicator() {
+      screenDots.forEach(dot => {
+        const screen = dot.getAttribute('data-screen');
+        dot.classList.toggle('active', screen === currentScreen);
       });
     }
 
-    // Создание точки с учетом повернутого изображения
+    // Создание точки
     function createMarker(x, y) {
       // Удаляем старую точку, если есть
       if (currentMarker) {
@@ -674,17 +626,8 @@
       // Создаем новую точку
       currentMarker = document.createElement('div');
       currentMarker.className = 'marker-point';
-      
-      // Корректируем координаты с учетом поворота изображения
-      const containerRect = fieldImageContainer.getBoundingClientRect();
-      const imageRect = fieldImage.getBoundingClientRect();
-      
-      // Так как изображение повернуто на 90 градусов, нужно преобразовать координаты
-      const correctedX = x;
-      const correctedY = y;
-      
-      currentMarker.style.left = correctedX + 'px';
-      currentMarker.style.top = correctedY + 'px';
+      currentMarker.style.left = x + 'px';
+      currentMarker.style.top = y + 'px';
       
       // Добавляем обработчики для перетаскивания
       currentMarker.addEventListener('mousedown', startDrag);
@@ -693,7 +636,7 @@
       // Добавляем на схему
       fieldImageContainer.appendChild(currentMarker);
       
-      console.log('Точка создана в позиции:', {x: correctedX, y: correctedY});
+      console.log('Точка создана в позиции:', {x, y});
     }
 
     // Начало перетаскивания (мышь)
@@ -837,65 +780,61 @@
       }
     }
 
-    // Начало вертикального скролла
-    function startVerticalScroll(e) {
-      isScrolling = true;
+    // Начало свайпа
+    function startSwipe(e) {
+      isSwiping = true;
       startTouchY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-      startCarouselY = parseInt(verticalCarousel.style.transform.replace('translateY(', '').replace('px)', '')) || 0;
+      startSwipeTime = Date.now();
       
       if (e.type === 'touchstart') {
-        document.addEventListener('touchmove', moveVerticalScroll);
-        document.addEventListener('touchend', endVerticalScroll);
+        document.addEventListener('touchmove', moveSwipe);
+        document.addEventListener('touchend', endSwipe);
       } else {
-        document.addEventListener('mousemove', moveVerticalScroll);
-        document.addEventListener('mouseup', endVerticalScroll);
+        document.addEventListener('mousemove', moveSwipe);
+        document.addEventListener('mouseup', endSwipe);
       }
     }
 
-    // Движение вертикального скролла
-    function moveVerticalScroll(e) {
-      if (!isScrolling) return;
+    // Движение при свайпе
+    function moveSwipe(e) {
+      if (!isSwiping) return;
       
       const currentY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
       const deltaY = currentY - startTouchY;
-      const newPosition = startCarouselY + deltaY;
       
-      // Ограничиваем скролл
-      const maxPosition = 0;
-      const minPosition = -(cardHeight + cardSpacing);
-      const clampedPosition = Math.max(minPosition, Math.min(newPosition, maxPosition));
-      
-      verticalCarousel.style.transform = `translateY(${clampedPosition}px)`;
+      // Визуальная обратная связь при движении
+      if (Math.abs(deltaY) > 10) {
+        e.preventDefault();
+      }
     }
 
-    // Конец вертикального скролла
-    function endVerticalScroll(e) {
-      if (!isScrolling) return;
+    // Конец свайпа
+    function endSwipe(e) {
+      if (!isSwiping) return;
       
-      isScrolling = false;
+      isSwiping = false;
       
       const currentY = e.type === 'touchend' ? e.changedTouches[0].clientY : e.clientY;
       const deltaY = currentY - startTouchY;
-      const velocity = deltaY / 300; // Простая "физика"
+      const swipeTime = Date.now() - startSwipeTime;
+      const swipeSpeed = Math.abs(deltaY) / swipeTime;
       
-      // Определяем, к какой карточке перейти
-      let targetIndex = currentIndex;
-      if (Math.abs(deltaY) > 50 || Math.abs(velocity) > 0.2) {
-        if (deltaY > 0 || velocity > 0) {
-          targetIndex = Math.max(0, currentIndex - 1); // Вверх
+      // Определяем направление и силу свайпа
+      if (Math.abs(deltaY) > 50 || swipeSpeed > 0.5) {
+        if (deltaY > 0) {
+          // Свайп вниз
+          switchScreen('field');
         } else {
-          targetIndex = Math.min(1, currentIndex + 1); // Вниз
+          // Свайп вверх
+          switchScreen('video');
         }
       }
       
-      // Плавный переход к карточке
-      goToCard(targetIndex);
-      
       // Убираем обработчики
-      document.removeEventListener('touchmove', moveVerticalScroll);
-      document.removeEventListener('touchend', endVerticalScroll);
-      document.removeEventListener('mousemove', moveVerticalScroll);
-      document.removeEventListener('mouseup', endVerticalScroll);
+      document.removeEventListener('touchmove', moveSwipe);
+      document.removeEventListener('touchend', endSwipe);
+      document.removeEventListener('mousemove', moveSwipe);
+      document.removeEventListener('mouseup', endSwipe);
     }
 
     // Начало записи
@@ -952,15 +891,15 @@
     fieldImageContainer.addEventListener('click', handleFieldClick);
     fieldImageContainer.addEventListener('touchstart', handleFieldClick);
 
-    // Обработчики для вертикального скролла
-    iosCarousel.addEventListener('touchstart', startVerticalScroll);
-    iosCarousel.addEventListener('mousedown', startVerticalScroll);
+    // Обработчики для свайпа
+    iosCarousel.addEventListener('touchstart', startSwipe);
+    iosCarousel.addEventListener('mousedown', startSwipe);
 
     // Клик по индикаторам
-    scrollDots.forEach(dot => {
+    screenDots.forEach(dot => {
       dot.addEventListener('click', () => {
-        const index = parseInt(dot.getAttribute('data-index'));
-        goToCard(index);
+        const screen = dot.getAttribute('data-screen');
+        switchScreen(screen);
       });
     });
 
@@ -983,14 +922,41 @@
     // Запускаем проверку
     checkVideoReady();
 
-    // Инициализация при загрузке
+    // Оптимизация изображения при загрузке
     window.addEventListener('load', () => {
-      updateCardPositions();
+      // Адаптация изображения под экран
+      function optimizeImage() {
+        const container = fieldImageContainer;
+        const img = fieldImage;
+        
+        // Если изображение вертикальное, поворачиваем его
+        if (img.naturalWidth && img.naturalHeight) {
+          if (img.naturalHeight > img.naturalWidth) {
+            // Вертикальное изображение - делаем горизонтальным
+            img.style.transform = 'rotate(90deg)';
+            img.style.width = 'auto';
+            img.style.height = '100%';
+            img.style.maxWidth = '100%';
+            img.style.maxHeight = '100%';
+          } else {
+            // Горизонтальное изображение - оставляем как есть
+            img.style.transform = 'none';
+            img.style.width = '100%';
+            img.style.height = 'auto';
+            img.style.maxWidth = '100%';
+            img.style.maxHeight = '100%';
+          }
+        }
+      }
       
-      // Загружаем изображение (если нужно изменить путь)
-      // fieldImage.src = 'https://raw.githubusercontent.com/username/repo/main/hockey-field.jpg';
+      // Когда изображение загружено
+      fieldImage.onload = optimizeImage;
+      
+      // Если изображение уже загружено
+      if (fieldImage.complete) {
+        optimizeImage();
+      }
     });
   </script>
 </body>
 </html>
-
