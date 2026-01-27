@@ -205,7 +205,7 @@
       font-size: 20px;
     }
 
-    /* Контейнеры контента - ПРАВИЛЬНО */
+    /* Контейнеры контента */
     .content-container {
       position: absolute;
       top: 0;
@@ -214,7 +214,6 @@
       height: 100%;
     }
 
-    /* Скрываем неактивные вкладки */
     .content-container:not(.active) {
       display: none;
     }
@@ -228,11 +227,11 @@
       background: #0d47a1;
     }
 
-    /* Изображение схемы - НА ВЕСЬ ЭКРАН */
+    /* Изображение схемы */
     #fieldImage {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover;
       display: block;
     }
 
@@ -361,29 +360,6 @@
       border: 1px solid rgba(255, 255, 255, 0.2);
       display: none;
     }
-
-    /* Кнопка возврата на видео после выбора */
-    #returnToVideoBtn {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 20px;
-      padding: 10px 20px;
-      font-size: 14px;
-      cursor: pointer;
-      z-index: 45;
-      backdrop-filter: blur(10px);
-      transition: all 0.2s;
-      display: none;
-    }
-
-    #returnToVideoBtn:active {
-      transform: translateX(-50%) scale(0.95);
-    }
   </style>
 </head>
 <body>
@@ -432,11 +408,8 @@
 
     <!-- Контейнер схемы -->
     <div id="fieldContainer" class="content-container">
-      <img id="fieldImage" src="1648780124_3-abrakadabra-fun-p-khokkeinoe-pole-sverkhu-10.jpg" alt="Хоккейная площадка">
+      <img id="fieldImage" src="1769507389.png" alt="Хоккейная площадка">
       <div id="fieldInstruction">Нажмите на поле, чтобы поставить точку</div>
-      
-      <!-- Кнопка возврата на видео -->
-      <button id="returnToVideoBtn">Вернуться к видео</button>
     </div>
   </div>
 
@@ -475,7 +448,6 @@
     const goalBtn = document.getElementById('goalBtn');
     const saveBtn = document.getElementById('saveBtn');
     const currentTabTitle = document.getElementById('currentTabTitle');
-    const returnToVideoBtn = document.getElementById('returnToVideoBtn');
     const tabs = document.querySelectorAll('.tab');
 
     // Переменные состояния
@@ -553,6 +525,11 @@
       } catch (e) {}
     }
 
+    // Получить текущее время видео
+    function getVideoCurrentTime() {
+      return videoCurrentTime;
+    }
+
     // Переключение вкладок
     function switchTab(tabName) {
       currentTab = tabName;
@@ -569,14 +546,12 @@
         fieldContainer.classList.remove('active');
         currentTabTitle.textContent = '🎥 Видео матча';
         currentTabTitle.style.display = 'block';
-        returnToVideoBtn.style.display = 'none';
         if (isVideoPaused) pauseYouTubeVideo();
       } else {
         videoContainer.classList.remove('active');
         fieldContainer.classList.add('active');
         currentTabTitle.textContent = '🏒 Схема поля';
         currentTabTitle.style.display = 'block';
-        returnToVideoBtn.style.display = 'block';
         pauseYouTubeVideo();
         isVideoPaused = true;
       }
@@ -710,6 +685,7 @@
       if (!isRecording) return;
       isRecording = false;
       recordingStopTime = Date.now();
+      videoCurrentTime = getVideoCurrentTime();
       if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
@@ -739,18 +715,16 @@
         currentMarker.remove();
         currentMarker = null;
       }
-      setTimeout(() => {
-        switchTab('video');
-        startBtn.style.display = 'block';
-        stopBtn.style.display = 'none';
-        isVideoPaused = false;
-      }, 300);
+      switchTab('video');
+      tabsPanel.classList.remove('visible');
+      startBtn.style.display = 'block';
+      stopBtn.style.display = 'none';
+      isVideoPaused = false;
     }
 
     // Обработчики кнопок
     startBtn.addEventListener('click', startRecording);
     stopBtn.addEventListener('click', stopRecording);
-    returnToVideoBtn.addEventListener('click', () => switchTab('video'));
 
     // Обработчики для вкладок
     tabs.forEach(tab => {
@@ -799,10 +773,9 @@
 
     // Загрузка изображения
     fieldImage.onload = function() {
-      console.log('Изображение загружено:', this.naturalWidth, 'x', this.naturalHeight);
+      console.log('Изображение загружено');
     };
     fieldImage.onerror = function() {
-      console.error('Ошибка загрузки изображения');
       fieldInstruction.textContent = 'Изображение не загрузилось';
       fieldInstruction.style.backgroundColor = 'rgba(198, 40, 40, 0.9)';
     };
