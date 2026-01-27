@@ -205,22 +205,21 @@
       font-size: 20px;
     }
 
-    /* Контейнеры контента */
-    .content-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      transition: opacity 0.3s ease;
-      opacity: 0;
-      pointer-events: none;
-    }
+    /* Контейнеры контента - ИСПРАВЛЕННЫЙ ВАРИАНТ */
+.content-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none; /* По умолчанию скрыты */
+}
 
-    .content-container.active {
-      opacity: 1;
-      pointer-events: all;
-    }
+.content-container.active {
+  display: block; /* Показываем активный */
+  opacity: 1;
+  pointer-events: all;
+}
 
     #fieldContainer {
   background: #0d47a1;
@@ -1050,6 +1049,9 @@ setTimeout(() => {
     className: fieldContainer.className
   });
 }, 100);
+    fieldContainer.style.display = 'block';
+fieldContainer.classList.add('active');
   </script>
 </body>
 </html>
+
