@@ -1,963 +1,667 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Анализ матча</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    /* Сброс */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Анализ футбольного матча</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    body {
-      background: #000;
-      color: white;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      height: 100vh;
-      overflow: hidden;
-      position: relative;
-    }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a2980, #26d0ce);
+            min-height: 100vh;
+            padding: 20px;
+        }
 
-    /* Экран поворота */
-    #rotateScreen {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      text-align: center;
-      padding: 20px;
-      background: #111;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      z-index: 1000;
-    }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
 
-    /* Основной интерфейс (видео) */
-    #mainInterface {
-      display: none;
-      height: 100vh;
-      position: relative;
-      background: #000;
-    }
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
 
-    /* Индикатор записи */
-    #recordingIndicator {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(198, 40, 40, 0.9);
-      color: white;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: bold;
-      z-index: 50;
-      display: none;
-      align-items: center;
-      gap: 8px;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-    }
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
 
-    .recordingDot {
-      width: 10px;
-      height: 10px;
-      background: #ff4444;
-      border-radius: 50%;
-      animation: pulse 1.5s infinite;
-    }
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
 
-    @keyframes pulse {
-      0% { opacity: 0.3; }
-      50% { opacity: 1; }
-      100% { opacity: 0.3; }
-    }
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
 
-    /* Таймер записи */
-    #recordingTimer {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: bold;
-      z-index: 50;
-      display: none;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
+        .video-container {
+            flex: 3;
+            min-width: 300px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 200px);
+        }
 
-    /* Видео контейнер */
-    #videoContainer {
-      width: 100%;
-      height: 100%;
-      background: #000;
-      position: relative;
-    }
+        .video-container.full-width {
+            flex: 1 1 100%;
+        }
 
-    #videoFrame {
-      width: 100%;
-      height: 100%;
-      border: none;
-      display: block;
-      background: #000;
-    }
+        .video-wrapper {
+            flex: 1;
+            position: relative;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+        }
 
-    /* Управление */
-    #controls {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 15px;
-      z-index: 40;
-    }
+        #videoPlayer {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
 
-    .control-btn {
-      padding: 14px 28px;
-      font-size: 16px;
-      font-weight: bold;
-      border: none;
-      border-radius: 25px;
-      cursor: pointer;
-      color: white;
-      min-width: 140px;
-      transition: all 0.2s;
-    }
+        .video-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
 
-    #startBtn { 
-      background: linear-gradient(135deg, #2e7d32, #4caf50);
-    }
+        .video-controls button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            min-width: 120px;
+        }
 
-    #startBtn:disabled {
-      background: #555;
-      cursor: not-allowed;
-      opacity: 0.6;
-    }
+        .play-btn {
+            background: linear-gradient(to right, #00b09b, #96c93d);
+            color: white;
+        }
 
-    #stopBtn { 
-      background: linear-gradient(135deg, #c62828, #f44336);
-      display: none;
-    }
+        .play-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 176, 155, 0.4);
+        }
 
-    .control-btn:active:not(:disabled) {
-      transform: scale(0.95);
-    }
+        .stop-btn {
+            background: linear-gradient(to right, #ff416c, #ff4b2b);
+            color: white;
+        }
 
-    /* Кнопка для перехода к схеме */
-    #showFieldBtn {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.7);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 20px;
-      padding: 6px 16px;
-      font-size: 12px;
-      cursor: pointer;
-      z-index: 45;
-      backdrop-filter: blur(10px);
-      transition: all 0.2s;
-      display: none;
-    }
+        .stop-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 65, 108, 0.4);
+        }
 
-    #showFieldBtn:active {
-      transform: translateX(-50%) scale(0.95);
-    }
+        .pitch-container {
+            flex: 2;
+            min-width: 300px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
 
-    /* iOS карусель - УПРОЩЕННАЯ ВЕРСИЯ */
-    #iosCarousel {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: #000;
-      display: none;
-      z-index: 200;
-    }
+        .pitch-container.hidden {
+            display: none;
+        }
 
-    /* Упрощенная карусель - только переключение между экранами */
-    .carousel-screen {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      transition: transform 0.4s ease;
-    }
+        .pitch-title {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.5em;
+        }
 
-    #videoScreen {
-      transform: translateY(0);
-      background: #000;
-    }
+        .pitch-wrapper {
+            flex: 1;
+            position: relative;
+            background: #2ecc71;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #27ae60;
+        }
 
-    #fieldScreen {
-      transform: translateY(100%);
-      background: #0d47a1;
-    }
+        .football-pitch {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
 
-    /* Показать карусель */
-    #iosCarousel.show #videoScreen {
-      transform: translateY(-100%);
-    }
-    
-    #iosCarousel.show #fieldScreen {
-      transform: translateY(0);
-    }
+        .pitch-line {
+            position: absolute;
+            border: 2px solid white;
+            border-radius: 5px;
+        }
 
-    /* Заголовок экрана */
-    .screen-header {
-      height: 50px;
-      background: rgba(0, 0, 0, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      font-weight: 500;
-      color: white;
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      position: relative;
-      z-index: 10;
-    }
+        .center-line {
+            top: 0;
+            left: 50%;
+            width: 0;
+            height: 100%;
+            transform: translateX(-50%);
+        }
 
-    /* Кнопка закрыть */
-    .close-btn {
-      position: absolute;
-      right: 15px;
-      background: none;
-      border: none;
-      color: white;
-      font-size: 20px;
-      cursor: pointer;
-      width: 30px;
-      height: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-    }
+        .center-circle {
+            top: 50%;
+            left: 50%;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
 
-    .close-btn:active {
-      background: rgba(255, 255, 255, 0.1);
-    }
+        .penalty-area {
+            width: 130px;
+            height: 300px;
+            border: 2px solid white;
+            border-radius: 5px;
+        }
 
-    /* Контент экрана */
-    .screen-content {
-      height: calc(100% - 50px);
-      position: relative;
-      overflow: hidden;
-    }
+        .left-penalty {
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+        }
 
-    /* Контейнер для изображения схемы - НА ВЕСЬ ЭКРАН */
-    #fieldImageContainer {
-      width: 100%;
-      height: 100%;
-      position: relative;
-      touch-action: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #0d47a1;
-    }
+        .right-penalty {
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+        }
 
-    /* Изображение схемы - оптимизированное */
-    #fieldImage {
-      width: 100%;
-      height: auto;
-      max-height: 100%;
-      object-fit: contain;
-      user-select: none;
-      -webkit-user-drag: none;
-      pointer-events: none;
-    }
+        .goal-area {
+            width: 50px;
+            height: 120px;
+            border: 2px solid white;
+            border-radius: 5px;
+        }
 
-    /* Активная точка на схеме */
-    .marker-point {
-      position: absolute;
-      width: 28px;
-      height: 28px;
-      background: #FF0000;
-      border-radius: 50%;
-      border: 3px solid white;
-      box-shadow: 0 0 20px rgba(255, 0, 0, 0.9);
-      transform: translate(-50%, -50%);
-      z-index: 100;
-      cursor: move;
-      transition: transform 0.1s;
-      pointer-events: auto;
-    }
+        .left-goal {
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+        }
 
-    .marker-point.dragging {
-      transform: translate(-50%, -50%) scale(1.4);
-      z-index: 101;
-      box-shadow: 0 0 30px rgba(255, 0, 0, 1);
-    }
+        .right-goal {
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+        }
 
-    /* Инструкция на схеме */
-    #fieldInstruction {
-      position: absolute;
-      bottom: 15px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      padding: 10px 20px;
-      border-radius: 25px;
-      font-size: 14px;
-      z-index: 45;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      text-align: center;
-      max-width: 90%;
-      white-space: nowrap;
-    }
+        .point-marker {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #e74c3c;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
 
-    /* Индикатор переключения */
-    #screenIndicator {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 8px;
-      z-index: 300;
-    }
+        .point-marker:hover {
+            transform: translate(-50%, -50%) scale(1.2);
+            background: #c0392b;
+        }
 
-    .screen-dot {
-      width: 8px;
-      height: 8px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      transition: all 0.3s;
-    }
+        .point-marker.selected {
+            background: #f1c40f;
+            border-color: #f39c12;
+            animation: pulse 1s infinite;
+        }
 
-    .screen-dot.active {
-      background: white;
-      transform: scale(1.3);
-    }
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
 
-    /* Анимация появления */
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
+        .action-menu {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            min-width: 250px;
+            text-align: center;
+        }
 
-    #iosCarousel.show {
-      display: block;
-      animation: fadeIn 0.3s ease-out;
-    }
+        .action-menu h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
 
-    /* Полоска для свайпа */
-    .swipe-handle {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 40px;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.5);
-      border-radius: 2px;
-      z-index: 11;
-    }
-  </style>
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .action-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            min-width: 100px;
+        }
+
+        .goal-btn {
+            background: linear-gradient(to right, #00b09b, #96c93d);
+            color: white;
+        }
+
+        .save-btn {
+            background: linear-gradient(to right, #3498db, #2980b9);
+            color: white;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .close-btn {
+            background: #e74c3c;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .close-btn:hover {
+            background: #c0392b;
+        }
+
+        .timeline {
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .timeline h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .events-list {
+            list-style: none;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .event-item {
+            padding: 10px 15px;
+            background: #f8f9fa;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #3498db;
+        }
+
+        .event-item.goal {
+            border-left-color: #2ecc71;
+        }
+
+        .event-item.save {
+            border-left-color: #3498db;
+        }
+
+        .event-time {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .event-type {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .event-type.goal {
+            background: #d5f4e6;
+            color: #27ae60;
+        }
+
+        .event-type.save {
+            background: #d6eaf8;
+            color: #2980b9;
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .instructions h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .instructions ul {
+            padding-left: 20px;
+            color: #7f8c8d;
+        }
+
+        .instructions li {
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .video-container, .pitch-container {
+                height: auto;
+                min-height: 500px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <!-- Экран поворота -->
-  <div id="rotateScreen">
-    <svg viewBox="0 0 24 24" fill="white" width="60" height="60">
-      <path d="M19 12h-1.5c-.82 0-1.5-.68-1.5-1.5V5.5C16 4.67 16.67 4 17.5 4H19c.83 0 1.5.67 1.5 1.5v3.5c0 .83-.67 1.5-1.5 1.5H1L1.01 21c0 1.1.89 2 2 2H21c1.1 0 2-.9 2-2L22.99 14H19zm-5.5-9H8.5V8h4V4zm6 14H2v2h18v-2z"/>
-    </svg>
-    <p style="margin-top: 20px;">Пожалуйста, поверните устройство в горизонтальное положение.</p>
-  </div>
-
-  <!-- Основной интерфейс (видео) -->
-  <div id="mainInterface">
-    <!-- Индикатор записи -->
-    <div id="recordingIndicator">
-      <div class="recordingDot"></div>
-      <span>Идет запись</span>
-    </div>
-
-    <!-- Таймер записи -->
-    <div id="recordingTimer">00:00:00</div>
-
-    <!-- Кнопка для перехода к схеме -->
-    <button id="showFieldBtn">Перейти к схеме</button>
-
-    <!-- Видео -->
-    <div id="videoContainer">
-      <iframe id="videoFrame" allowfullscreen></iframe>
-    </div>
-
-    <!-- Управление -->
-    <div id="controls">
-      <button id="startBtn" class="control-btn" disabled>Начать запись</button>
-      <button id="stopBtn" class="control-btn">Стоп</button>
-    </div>
-  </div>
-
-  <!-- Упрощенная iOS карусель -->
-  <div id="iosCarousel">
-    <!-- Полоска для свайпа -->
-    <div class="swipe-handle"></div>
-    
-    <!-- Экран видео -->
-    <div class="carousel-screen" id="videoScreen">
-      <div class="screen-header">
-        <span>🎥 Видео матча</span>
-        <button class="close-btn" onclick="hideCarousel()">×</button>
-      </div>
-      <div class="screen-content">
-        <!-- Видео будет здесь -->
-        <iframe id="carouselVideoFrame" allowfullscreen style="width:100%; height:100%; border:none;"></iframe>
-      </div>
-    </div>
-
-    <!-- Экран схемы -->
-    <div class="carousel-screen" id="fieldScreen">
-      <div class="screen-header">
-        <span>🏒 Схема поля</span>
-        <button class="close-btn" onclick="hideCarousel()">×</button>
-      </div>
-      <div class="screen-content">
-        <!-- Контейнер для изображения схемы -->
-        <div id="fieldImageContainer">
-          <!-- ЗАМЕНИТЕ ЭТУ ССЫЛКУ НА ВАШЕ ИЗОБРАЖЕНИЕ -->
-          <img id="fieldImage" src="1769507389.png" alt="Хоккейная площадка">
-          <div id="fieldInstruction">Нажмите на поле, чтобы поставить точку. Нажмите на точку, чтобы перетащить</div>
-          <!-- Здесь будет появляться точка -->
+    <div class="container">
+        <div class="header">
+            <h1>Анализ футбольного матча</h1>
+            <p>Анализируйте игровые моменты: отмечайте точки на поле и классифицируйте действия</p>
         </div>
-      </div>
+
+        <div class="main-content">
+            <div class="video-container" id="videoContainer">
+                <div class="video-wrapper">
+                    <video id="videoPlayer" controls>
+                        <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
+                        Ваш браузер не поддерживает видео тег.
+                    </video>
+                </div>
+                <div class="video-controls">
+                    <button class="play-btn" id="playBtn">▶ Воспроизвести</button>
+                    <button class="stop-btn" id="stopBtn">⏸ Пауза</button>
+                </div>
+            </div>
+
+            <div class="pitch-container" id="pitchContainer">
+                <h2 class="pitch-title">Схема футбольного поля</h2>
+                <div class="pitch-wrapper">
+                    <div class="football-pitch" id="footballPitch">
+                        <!-- Элементы поля будут добавлены через JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="timeline">
+            <h3>Хронология событий</h3>
+            <ul class="events-list" id="eventsList">
+                <!-- События будут добавляться здесь -->
+            </ul>
+        </div>
+
+        <div class="instructions">
+            <h3>Инструкция</h3>
+            <ul>
+                <li>Нажмите "Воспроизвести" для начала просмотра видео</li>
+                <li>Нажмите "Пауза" чтобы остановить видео в нужный момент</li>
+                <li>Кликните на поле, чтобы отметить точку события</li>
+                <li>Выберите тип события (Гол или Сэйв) во всплывающем меню</li>
+                <li>После выбора типа события схема поля скроется</li>
+                <li>Все события сохраняются в хронологии ниже</li>
+            </ul>
+        </div>
     </div>
 
-    <!-- Индикатор экрана -->
-    <div id="screenIndicator">
-      <div class="screen-dot" data-screen="video"></div>
-      <div class="screen-dot active" data-screen="field"></div>
+    <div class="action-menu" id="actionMenu">
+        <h3>Выберите тип события</h3>
+        <div class="action-buttons">
+            <button class="action-btn goal-btn" id="goalBtn">⚽ Гол</button>
+            <button class="action-btn save-btn" id="saveBtn">🧤 Сэйв</button>
+        </div>
+        <button class="close-btn" id="closeMenuBtn">Отмена</button>
     </div>
-  </div>
 
-  <script>
-    // Инициализация Telegram Web App
-    if (window.Telegram?.WebApp) {
-      Telegram.WebApp.ready();
-      Telegram.WebApp.expand();
-    }
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const videoPlayer = document.getElementById('videoPlayer');
+            const playBtn = document.getElementById('playBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const footballPitch = document.getElementById('footballPitch');
+            const pitchContainer = document.getElementById('pitchContainer');
+            const actionMenu = document.getElementById('actionMenu');
+            const goalBtn = document.getElementById('goalBtn');
+            const saveBtn = document.getElementById('saveBtn');
+            const closeMenuBtn = document.getElementById('closeMenuBtn');
+            const eventsList = document.getElementById('eventsList');
+            const videoContainer = document.getElementById('videoContainer');
 
-    // Элементы
-    const rotateScreen = document.getElementById('rotateScreen');
-    const mainInterface = document.getElementById('mainInterface');
-    const iosCarousel = document.getElementById('iosCarousel');
-    const videoScreen = document.getElementById('videoScreen');
-    const fieldScreen = document.getElementById('fieldScreen');
-    const videoFrame = document.getElementById('videoFrame');
-    const carouselVideoFrame = document.getElementById('carouselVideoFrame');
-    const startBtn = document.getElementById('startBtn');
-    const stopBtn = document.getElementById('stopBtn');
-    const showFieldBtn = document.getElementById('showFieldBtn');
-    const fieldImageContainer = document.getElementById('fieldImageContainer');
-    const fieldImage = document.getElementById('fieldImage');
-    const fieldInstruction = document.getElementById('fieldInstruction');
-    const recordingIndicator = document.getElementById('recordingIndicator');
-    const recordingTimer = document.getElementById('recordingTimer');
-    const screenDots = document.querySelectorAll('.screen-dot');
+            let currentMarker = null;
+            let events = [];
 
-    // Переменные состояния
-    let isRecording = false;
-    let recordingStartTime = null;
-    let timerInterval = null;
-    let events = [];
-    
-    // Для работы с точкой
-    let currentMarker = null;
-    let isDragging = false;
-    let dragStartX = 0;
-    let dragStartY = 0;
-    let markerStartX = 0;
-    let markerStartY = 0;
-    
-    // Для свайпа
-    let isSwiping = false;
-    let startTouchY = 0;
-    let startSwipeTime = 0;
-    let currentScreen = 'field'; // 'video' или 'field'
+            // Инициализация футбольного поля
+            function initializePitch() {
+                const pitchElements = [
+                    { className: 'pitch-line center-line', text: '' },
+                    { className: 'pitch-line center-circle', text: '' },
+                    { className: 'penalty-area left-penalty', text: '' },
+                    { className: 'penalty-area right-penalty', text: '' },
+                    { className: 'goal-area left-goal', text: '' },
+                    { className: 'goal-area right-goal', text: '' }
+                ];
 
-    // Параметры из URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const videoUrl = urlParams.get('video');
-    const date = urlParams.get('date');
-    const opponent = urlParams.get('opponent');
-    const iceTime = urlParams.get('ice_time');
+                pitchElements.forEach(element => {
+                    const div = document.createElement('div');
+                    div.className = element.className;
+                    div.textContent = element.text;
+                    footballPitch.appendChild(div);
+                });
+            }
 
-    // Загружаем видео
-    if (videoUrl) {
-      let finalUrl = videoUrl;
-      
-      // YouTube
-      if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
-        let videoId;
-        if (videoUrl.includes('youtu.be/')) {
-          videoId = videoUrl.split('youtu.be/')[1].split('?')[0];
-        } else {
-          videoId = videoUrl.split('v=')[1]?.split('&')[0];
-        }
-        if (videoId) {
-          finalUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&controls=1&enablejsapi=1`;
-        }
-      }
-      // Vimeo
-      else if (videoUrl.includes('vimeo.com')) {
-        const vimeoId = videoUrl.split('/').pop();
-        finalUrl = `https://player.vimeo.com/video/${vimeoId}?autoplay=0`;
-      }
-      
-      videoFrame.src = finalUrl;
-      carouselVideoFrame.src = finalUrl;
-    }
+            // Воспроизведение видео
+            playBtn.addEventListener('click', function() {
+                videoPlayer.play();
+                playBtn.textContent = '▶ Воспроизведение...';
+                stopBtn.textContent = '⏸ Пауза';
+            });
 
-    // Проверка ориентации
-    function checkOrientation() {
-      const isLandscape = window.innerWidth > window.innerHeight;
-      rotateScreen.style.display = isLandscape ? 'none' : 'flex';
-      mainInterface.style.display = isLandscape ? 'block' : 'none';
-    }
+            // Пауза видео (вместо остановки)
+            stopBtn.addEventListener('click', function() {
+                if (videoPlayer.paused) {
+                    videoPlayer.play();
+                    playBtn.textContent = '▶ Воспроизведение...';
+                    stopBtn.textContent = '⏸ Пауза';
+                } else {
+                    videoPlayer.pause();
+                    playBtn.textContent = '▶ Возобновить';
+                    stopBtn.textContent = '⏸ На паузе';
+                    
+                    // Показываем схему поля при паузе
+                    pitchContainer.classList.remove('hidden');
+                    videoContainer.classList.remove('full-width');
+                }
+            });
 
-    window.addEventListener('resize', checkOrientation);
-    checkOrientation();
+            // Добавление маркера на поле
+            footballPitch.addEventListener('click', function(e) {
+                if (videoPlayer.paused) {
+                    const rect = footballPitch.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    // Удаляем предыдущий выбранный маркер
+                    const existingMarkers = document.querySelectorAll('.point-marker');
+                    existingMarkers.forEach(marker => marker.classList.remove('selected'));
+                    
+                    // Создаем новый маркер
+                    const marker = document.createElement('div');
+                    marker.className = 'point-marker selected';
+                    marker.style.left = `${x}px`;
+                    marker.style.top = `${y}px`;
+                    
+                    // Удаляем старые маркеры
+                    const oldMarkers = document.querySelectorAll('.point-marker');
+                    oldMarkers.forEach(m => m.remove());
+                    
+                    footballPitch.appendChild(marker);
+                    currentMarker = marker;
+                    
+                    // Показываем меню выбора действия
+                    actionMenu.style.display = 'flex';
+                }
+            });
 
-    // Форматирование времени
-    function formatTime(ms) {
-      const totalSeconds = Math.floor(ms / 1000);
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
-      
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
+            // Обработка выбора "Гол"
+            goalBtn.addEventListener('click', function() {
+                if (currentMarker) {
+                    currentMarker.style.background = '#2ecc71';
+                    currentMarker.style.borderColor = '#27ae60';
+                    currentMarker.classList.remove('selected');
+                    
+                    // Скрываем схему поля
+                    pitchContainer.classList.add('hidden');
+                    videoContainer.classList.add('full-width');
+                    
+                    // Добавляем событие в хронологию
+                    addEvent('goal', getFormattedTime());
+                    
+                    // Скрываем меню
+                    actionMenu.style.display = 'none';
+                    currentMarker = null;
+                }
+            });
 
-    // Обновление таймера
-    function updateTimer() {
-      if (recordingStartTime) {
-        const elapsed = Date.now() - recordingStartTime;
-        recordingTimer.textContent = formatTime(elapsed);
-      }
-    }
+            // Обработка выбора "Сэйв"
+            saveBtn.addEventListener('click', function() {
+                if (currentMarker) {
+                    currentMarker.style.background = '#3498db';
+                    currentMarker.style.borderColor = '#2980b9';
+                    currentMarker.classList.remove('selected');
+                    
+                    // Скрываем схему поля
+                    pitchContainer.classList.add('hidden');
+                    videoContainer.classList.add('full-width');
+                    
+                    // Добавляем событие в хронологию
+                    addEvent('save', getFormattedTime());
+                    
+                    // Скрываем меню
+                    actionMenu.style.display = 'none';
+                    currentMarker = null;
+                }
+            });
 
-    // Пауза видео
-    function pauseVideo() {
-      if (videoFrame.contentWindow) {
-        try {
-          videoFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-        } catch (e) {
-          console.log('Не удалось поставить видео на паузу');
-        }
-      }
-    }
+            // Закрытие меню
+            closeMenuBtn.addEventListener('click', function() {
+                actionMenu.style.display = 'none';
+                if (currentMarker) {
+                    currentMarker.remove();
+                    currentMarker = null;
+                }
+            });
 
-    // Показать карусель
-    function showCarousel() {
-      // Ставим видео на паузу
-      pauseVideo();
-      
-      // Показываем карусель
-      iosCarousel.classList.add('show');
-      mainInterface.style.display = 'none';
-      
-      // Устанавливаем схему как активный экран
-      currentScreen = 'field';
-      updateScreenIndicator();
-      
-      // Показываем кнопку "Перейти к схеме" в основном интерфейсе
-      showFieldBtn.style.display = 'block';
-    }
+            // Получение форматированного времени видео
+            function getFormattedTime() {
+                const time = videoPlayer.currentTime;
+                const minutes = Math.floor(time / 60);
+                const seconds = Math.floor(time % 60);
+                return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
 
-    // Скрыть карусель
-    function hideCarousel() {
-      iosCarousel.classList.remove('show');
-      mainInterface.style.display = 'block';
-    }
+            // Добавление события в хронологию
+            function addEvent(type, time) {
+                const event = {
+                    id: Date.now(),
+                    type: type,
+                    time: time,
+                    timestamp: videoPlayer.currentTime
+                };
+                
+                events.push(event);
+                events.sort((a, b) => a.timestamp - b.timestamp);
+                
+                updateTimeline();
+            }
 
-    // Переключить экран
-    function switchScreen(screenName) {
-      currentScreen = screenName;
-      
-      if (screenName === 'field') {
-        fieldScreen.style.transform = 'translateY(0)';
-        videoScreen.style.transform = 'translateY(-100%)';
-      } else {
-        fieldScreen.style.transform = 'translateY(100%)';
-        videoScreen.style.transform = 'translateY(0)';
-      }
-      
-      updateScreenIndicator();
-    }
+            // Обновление хронологии
+            function updateTimeline() {
+                eventsList.innerHTML = '';
+                
+                events.forEach(event => {
+                    const li = document.createElement('li');
+                    li.className = `event-item ${event.type}`;
+                    
+                    li.innerHTML = `
+                        <span class="event-time">${event.time}</span>
+                        <span class="event-type ${event.type}">
+                            ${event.type === 'goal' ? '⚽ Гол' : '🧤 Сэйв'}
+                        </span>
+                    `;
+                    
+                    eventsList.appendChild(li);
+                });
+            }
 
-    // Обновить индикатор экрана
-    function updateScreenIndicator() {
-      screenDots.forEach(dot => {
-        const screen = dot.getAttribute('data-screen');
-        dot.classList.toggle('active', screen === currentScreen);
-      });
-    }
-
-    // Создание точки
-    function createMarker(x, y) {
-      // Удаляем старую точку, если есть
-      if (currentMarker) {
-        currentMarker.remove();
-      }
-      
-      // Создаем новую точку
-      currentMarker = document.createElement('div');
-      currentMarker.className = 'marker-point';
-      currentMarker.style.left = x + 'px';
-      currentMarker.style.top = y + 'px';
-      
-      // Добавляем обработчики для перетаскивания
-      currentMarker.addEventListener('mousedown', startDrag);
-      currentMarker.addEventListener('touchstart', startDragTouch);
-      
-      // Добавляем на схему
-      fieldImageContainer.appendChild(currentMarker);
-      
-      console.log('Точка создана в позиции:', {x, y});
-    }
-
-    // Начало перетаскивания (мышь)
-    function startDrag(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      isDragging = true;
-      currentMarker.classList.add('dragging');
-      
-      dragStartX = e.clientX;
-      dragStartY = e.clientY;
-      markerStartX = currentMarker.offsetLeft;
-      markerStartY = currentMarker.offsetTop;
-      
-      document.addEventListener('mousemove', drag);
-      document.addEventListener('mouseup', stopDrag);
-    }
-
-    // Начало перетаскивания (тач)
-    function startDragTouch(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      if (e.touches.length !== 1) return;
-      
-      isDragging = true;
-      currentMarker.classList.add('dragging');
-      
-      const touch = e.touches[0];
-      dragStartX = touch.clientX;
-      dragStartY = touch.clientY;
-      markerStartX = currentMarker.offsetLeft;
-      markerStartY = currentMarker.offsetTop;
-      
-      document.addEventListener('touchmove', dragTouch);
-      document.addEventListener('touchend', stopDragTouch);
-    }
-
-    // Перетаскивание (мышь)
-    function drag(e) {
-      if (!isDragging) return;
-      
-      const deltaX = e.clientX - dragStartX;
-      const deltaY = e.clientY - dragStartY;
-      
-      const newX = markerStartX + deltaX;
-      const newY = markerStartY + deltaY;
-      
-      // Ограничиваем перемещение в пределах контейнера
-      const containerRect = fieldImageContainer.getBoundingClientRect();
-      const maxX = containerRect.width;
-      const maxY = containerRect.height;
-      
-      const clampedX = Math.max(0, Math.min(newX, maxX));
-      const clampedY = Math.max(0, Math.min(newY, maxY));
-      
-      currentMarker.style.left = clampedX + 'px';
-      currentMarker.style.top = clampedY + 'px';
-    }
-
-    // Перетаскивание (тач)
-    function dragTouch(e) {
-      if (!isDragging || e.touches.length !== 1) return;
-      
-      const touch = e.touches[0];
-      const deltaX = touch.clientX - dragStartX;
-      const deltaY = touch.clientY - dragStartY;
-      
-      const newX = markerStartX + deltaX;
-      const newY = markerStartY + deltaY;
-      
-      // Ограничиваем перемещение в пределах контейнера
-      const containerRect = fieldImageContainer.getBoundingClientRect();
-      const maxX = containerRect.width;
-      const maxY = containerRect.height;
-      
-      const clampedX = Math.max(0, Math.min(newX, maxX));
-      const clampedY = Math.max(0, Math.min(newY, maxY));
-      
-      currentMarker.style.left = clampedX + 'px';
-      currentMarker.style.top = clampedY + 'px';
-    }
-
-    // Остановка перетаскивания (мышь)
-    function stopDrag() {
-      isDragging = false;
-      if (currentMarker) {
-        currentMarker.classList.remove('dragging');
-      }
-      
-      document.removeEventListener('mousemove', drag);
-      document.removeEventListener('mouseup', stopDrag);
-      
-      console.log('Точка перемещена в позицию:', {
-        x: currentMarker.offsetLeft,
-        y: currentMarker.offsetTop
-      });
-    }
-
-    // Остановка перетаскивания (тач)
-    function stopDragTouch() {
-      isDragging = false;
-      if (currentMarker) {
-        currentMarker.classList.remove('dragging');
-      }
-      
-      document.removeEventListener('touchmove', dragTouch);
-      document.removeEventListener('touchend', stopDragTouch);
-    }
-
-    // Обработка кликов по схеме
-    function handleFieldClick(e) {
-      // Если кликнули по точке, не создаем новую
-      if (e.target.classList.contains('marker-point')) {
-        return;
-      }
-      
-      // Получаем координаты клика относительно контейнера
-      const rect = fieldImageContainer.getBoundingClientRect();
-      let x, y;
-      
-      if (e.type === 'click' || e.type === 'mousedown') {
-        x = e.clientX - rect.left;
-        y = e.clientY - rect.top;
-      } else if (e.type === 'touchstart') {
-        const touch = e.touches[0];
-        x = touch.clientX - rect.left;
-        y = touch.clientY - rect.top;
-      }
-      
-      // Создаем или перемещаем точку
-      if (currentMarker) {
-        // Перемещаем существующую точку
-        currentMarker.style.left = x + 'px';
-        currentMarker.style.top = y + 'px';
-        console.log('Точка перемещена в:', {x, y});
-      } else {
-        // Создаем новую точку
-        createMarker(x, y);
-      }
-    }
-
-    // Начало свайпа
-    function startSwipe(e) {
-      isSwiping = true;
-      startTouchY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-      startSwipeTime = Date.now();
-      
-      if (e.type === 'touchstart') {
-        document.addEventListener('touchmove', moveSwipe);
-        document.addEventListener('touchend', endSwipe);
-      } else {
-        document.addEventListener('mousemove', moveSwipe);
-        document.addEventListener('mouseup', endSwipe);
-      }
-    }
-
-    // Движение при свайпе
-    function moveSwipe(e) {
-      if (!isSwiping) return;
-      
-      const currentY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-      const deltaY = currentY - startTouchY;
-      
-      // Визуальная обратная связь при движении
-      if (Math.abs(deltaY) > 10) {
-        e.preventDefault();
-      }
-    }
-
-    // Конец свайпа
-    function endSwipe(e) {
-      if (!isSwiping) return;
-      
-      isSwiping = false;
-      
-      const currentY = e.type === 'touchend' ? e.changedTouches[0].clientY : e.clientY;
-      const deltaY = currentY - startTouchY;
-      const swipeTime = Date.now() - startSwipeTime;
-      const swipeSpeed = Math.abs(deltaY) / swipeTime;
-      
-      // Определяем направление и силу свайпа
-      if (Math.abs(deltaY) > 50 || swipeSpeed > 0.5) {
-        if (deltaY > 0) {
-          // Свайп вниз
-          switchScreen('field');
-        } else {
-          // Свайп вверх
-          switchScreen('video');
-        }
-      }
-      
-      // Убираем обработчики
-      document.removeEventListener('touchmove', moveSwipe);
-      document.removeEventListener('touchend', endSwipe);
-      document.removeEventListener('mousemove', moveSwipe);
-      document.removeEventListener('mouseup', endSwipe);
-    }
-
-    // Начало записи
-    function startRecording() {
-      if (isRecording) return;
-      
-      isRecording = true;
-      recordingStartTime = Date.now();
-      events = [];
-      
-      // Показываем индикаторы
-      recordingIndicator.style.display = 'flex';
-      recordingTimer.style.display = 'block';
-      
-      // Обновляем кнопки
-      startBtn.style.display = 'none';
-      stopBtn.style.display = 'block';
-      
-      // Запускаем таймер
-      updateTimer();
-      timerInterval = setInterval(updateTimer, 1000);
-      
-      console.log('Запись начата в', new Date().toLocaleTimeString());
-    }
-
-    // Остановка записи
-    function stopRecording() {
-      if (!isRecording) return;
-      
-      isRecording = false;
-      
-      // Останавливаем таймер
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-      }
-      
-      // Скрываем индикаторы
-      recordingIndicator.style.display = 'none';
-      recordingTimer.style.display = 'none';
-      
-      // Показываем карусель со схемой
-      showCarousel();
-      
-      console.log('Запись остановлена. Событий:', events.length);
-    }
-
-    // Обработчики кнопок
-    startBtn.addEventListener('click', startRecording);
-    stopBtn.addEventListener('click', stopRecording);
-    showFieldBtn.addEventListener('click', showCarousel);
-
-    // Обработчики для схемы
-    fieldImageContainer.addEventListener('click', handleFieldClick);
-    fieldImageContainer.addEventListener('touchstart', handleFieldClick);
-
-    // Обработчики для свайпа
-    iosCarousel.addEventListener('touchstart', startSwipe);
-    iosCarousel.addEventListener('mousedown', startSwipe);
-
-    // Клик по индикаторам
-    screenDots.forEach(dot => {
-      dot.addEventListener('click', () => {
-        const screen = dot.getAttribute('data-screen');
-        switchScreen(screen);
-      });
-    });
-
-    // Проверяем, когда видео готово
-    function checkVideoReady() {
-      window.addEventListener('message', (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.event === 'onReady') {
-            startBtn.disabled = false;
-          }
-        } catch (e) {}
-      });
-      
-      setTimeout(() => {
-        startBtn.disabled = false;
-      }, 3000);
-    }
-
-    // Запускаем проверку
-    checkVideoReady();
-
-    // Оптимизация изображения при загрузке
-    window.addEventListener('load', () => {
-      // Адаптация изображения под экран
-      function optimizeImage() {
-        const container = fieldImageContainer;
-        const img = fieldImage;
-        
-        // Если изображение вертикальное, поворачиваем его
-        if (img.naturalWidth && img.naturalHeight) {
-          if (img.naturalHeight > img.naturalWidth) {
-            // Вертикальное изображение - делаем горизонтальным
-            img.style.transform = 'rotate(90deg)';
-            img.style.width = 'auto';
-            img.style.height = '100%';
-            img.style.maxWidth = '100%';
-            img.style.maxHeight = '100%';
-          } else {
-            // Горизонтальное изображение - оставляем как есть
-            img.style.transform = 'none';
-            img.style.width = '100%';
-            img.style.height = 'auto';
-            img.style.maxWidth = '100%';
-            img.style.maxHeight = '100%';
-          }
-        }
-      }
-      
-      // Когда изображение загружено
-      fieldImage.onload = optimizeImage;
-      
-      // Если изображение уже загружено
-      if (fieldImage.complete) {
-        optimizeImage();
-      }
-    });
-  </script>
+            // Инициализация
+            initializePitch();
+            
+            // Обработка клавиши пробела для паузы/воспроизведения
+            document.addEventListener('keydown', function(e) {
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    stopBtn.click();
+                }
+            });
+        });
+    </script>
 </body>
 </html>
-
