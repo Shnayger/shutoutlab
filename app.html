@@ -11,6 +11,7 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body {
@@ -19,6 +20,7 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       height: 100vh;
       overflow: hidden;
+      touch-action: none;
     }
 
     /* Экран поворота */
@@ -31,6 +33,11 @@
       text-align: center;
       padding: 20px;
       background: #111;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 1000;
     }
 
     /* Основной интерфейс */
@@ -45,18 +52,18 @@
       position: absolute;
       top: 10px;
       left: 10px;
-      background: #c62828;
+      background: rgba(198, 40, 40, 0.9);
       color: white;
       padding: 6px 12px;
       border-radius: 20px;
       font-size: 14px;
       font-weight: bold;
-      z-index: 15;
+      z-index: 50;
       display: none;
       align-items: center;
       gap: 8px;
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
     .recordingDot {
@@ -78,29 +85,33 @@
       position: absolute;
       top: 10px;
       right: 10px;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.8);
       color: white;
       padding: 6px 12px;
       border-radius: 20px;
       font-size: 14px;
       font-weight: bold;
-      z-index: 15;
+      z-index: 50;
       display: none;
       backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
-    /* Видео контейнер */
+    /* Контейнер для видео */
     #videoContainer {
       width: 100%;
-      height: 100%;
+      height: 70vh; /* Начальная высота */
       background: #000;
+      position: relative;
+      transition: height 0.3s ease;
+      overflow: hidden;
     }
 
     #videoFrame {
       width: 100%;
       height: 100%;
       border: none;
+      display: block;
     }
 
     /* Управление */
@@ -111,7 +122,7 @@
       transform: translateX(-50%);
       display: flex;
       gap: 15px;
-      z-index: 10;
+      z-index: 40;
     }
 
     .control-btn {
@@ -145,37 +156,136 @@
       transform: scale(0.95);
     }
 
-    /* Поле для разметки (КХЛ) */
-    #fieldOverlay {
+    /* Разделитель между видео и схемой */
+    #divider {
       position: absolute;
-      top: 0;
       left: 0;
       width: 100%;
-      height: 100%;
-      background: #1a237e;
-      display: none;
-      z-index: 20;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.3);
+      cursor: ns-resize;
+      z-index: 60;
+      transition: background 0.2s;
     }
 
+    #divider:hover {
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    #dividerHandle {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 40px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #dividerHandle::after {
+      content: "";
+      width: 20px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 2px;
+    }
+
+    /* Панель со схемой (Bottom Sheet) */
+    #fieldPanel {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 30vh; /* Начальная высота */
+      background: #1a237e;
+      z-index: 30;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      overflow: hidden;
+      display: none;
+      box-shadow: 0 -5px 30px rgba(0, 0, 0, 0.5);
+      transition: height 0.3s ease;
+    }
+
+    /* Контейнер для схемы */
+    #fieldContainer {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      touch-action: none;
+    }
+
+    /* Схема поля (КХЛ) */
     #hockeyField {
       width: 100%;
       height: 100%;
+      display: block;
     }
 
-    /* Зоны для клика */
-    .clickable-zone {
+    /* Активная точка */
+    .marker-point {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      background: #FF0000;
+      border-radius: 50%;
+      border: 3px solid white;
+      box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+      transform: translate(-50%, -50%);
+      z-index: 100;
+      cursor: move;
+      transition: transform 0.1s;
+      pointer-events: auto;
+    }
+
+    .marker-point.dragging {
+      transform: translate(-50%, -50%) scale(1.2);
+      z-index: 101;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 1);
+    }
+
+    /* Инструкция */
+    #instruction {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      z-index: 45;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      text-align: center;
+      max-width: 90%;
+      display: none;
+    }
+
+    /* Кнопка закрытия схемы */
+    #closeFieldBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 6px 12px;
+      font-size: 12px;
       cursor: pointer;
+      z-index: 45;
+      backdrop-filter: blur(10px);
       transition: all 0.2s;
     }
 
-    .clickable-zone:hover {
-      opacity: 0.8;
-    }
-
-    .highlight {
-      fill: rgba(255, 255, 255, 0.4) !important;
-      stroke: white !important;
-      stroke-width: 3px !important;
+    #closeFieldBtn:active {
+      transform: scale(0.95);
     }
   </style>
 </head>
@@ -199,100 +309,88 @@
     <!-- Таймер записи -->
     <div id="recordingTimer">00:00:00</div>
 
-    <!-- Видео -->
+    <!-- Контейнер для видео -->
     <div id="videoContainer">
       <iframe id="videoFrame" allowfullscreen></iframe>
+    </div>
+
+    <!-- Разделитель -->
+    <div id="divider" style="display: none;">
+      <div id="dividerHandle"></div>
+    </div>
+
+    <!-- Панель со схемой -->
+    <div id="fieldPanel">
+      <div id="instruction">Нажмите на поле, чтобы поставить точку. Нажмите на точку, чтобы перетащить</div>
+      <button id="closeFieldBtn">Скрыть схему</button>
+      <div id="fieldContainer">
+        <svg id="hockeyField" viewBox="0 0 200 85" xmlns="http://www.w3.org/2000/svg">
+          <!-- Лёд -->
+          <rect width="200" height="85" fill="#87CEEB"/>
+          
+          <!-- Борта (красные) -->
+          <rect x="0" y="0" width="200" height="85" fill="none" stroke="#FF0000" stroke-width="0.5"/>
+          
+          <!-- Центральная красная линия -->
+          <line x1="100" y1="0" x2="100" y2="85" stroke="#FF0000" stroke-width="1"/>
+          
+          <!-- Центральный круг -->
+          <circle cx="100" cy="42.5" r="15" fill="none" stroke="#FF0000" stroke-width="1"/>
+          <circle cx="100" cy="42.5" r="0.5" fill="#FF0000"/>
+          
+          <!-- Синие линии -->
+          <rect x="25" y="0" width="1" height="85" fill="#0000FF"/>
+          <rect x="174" y="0" width="1" height="85" fill="#0000FF"/>
+          
+          <!-- Зоны ворот -->
+          <rect x="0" y="30" width="11" height="25" fill="none" stroke="#000000" stroke-width="1"/>
+          <rect x="189" y="30" width="11" height="25" fill="none" stroke="#000000" stroke-width="1"/>
+          
+          <!-- Круги вбрасывания -->
+          <!-- Центральный -->
+          <circle cx="100" cy="42.5" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
+          
+          <!-- В зонах -->
+          <circle cx="25" cy="42.5" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
+          <circle cx="175" cy="42.5" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
+          
+          <!-- В зоне защиты слева -->
+          <circle cx="25" cy="20" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
+          <circle cx="25" cy="65" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
+          
+          <!-- В зоне защиты справа -->
+          <circle cx="175" cy="20" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
+          <circle cx="175" cy="65" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
+          
+          <!-- В зоне атаки слева -->
+          <circle cx="60" cy="20" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
+          <circle cx="60" cy="65" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
+          
+          <!-- В зоне атаки справа -->
+          <circle cx="140" cy="20" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
+          <circle cx="140" cy="65" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
+          
+          <!-- Точки вбрасывания (белые) -->
+          <circle cx="100" cy="42.5" r="0.5" fill="white"/>
+          <circle cx="25" cy="42.5" r="0.5" fill="white"/>
+          <circle cx="175" cy="42.5" r="0.5" fill="white"/>
+          <circle cx="25" cy="20" r="0.5" fill="white"/>
+          <circle cx="25" cy="65" r="0.5" fill="white"/>
+          <circle cx="175" cy="20" r="0.5" fill="white"/>
+          <circle cx="175" cy="65" r="0.5" fill="white"/>
+          <circle cx="60" cy="20" r="0.5" fill="white"/>
+          <circle cx="60" cy="65" r="0.5" fill="white"/>
+          <circle cx="140" cy="20" r="0.5" fill="white"/>
+          <circle cx="140" cy="65" r="0.5" fill="white"/>
+        </svg>
+        <!-- Здесь будет появляться точка -->
+      </div>
     </div>
 
     <!-- Управление -->
     <div id="controls">
       <button id="startBtn" class="control-btn" disabled>Начать запись</button>
       <button id="stopBtn" class="control-btn">Стоп</button>
-    </div>
-
-    <!-- Поле для разметки (КХЛ) -->
-    <div id="fieldOverlay">
-      <svg id="hockeyField" viewBox="0 0 200 85" xmlns="http://www.w3.org/2000/svg">
-        <!-- Лёд -->
-        <rect width="200" height="85" fill="#87CEEB"/>
-        
-        <!-- Борта (красные) -->
-        <rect x="0" y="0" width="200" height="85" fill="none" stroke="#FF0000" stroke-width="0.5"/>
-        
-        <!-- Центральная красная линия -->
-        <line x1="100" y1="0" x2="100" y2="85" stroke="#FF0000" stroke-width="1"/>
-        
-        <!-- Центральный круг -->
-        <circle cx="100" cy="42.5" r="15" fill="none" stroke="#FF0000" stroke-width="1"/>
-        <circle cx="100" cy="42.5" r="0.5" fill="#FF0000"/>
-        
-        <!-- Синие линии -->
-        <rect x="25" y="0" width="1" height="85" fill="#0000FF"/>
-        <rect x="174" y="0" width="1" height="85" fill="#0000FF"/>
-        
-        <!-- Зоны ворот -->
-        <rect x="0" y="30" width="11" height="25" fill="none" stroke="#000000" stroke-width="1"/>
-        <rect x="189" y="30" width="11" height="25" fill="none" stroke="#000000" stroke-width="1"/>
-        
-        <!-- Круги вбрасывания -->
-        <!-- Центральный -->
-        <circle cx="100" cy="42.5" r="3" fill="none" stroke="#FF0000" stroke-width="0.5"/>
-        
-        <!-- В зонах -->
-        <circle cx="25" cy="42.5" r="3" fill="none" stroke="#FF0000" stroke-width="0.5" class="clickable-zone" id="faceoff-center-left"/>
-        <circle cx="175" cy="42.5" r="3" fill="none" stroke="#FF0000" stroke-width="0.5" class="clickable-zone" id="faceoff-center-right"/>
-        
-        <!-- В зоне защиты слева -->
-        <circle cx="25" cy="20" r="3" fill="none" stroke="#FF0000" stroke-width="0.5" class="clickable-zone" id="faceoff-def-left-top"/>
-        <circle cx="25" cy="65" r="3" fill="none" stroke="#FF0000" stroke-width="0.5" class="clickable-zone" id="faceoff-def-left-bottom"/>
-        
-        <!-- В зоне защиты справа -->
-        <circle cx="175" cy="20" r="3" fill="none" stroke="#FF0000" stroke-width="0.5" class="clickable-zone" id="faceoff-def-right-top"/>
-        <circle cx="175" cy="65" r="3" fill="none" stroke="#FF0000" stroke-width="0.5" class="clickable-zone" id="faceoff-def-right-bottom"/>
-        
-        <!-- В зоне атаки слева -->
-        <circle cx="60" cy="20" r="3" fill="none" stroke="#FF0000" stroke-width="0.5" class="clickable-zone" id="faceoff-att-left-top"/>
-        <circle cx="60" cy="65" r="3" fill="none" stroke="#FF0000" stroke-width="0.5" class="clickable-zone" id="faceoff-att-left-bottom"/>
-        
-        <!-- В зоне атаки справа -->
-        <circle cx="140" cy="20" r="3" fill="none" stroke="#FF0000" stroke-width="0.5" class="clickable-zone" id="faceoff-att-right-top"/>
-        <circle cx="140" cy="65" r="3" fill="none" stroke="#FF0000" stroke-width="0.5" class="clickable-zone" id="faceoff-att-right-bottom"/>
-        
-        <!-- Зоны для кликов (невидимые прямоугольники для удобства) -->
-        <!-- Левая зона защиты -->
-        <rect x="0" y="0" width="50" height="85" fill="transparent" class="clickable-zone" id="zone-defense-left"/>
-        
-        <!-- Правая зона защиты -->
-        <rect x="150" y="0" width="50" height="85" fill="transparent" class="clickable-zone" id="zone-defense-right"/>
-        
-        <!-- Левая зона атаки -->
-        <rect x="50" y="0" width="50" height="85" fill="transparent" class="clickable-zone" id="zone-attack-left"/>
-        
-        <!-- Правая зона атаки -->
-        <rect x="100" y="0" width="50" height="85" fill="transparent" class="clickable-zone" id="zone-attack-right"/>
-        
-        <!-- Центральная зона -->
-        <rect x="75" y="0" width="50" height="85" fill="transparent" class="clickable-zone" id="zone-center"/>
-        
-        <!-- Левые ворота -->
-        <rect x="0" y="30" width="11" height="25" fill="transparent" class="clickable-zone" id="goal-left"/>
-        
-        <!-- Правые ворота -->
-        <rect x="189" y="30" width="11" height="25" fill="transparent" class="clickable-zone" id="goal-right"/>
-        
-        <!-- Точки вбрасывания (белые) -->
-        <circle cx="100" cy="42.5" r="0.5" fill="white"/>
-        <circle cx="25" cy="42.5" r="0.5" fill="white"/>
-        <circle cx="175" cy="42.5" r="0.5" fill="white"/>
-        <circle cx="25" cy="20" r="0.5" fill="white"/>
-        <circle cx="25" cy="65" r="0.5" fill="white"/>
-        <circle cx="175" cy="20" r="0.5" fill="white"/>
-        <circle cx="175" cy="65" r="0.5" fill="white"/>
-        <circle cx="60" cy="20" r="0.5" fill="white"/>
-        <circle cx="60" cy="65" r="0.5" fill="white"/>
-        <circle cx="140" cy="20" r="0.5" fill="white"/>
-        <circle cx="140" cy="65" r="0.5" fill="white"/>
-      </svg>
     </div>
   </div>
 
@@ -307,18 +405,38 @@
     const rotateScreen = document.getElementById('rotateScreen');
     const mainInterface = document.getElementById('mainInterface');
     const videoFrame = document.getElementById('videoFrame');
+    const videoContainer = document.getElementById('videoContainer');
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
-    const fieldOverlay = document.getElementById('fieldOverlay');
+    const fieldPanel = document.getElementById('fieldPanel');
+    const fieldContainer = document.getElementById('fieldContainer');
     const hockeyField = document.getElementById('hockeyField');
     const recordingIndicator = document.getElementById('recordingIndicator');
     const recordingTimer = document.getElementById('recordingTimer');
+    const divider = document.getElementById('divider');
+    const instruction = document.getElementById('instruction');
+    const closeFieldBtn = document.getElementById('closeFieldBtn');
 
     // Переменные состояния
     let isRecording = false;
     let recordingStartTime = null;
     let timerInterval = null;
     let events = [];
+    
+    // Для работы с точкой
+    let currentMarker = null;
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let markerStartX = 0;
+    let markerStartY = 0;
+    
+    // Для работы с разделителем
+    let isResizing = false;
+    let startHeight = 0;
+    let startY = 0;
+    const minVideoHeight = 30; // минимальная высота видео в %
+    const maxVideoHeight = 90; // максимальная высота видео в %
 
     // Параметры из URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -380,6 +498,261 @@
       }
     }
 
+    // Создание точки
+    function createMarker(x, y) {
+      // Удаляем старую точку, если есть
+      if (currentMarker) {
+        currentMarker.remove();
+      }
+      
+      // Создаем новую точку
+      currentMarker = document.createElement('div');
+      currentMarker.className = 'marker-point';
+      currentMarker.style.left = x + 'px';
+      currentMarker.style.top = y + 'px';
+      
+      // Добавляем обработчики для перетаскивания
+      currentMarker.addEventListener('mousedown', startDrag);
+      currentMarker.addEventListener('touchstart', startDragTouch);
+      
+      // Добавляем на схему
+      fieldContainer.appendChild(currentMarker);
+      
+      console.log('Точка создана в позиции:', {x, y});
+    }
+
+    // Начало перетаскивания (мышь)
+    function startDrag(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      isDragging = true;
+      currentMarker.classList.add('dragging');
+      
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      markerStartX = currentMarker.offsetLeft;
+      markerStartY = currentMarker.offsetTop;
+      
+      document.addEventListener('mousemove', drag);
+      document.addEventListener('mouseup', stopDrag);
+    }
+
+    // Начало перетаскивания (тач)
+    function startDragTouch(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (e.touches.length !== 1) return;
+      
+      isDragging = true;
+      currentMarker.classList.add('dragging');
+      
+      const touch = e.touches[0];
+      dragStartX = touch.clientX;
+      dragStartY = touch.clientY;
+      markerStartX = currentMarker.offsetLeft;
+      markerStartY = currentMarker.offsetTop;
+      
+      document.addEventListener('touchmove', dragTouch);
+      document.addEventListener('touchend', stopDragTouch);
+    }
+
+    // Перетаскивание (мышь)
+    function drag(e) {
+      if (!isDragging) return;
+      
+      const deltaX = e.clientX - dragStartX;
+      const deltaY = e.clientY - dragStartY;
+      
+      const newX = markerStartX + deltaX;
+      const newY = markerStartY + deltaY;
+      
+      // Ограничиваем перемещение в пределах схемы
+      const fieldRect = fieldContainer.getBoundingClientRect();
+      const maxX = fieldRect.width;
+      const maxY = fieldRect.height;
+      
+      const clampedX = Math.max(0, Math.min(newX, maxX));
+      const clampedY = Math.max(0, Math.min(newY, maxY));
+      
+      currentMarker.style.left = clampedX + 'px';
+      currentMarker.style.top = clampedY + 'px';
+    }
+
+    // Перетаскивание (тач)
+    function dragTouch(e) {
+      if (!isDragging || e.touches.length !== 1) return;
+      
+      const touch = e.touches[0];
+      const deltaX = touch.clientX - dragStartX;
+      const deltaY = touch.clientY - dragStartY;
+      
+      const newX = markerStartX + deltaX;
+      const newY = markerStartY + deltaY;
+      
+      // Ограничиваем перемещение в пределах схемы
+      const fieldRect = fieldContainer.getBoundingClientRect();
+      const maxX = fieldRect.width;
+      const maxY = fieldRect.height;
+      
+      const clampedX = Math.max(0, Math.min(newX, maxX));
+      const clampedY = Math.max(0, Math.min(newY, maxY));
+      
+      currentMarker.style.left = clampedX + 'px';
+      currentMarker.style.top = clampedY + 'px';
+    }
+
+    // Остановка перетаскивания (мышь)
+    function stopDrag() {
+      isDragging = false;
+      if (currentMarker) {
+        currentMarker.classList.remove('dragging');
+      }
+      
+      document.removeEventListener('mousemove', drag);
+      document.removeEventListener('mouseup', stopDrag);
+      
+      console.log('Точка перемещена в позицию:', {
+        x: currentMarker.offsetLeft,
+        y: currentMarker.offsetTop
+      });
+    }
+
+    // Остановка перетаскивания (тач)
+    function stopDragTouch() {
+      isDragging = false;
+      if (currentMarker) {
+        currentMarker.classList.remove('dragging');
+      }
+      
+      document.removeEventListener('touchmove', dragTouch);
+      document.removeEventListener('touchend', stopDragTouch);
+    }
+
+    // Обработка кликов по схеме
+    function handleFieldClick(e) {
+      // Если кликнули по точке, не создаем новую
+      if (e.target.classList.contains('marker-point')) {
+        return;
+      }
+      
+      // Получаем координаты клика относительно схемы
+      const rect = fieldContainer.getBoundingClientRect();
+      let x, y;
+      
+      if (e.type === 'click' || e.type === 'mousedown') {
+        x = e.clientX - rect.left;
+        y = e.clientY - rect.top;
+      } else if (e.type === 'touchstart') {
+        const touch = e.touches[0];
+        x = touch.clientX - rect.left;
+        y = touch.clientY - rect.top;
+      }
+      
+      // Создаем или перемещаем точку
+      if (currentMarker) {
+        // Перемещаем существующую точку
+        currentMarker.style.left = x + 'px';
+        currentMarker.style.top = y + 'px';
+        console.log('Точка перемещена в:', {x, y});
+      } else {
+        // Создаем новую точку
+        createMarker(x, y);
+      }
+    }
+
+    // Показ схемы поля
+    function showField() {
+      // Останавливаем видео
+      if (videoFrame.contentWindow) {
+        try {
+          videoFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+        } catch (e) {}
+      }
+      
+      // Показываем панель со схемой
+      fieldPanel.style.display = 'block';
+      instruction.style.display = 'block';
+      divider.style.display = 'block';
+      
+      // Анимация появления
+      setTimeout(() => {
+        fieldPanel.style.height = '30vh';
+        videoContainer.style.height = '70vh';
+        divider.style.top = 'calc(70vh - 2px)';
+      }, 10);
+      
+      console.log('Схема поля показана');
+    }
+
+    // Скрытие схемы поля
+    function hideField() {
+      // Анимация скрытия
+      fieldPanel.style.height = '0';
+      
+      setTimeout(() => {
+        fieldPanel.style.display = 'none';
+        instruction.style.display = 'none';
+        divider.style.display = 'none';
+        videoContainer.style.height = '100vh';
+      }, 300);
+      
+      console.log('Схема поля скрыта');
+    }
+
+    // Начало изменения размера
+    function startResize(e) {
+      isResizing = true;
+      startHeight = parseInt(videoContainer.style.height) || 70;
+      startY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
+      
+      document.addEventListener('mousemove', resize);
+      document.addEventListener('touchmove', resizeTouch);
+      document.addEventListener('mouseup', stopResize);
+      document.addEventListener('touchend', stopResize);
+    }
+
+    // Изменение размера (мышь)
+    function resize(e) {
+      if (!isResizing) return;
+      
+      const deltaY = startY - e.clientY;
+      const newHeightPercent = startHeight + (deltaY / window.innerHeight) * 100;
+      
+      // Ограничиваем высоту
+      const clampedHeight = Math.max(minVideoHeight, Math.min(newHeightPercent, maxVideoHeight));
+      
+      videoContainer.style.height = clampedHeight + 'vh';
+      fieldPanel.style.height = (100 - clampedHeight) + 'vh';
+      divider.style.top = `calc(${clampedHeight}vh - 2px)`;
+    }
+
+    // Изменение размера (тач)
+    function resizeTouch(e) {
+      if (!isResizing || e.touches.length !== 1) return;
+      
+      const touch = e.touches[0];
+      const deltaY = startY - touch.clientY;
+      const newHeightPercent = startHeight + (deltaY / window.innerHeight) * 100;
+      
+      // Ограничиваем высоту
+      const clampedHeight = Math.max(minVideoHeight, Math.min(newHeightPercent, maxVideoHeight));
+      
+      videoContainer.style.height = clampedHeight + 'vh';
+      fieldPanel.style.height = (100 - clampedHeight) + 'vh';
+      divider.style.top = `calc(${clampedHeight}vh - 2px)`;
+    }
+
+    // Остановка изменения размера
+    function stopResize() {
+      isResizing = false;
+      document.removeEventListener('mousemove', resize);
+      document.removeEventListener('touchmove', resizeTouch);
+      document.removeEventListener('mouseup', stopResize);
+      document.removeEventListener('touchend', stopResize);
+    }
+
     // Начало записи
     function startRecording() {
       if (isRecording) return;
@@ -409,15 +782,6 @@
       
       isRecording = false;
       
-      // Останавливаем видео
-      if (videoFrame.contentWindow) {
-        try {
-          videoFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-        } catch (e) {
-          console.log('Не удалось остановить видео');
-        }
-      }
-      
       // Останавливаем таймер
       if (timerInterval) {
         clearInterval(timerInterval);
@@ -428,32 +792,36 @@
       recordingIndicator.style.display = 'none';
       recordingTimer.style.display = 'none';
       
-      // Показываем поле
-      fieldOverlay.style.display = 'block';
+      // Показываем схему
+      showField();
       
       console.log('Запись остановлена. Событий:', events.length);
-      console.log('Все события:', events);
     }
 
     // Обработчики кнопок
     startBtn.addEventListener('click', startRecording);
     stopBtn.addEventListener('click', stopRecording);
 
-    // Проверяем, когда видео готово (для YouTube)
+    // Обработчики для схемы
+    fieldContainer.addEventListener('click', handleFieldClick);
+    fieldContainer.addEventListener('touchstart', handleFieldClick);
+    closeFieldBtn.addEventListener('click', hideField);
+
+    // Обработчики для разделителя
+    divider.addEventListener('mousedown', startResize);
+    divider.addEventListener('touchstart', startResize);
+
+    // Проверяем, когда видео готово
     function checkVideoReady() {
-      // Для YouTube можно слушать сообщения
       window.addEventListener('message', (event) => {
         try {
           const data = JSON.parse(event.data);
           if (data.event === 'onReady') {
             startBtn.disabled = false;
           }
-        } catch (e) {
-          // Не JSON сообщение
-        }
+        } catch (e) {}
       });
       
-      // Общий таймаут
       setTimeout(() => {
         startBtn.disabled = false;
       }, 3000);
@@ -461,69 +829,6 @@
 
     // Запускаем проверку
     checkVideoReady();
-
-    // Клики по полю
-    const zones = {
-      // Лицевые вбрасывания
-      'faceoff-center-left': 'Лицевое вбрасывание (центр, слева)',
-      'faceoff-center-right': 'Лицевое вбрасывание (центр, справа)',
-      'faceoff-def-left-top': 'Лицевое вбрасывание (зона защиты, слева, верх)',
-      'faceoff-def-left-bottom': 'Лицевое вбрасывание (зона защиты, слева, низ)',
-      'faceoff-def-right-top': 'Лицевое вбрасывание (зона защиты, справа, верх)',
-      'faceoff-def-right-bottom': 'Лицевое вбрасывание (зона защиты, справа, низ)',
-      'faceoff-att-left-top': 'Лицевое вбрасывание (зона атаки, слева, верх)',
-      'faceoff-att-left-bottom': 'Лицевое вбрасывание (зона атаки, слева, низ)',
-      'faceoff-att-right-top': 'Лицевое вбрасывание (зона атаки, справа, верх)',
-      'faceoff-att-right-bottom': 'Лицевое вбрасывание (зона атаки, справа, низ)',
-      
-      // Зоны
-      'zone-defense-left': 'Зона защиты (слева)',
-      'zone-defense-right': 'Зона защиты (справа)',
-      'zone-attack-left': 'Зона атаки (слева)',
-      'zone-attack-right': 'Зона атаки (справа)',
-      'zone-center': 'Центральная зона',
-      
-      // Ворота
-      'goal-left': 'Ворота (слева)',
-      'goal-right': 'Ворота (справа)',
-    };
-
-    hockeyField.addEventListener('click', (e) => {
-      if (!isRecording) return;
-      
-      const target = e.target;
-      const id = target.id;
-      
-      if (zones[id]) {
-        // Подсветка
-        target.classList.add('highlight');
-        
-        // Данные события
-        const eventData = {
-          zone_id: id,
-          zone_name: zones[id],
-          timestamp: Date.now() - recordingStartTime,
-          video_time: videoFrame.currentTime || 0,
-          match_date: date,
-          opponent: opponent,
-          ice_time: iceTime
-        };
-        
-        events.push(eventData);
-        
-        // Отправляем в Telegram
-        if (window.Telegram?.WebApp) {
-          Telegram.WebApp.sendData(JSON.stringify(eventData));
-        }
-        
-        // Убираем подсветку
-        setTimeout(() => {
-          target.classList.remove('highlight');
-        }, 800);
-        
-        console.log('Записано событие:', eventData);
-      }
-    });
   </script>
 </body>
 </html>
