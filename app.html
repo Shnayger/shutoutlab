@@ -2,105 +2,169 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Анализ матча</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f0f0f0;
-    }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    h2 {
-      color: #1e88e5;
-    }
-    .field {
-      margin: 15px 0;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    input, textarea {
-      width: 100%;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+    * {
+      margin: 0;
+      padding: 0;
       box-sizing: border-box;
     }
-    button {
-      background: #1e88e5;
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #000;
       color: white;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 16px;
-      margin-top: 10px;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
     }
-    button:hover {
-      background: #1976d2;
-    }
-    #videoContainer {
-      margin: 20px 0;
+
+    /* Экран с просьбой повернуть устройство */
+    #rotateScreen {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #111;
       text-align: center;
+      padding: 20px;
     }
+
+    #rotateScreen img {
+      width: 60px;
+      margin-bottom: 20px;
+      transform: rotate(90deg);
+    }
+
+    #rotateScreen p {
+      font-size: 18px;
+      line-height: 1.4;
+    }
+
+    /* Основной интерфейс (скрыт по умолчанию) */
+    #mainInterface {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    #videoContainer {
+      flex: 1;
+      position: relative;
+    }
+
     #videoFrame {
       width: 100%;
-      height: 300px;
+      height: 100%;
+      background: #000;
       border: none;
-      border-radius: 8px;
+    }
+
+    #controls {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 15px;
+    }
+
+    .control-btn {
+      padding: 12px 24px;
+      font-size: 18px;
+      font-weight: bold;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      color: white;
+    }
+
+    #startBtn {
+      background: #2e7d32; /* зелёный */
+    }
+
+    #stopBtn {
+      background: #c62828; /* красный */
+      display: none; /* скрыт до старта */
+    }
+
+    /* Схема поля */
+    #fieldOverlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 0;
+      background: rgba(0, 0, 0, 0.9);
+      transition: height 0.4s ease-out;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      padding: 20px 0;
+      overflow: hidden;
+    }
+
+    #hockeyField {
+      width: 90%;
+      max-width: 600px;
+      height: auto;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>🏒 Анализ хоккейного матча</h2>
+  <!-- Экран "поверните устройство" -->
+  <div id="rotateScreen">
+    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+PHBhdGggZD0iTTE5IDEyaGEtMS41Yy0uODIgMC0xLjUtLjY4LTEuNS0xLjVWNS41QzE2IDQuNjcgMTYuNjcgNCAxNy41IDRIMTljLjgzIDAgMS41LjY3IDEuNSAxLjV2My41YzAgLjgzLS42NyAxLjUtMS41IDEuNUgxbC4wMSA5YzAgMS4xLjg5IDIgMiAySDIxYzEuMSAwIDItLjkgMi0ybC0uMDEtN0gxOVptLTUuNS05SDguNVY4aDRWNHptNiAxNEgydjJIMjB2LTJ6Ii8+PC9zdmc+" alt="Поверните" />
+    <p>Пожалуйста, поверните устройство в&nbsp;горизонтальное положение для анализа матча.</p>
+  </div>
 
-    <div id="matchInfo"></div>
-
+  <!-- Основной интерфейс -->
+  <div id="mainInterface">
     <div id="videoContainer">
-      <h3>Видео матча</h3>
-      <iframe id="videoFrame" src="" allowfullscreen></iframe>
+      <iframe id="videoFrame" allowfullscreen></iframe>
+      <div id="controls">
+        <button id="startBtn" class="control-btn">Старт</button>
+        <button id="stopBtn" class="control-btn">Стоп</button>
+      </div>
+      <div id="fieldOverlay">
+        <!-- Простая схема хоккейного поля (SVG) -->
+        <svg id="hockeyField" viewBox="0 0 200 85" xmlns="http://www.w3.org/2000/svg">
+          <!-- Поле -->
+          <rect x="0" y="0" width="200" height="85" fill="none" stroke="white" stroke-width="1"/>
+          <!-- Центральная линия -->
+          <line x1="100" y1="0" x2="100" y2="85" stroke="white" stroke-width="1" stroke-dasharray="4,4"/>
+          <!-- Центральный круг -->
+          <circle cx="100" cy="42.5" r="12" fill="none" stroke="white" stroke-width="1"/>
+          <!-- Зоны ворот -->
+          <rect x="0" y="27.5" width="15" height="30" fill="none" stroke="white" stroke-width="1"/>
+          <rect x="185" y="27.5" width="15" height="30" fill="none" stroke="white" stroke-width="1"/>
+          <!-- Полукруги у ворот -->
+          <path d="M15,42.5 a15,15 0 0,1 0,0" fill="none" stroke="white" stroke-width="1"/>
+          <path d="M185,42.5 a15,15 0 0,0 0,0" fill="none" stroke="white" stroke-width="1"/>
+        </svg>
+      </div>
     </div>
-
-    <div class="field">
-      <label>Комментарий (опционально):</label>
-      <textarea id="comment" rows="3" placeholder="Добавьте заметки по матчу..."></textarea>
-    </div>
-
-    <button onclick="sendData()">Сохранить и начать анализ</button>
   </div>
 
   <script>
+    const rotateScreen = document.getElementById('rotateScreen');
+    const mainInterface = document.getElementById('mainInterface');
+    const videoFrame = document.getElementById('videoFrame');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const fieldOverlay = document.getElementById('fieldOverlay');
+
     // Получаем параметры из URL
     const urlParams = new URLSearchParams(window.location.search);
-    const date = urlParams.get('date');
-    const opponent = urlParams.get('opponent');
-    const iceTime = urlParams.get('ice_time');
     const videoUrl = urlParams.get('video');
 
-    // Отображаем информацию
-    document.getElementById('matchInfo').innerHTML = `
-      <p><strong>Дата:</strong> ${date}</p>
-      <p><strong>Соперник:</strong> ${opponent}</p>
-      <p><strong>Время на льду:</strong> ${iceTime} мин</p>
-    `;
-
-    // Подгружаем видео (поддержка YouTube, Vimeo, прямые ссылки)
-    const videoFrame = document.getElementById('videoFrame');
+    // Загружаем видео
     if (videoUrl) {
       if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
-        // Извлекаем ID для YouTube
         let videoId;
         if (videoUrl.includes('youtu.be/')) {
           videoId = videoUrl.split('youtu.be/')[1].split('?')[0];
@@ -108,37 +172,66 @@
           videoId = videoUrl.split('v=')[1]?.split('&')[0];
         }
         if (videoId) {
-          videoFrame.src = `https://www.youtube.com/embed/${videoId}?autoplay=0`;
+          videoFrame.src = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0`;
         }
       } else if (videoUrl.includes('vimeo.com')) {
         const vimeoId = videoUrl.split('/').pop();
         videoFrame.src = `https://player.vimeo.com/video/${vimeoId}`;
       } else {
-        // Прямая ссылка на видео
         videoFrame.src = videoUrl;
       }
     }
 
-    function sendData() {
-      const comment = document.getElementById('comment').value;
-      const result = {
-        date: date,
-        opponent: opponent,
-        ice_time: iceTime,
-        video: videoUrl,
-        comment: comment,
-        timestamp: new Date().toISOString()
-      };
-
-      // Отправляем данные обратно в Telegram (если вызван как Web App)
-      if (window.Telegram && Telegram.WebApp) {
-        Telegram.WebApp.sendData(JSON.stringify(result));
-        Telegram.WebApp.close();
+    // Проверка ориентации
+    function checkOrientation() {
+      const isLandscape = window.innerWidth > window.innerHeight;
+      if (isLandscape) {
+        rotateScreen.style.display = 'none';
+        mainInterface.style.display = 'flex';
       } else {
-        alert("Данные для отправки в бот:\n" + JSON.stringify(result, null, 2));
-        console.log("Web App data:", result);
+        rotateScreen.style.display = 'flex';
+        mainInterface.style.display = 'none';
       }
     }
+
+    // Слушаем изменения ориентации и размера
+    window.addEventListener('resize', checkOrientation);
+    checkOrientation(); // при первом запуске
+
+    // Логика записи
+    let startTime = null;
+
+    startBtn.addEventListener('click', () => {
+      startTime = Date.now();
+      startBtn.style.display = 'none';
+      stopBtn.style.display = 'block';
+    });
+
+    stopBtn.addEventListener('click', () => {
+      const endTime = Date.now();
+      const duration = Math.round((endTime - startTime) / 1000); // секунды
+
+      // Показываем схему поля
+      fieldOverlay.style.height = '40%';
+
+      // Можно отправить данные обратно в бот
+      const result = {
+        action: "moment_recorded",
+        start_time_ms: startTime,
+        end_time_ms: endTime,
+        duration_sec: duration,
+        video_url: videoUrl
+      };
+
+      if (window.Telegram?.WebApp) {
+        Telegram.WebApp.sendData(JSON.stringify(result));
+        // Не закрываем сразу — даём пользователю поработать со схемой
+      }
+
+      // Скрываем кнопки после записи
+      startBtn.style.display = 'none';
+      stopBtn.style.display = 'none';
+    });
   </script>
 </body>
 </html>
