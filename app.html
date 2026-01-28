@@ -360,6 +360,27 @@
       border: 1px solid rgba(255, 255, 255, 0.2);
       display: none;
     }
+
+    /* Временное информационное окно */
+    #tempInfo {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 15px 25px;
+      border-radius: 15px;
+      font-size: 16px;
+      font-weight: bold;
+      z-index: 250;
+      display: none;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.7);
+      min-width: 200px;
+    }
   </style>
 </head>
 <body>
@@ -383,7 +404,7 @@
       </div>
     </div>
 
-    <!-- Заголовок текущей вкладка -->
+    <!-- Заголовок текущей вкладки -->
     <div id="currentTabTitle">🎥 Видео матча</div>
 
     <!-- Индикатор записи -->
@@ -411,17 +432,20 @@
       <img id="fieldImage" src="1648780124_3-abrakadabra-fun-p-khokkeinoe-pole-sverkhu-10.jpg" alt="Хоккейная площадка">
       <div id="fieldInstruction">Нажмите на поле, чтобы поставить точку</div>
     </div>
-  </div>
 
-  <!-- Модальное окно выбора гол/сэйв -->
-  <div id="choiceModal">
-    <div class="modal-content">
-      <div class="modal-title">Выберите тип события</div>
-      <div class="choice-buttons">
-        <button id="goalBtn" class="choice-btn">Гол</button>
-        <button id="saveBtn" class="choice-btn">Сэйв</button>
+    <!-- Модальное окно выбора гол/сэйв -->
+    <div id="choiceModal">
+      <div class="modal-content">
+        <div class="modal-title">Выберите тип события</div>
+        <div class="choice-buttons">
+          <button id="goalBtn" class="choice-btn">Гол</button>
+          <button id="saveBtn" class="choice-btn">Сэйв</button>
+        </div>
       </div>
     </div>
+
+    <!-- Временное информационное окно -->
+    <div id="tempInfo"></div>
   </div>
 
   <script>
@@ -448,6 +472,7 @@
     const goalBtn = document.getElementById('goalBtn');
     const saveBtn = document.getElementById('saveBtn');
     const currentTabTitle = document.getElementById('currentTabTitle');
+    const tempInfo = document.getElementById('tempInfo');
     const tabs = document.querySelectorAll('.tab');
 
     // Переменные состояния
@@ -653,6 +678,22 @@
       };
     }
 
+    // Функция для показа временного сообщения
+    function showTempInfo(distance, angle, goalType) {
+      const goalName = goalType === 'leftGoal' ? 'Левые' : 'Правые';
+      tempInfo.innerHTML = `
+        <div style="margin-bottom: 8px; color: #4fc3f7;">Проверка расчета:</div>
+        <div>Дистанция: ${distance.toFixed(2)} м</div>
+        <div>Угол: ${angle.toFixed(1)}°</div>
+        <div>Ворота: ${goalName}</div>
+      `;
+      tempInfo.style.display = 'block';
+      
+      setTimeout(() => {
+        tempInfo.style.display = 'none';
+      }, 3000);
+    }
+
     // Создание точки
     function createMarker(x, y) {
       if (currentMarker) currentMarker.remove();
@@ -666,6 +707,12 @@
       currentMarker.addEventListener('touchstart', startDragTouch);
       
       fieldContainer.appendChild(currentMarker);
+      
+      // Показываем сообщение с расчетами на 3 секунды
+      const goalType = determineActiveGoal(x, y);
+      const goalCoords = currentGoalCoords[goalType];
+      const result = calculateDistanceAndAngle(x, y, goalCoords);
+      showTempInfo(result.distance, result.angle, goalType);
       
       setTimeout(() => {
         choiceModal.classList.add('visible');
