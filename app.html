@@ -383,7 +383,7 @@
       </div>
     </div>
 
-    <!-- Заголовок текущей вкладки -->
+    <!-- Заголовок текущей вкладка -->
     <div id="currentTabTitle">🎥 Видео матча</div>
 
     <!-- Индикатор записи -->
@@ -465,6 +465,27 @@
     let recordingStopTime = 0;
     let videoCurrentTime = 0;
     let isVideoPaused = false;
+
+    // Константы для расчета расстояния и угла
+    const ORIGINAL_IMAGE_SIZE = { width: 2050, height: 860 };
+    const ORIGINAL_GOAL_COORDS = {
+      leftGoal: {
+        leftPost: { x: 188, y: 401 },
+        rightPost: { x: 188, y: 458 },
+        center: { x: 188, y: 429.5 }
+      },
+      rightGoal: {
+        leftPost: { x: 1861, y: 457 },
+        rightPost: { x: 1861, y: 401 },
+        center: { x: 1861, y: 429 }
+      }
+    };
+    const REAL_GOAL_HEIGHT = 1.22; // метра
+    
+    let scaleFactor = 1;
+    let currentGoalCoords = {};
+    let pixelsPerMeter = 0;
+    let imageDisplayRect = { x: 0, y: 0, width: 0, height: 0 };
 
     // Параметры из URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -555,6 +576,81 @@
         pauseYouTubeVideo();
         isVideoPaused = true;
       }
+    }
+
+    // Функции для расчета расстояния и угла
+    function initializeGoalCoordinates() {
+      if (!fieldImage.complete) {
+        fieldImage.onload = function() {
+          setTimeout(updateGoalCoordinates, 100);
+        };
+      } else {
+        updateGoalCoordinates();
+      }
+    }
+
+    function updateGoalCoordinates() {
+      const rect = fieldImage.getBoundingClientRect();
+      const containerRect = fieldContainer.getBoundingClientRect();
+      
+      imageDisplayRect = {
+        x: rect.left - containerRect.left,
+        y: rect.top - containerRect.top,
+        width: rect.width,
+        height: rect.height
+      };
+      
+      scaleFactor = rect.width / ORIGINAL_IMAGE_SIZE.width;
+      
+      currentGoalCoords = {
+        leftGoal: scaleCoordinates(ORIGINAL_GOAL_COORDS.leftGoal),
+        rightGoal: scaleCoordinates(ORIGINAL_GOAL_COORDS.rightGoal)
+      };
+      
+      const originalGoalHeight = 57;
+      pixelsPerMeter = (originalGoalHeight * scaleFactor) / REAL_GOAL_HEIGHT;
+    }
+
+    function scaleCoordinates(coords) {
+      return {
+        leftPost: {
+          x: coords.leftPost.x * scaleFactor + imageDisplayRect.x,
+          y: coords.leftPost.y * scaleFactor + imageDisplayRect.y
+        },
+        rightPost: {
+          x: coords.rightPost.x * scaleFactor + imageDisplayRect.x,
+          y: coords.rightPost.y * scaleFactor + imageDisplayRect.y
+        },
+        center: {
+          x: coords.center.x * scaleFactor + imageDisplayRect.x,
+          y: coords.center.y * scaleFactor + imageDisplayRect.y
+        }
+      };
+    }
+
+    function determineActiveGoal(markerX, markerY) {
+      const imageCenterX = imageDisplayRect.x + imageDisplayRect.width / 2;
+      return markerX < imageCenterX ? 'rightGoal' : 'leftGoal';
+    }
+
+    function calculateDistanceAndAngle(markerX, markerY, goalCoords) {
+      const dx = goalCoords.center.x - markerX;
+      const dy = goalCoords.center.y - markerY;
+      
+      const distancePixels = Math.sqrt(dx * dx + dy * dy);
+      const distanceMeters = distancePixels / pixelsPerMeter;
+      
+      let angleRad = Math.atan2(dx, dy);
+      let angleDeg = angleRad * (180 / Math.PI);
+      
+      if (goalCoords === currentGoalCoords.rightGoal) {
+        angleDeg = -angleDeg;
+      }
+      
+      return {
+        distance: distanceMeters,
+        angle: angleDeg
+      };
     }
 
     // Создание точки
@@ -701,6 +797,23 @@
     // Обработка выбора гол/сэйв
     function handleChoice(type) {
       choiceModal.classList.remove('visible');
+      
+      let distance = 0;
+      let angle = 0;
+      let goalType = 'unknown';
+      
+      if (currentMarker) {
+        const markerX = currentMarker.offsetLeft;
+        const markerY = currentMarker.offsetTop;
+        
+        goalType = determineActiveGoal(markerX, markerY);
+        const goalCoords = currentGoalCoords[goalType];
+        
+        const result = calculateDistanceAndAngle(markerX, markerY, goalCoords);
+        distance = result.distance;
+        angle = result.angle;
+      }
+      
       const eventData = {
         type: type,
         timestamp: Date.now() - recordingStartTime,
@@ -708,9 +821,28 @@
         markerPosition: currentMarker ? {
           x: currentMarker.offsetLeft,
           y: currentMarker.offsetTop
-        } : null
+        } : null,
+        shotParams: {
+          distance: distance.toFixed(2),
+          angle: angle.toFixed(1),
+          goal: goalType
+        }
       };
+      
       events.push(eventData);
+      
+      if (window.Telegram?.WebApp) {
+        try {
+          Telegram.WebApp.sendData(JSON.stringify({
+            action: 'save_event',
+            event: eventData
+          }));
+          console.log('Данные отправлены в бот:', eventData);
+        } catch (error) {
+          console.error('Ошибка отправки данных:', error);
+        }
+      }
+      
       if (currentMarker) {
         currentMarker.remove();
         currentMarker = null;
@@ -774,6 +906,7 @@
     // Загрузка изображения
     fieldImage.onload = function() {
       console.log('Изображение загружено');
+      initializeGoalCoordinates();
     };
     fieldImage.onerror = function() {
       fieldInstruction.textContent = 'Изображение не загрузилось';
