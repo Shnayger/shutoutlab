@@ -1163,22 +1163,19 @@
       const eventData = {
         action: 'save_event',
         event: {
-          match_id: parseInt(matchId),
-          event_type: eventType,
-          type: eventType,
-          timestamp: timestamp,
-          video_time: videoTime,
-          videoTime: videoTime,
-          distance: parseFloat(distance.toFixed(2)),
-          angle: parseFloat(angle.toFixed(1)),
-          goal_type: goalType,
-          goal: goalType,
-          original_x: parseFloat(originalX.toFixed(2)),
-          originalX: parseFloat(originalX.toFixed(2)),
-          original_y: parseFloat(originalY.toFixed(2)),
-          originalY: parseFloat(originalY.toFixed(2))
+            match_id: parseInt(matchId),
+            event_type: eventType,
+            type: 1,  // Это значение из лога, но лучше сделать eventType
+            timestamp: timestamp,
+            video_time: videoTime,
+            distance: parseFloat(distance.toFixed(2)),
+            angle: parseFloat(angle.toFixed(1)),
+            goal_type: goalType,
+            goal: goalType,
+            original_x: parseFloat(originalX.toFixed(2)),
+            original_y: parseFloat(originalY.toFixed(2))
         }
-      };
+    };
       
       addDebugLog(`📦 Данные для отправки: ${JSON.stringify(eventData)}`);
       
@@ -1355,3 +1352,4 @@
   </script>
 </body>
 </html>
+
