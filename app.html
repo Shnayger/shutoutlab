@@ -40,7 +40,7 @@
       z-index: 1000;
     }
 
-    /* Основной интерфейс (видео) */
+    /* Основной интерфейс */
     #mainInterface {
       display: none;
       height: 100vh;
@@ -225,14 +225,26 @@
     /* Контейнер схемы */
     #fieldContainer {
       background: #0d47a1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Контейнер для изображения */
+    #fieldImageContainer {
+      width: 100%;
+      height: 100%;
+      position: relative;
     }
 
     /* Изображение схемы */
     #fieldImage {
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
-      object-fit: cover;
-      display: block;
+      object-fit: contain;
+      background: #0d47a1;
     }
 
     /* Активная точка на схеме */
@@ -257,6 +269,95 @@
       box-shadow: 0 0 30px rgba(255, 0, 0, 1);
     }
 
+    /* Маркеры ворот */
+    .goal-marker {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: #00FF00;
+      border-radius: 50%;
+      border: 2px solid white;
+      transform: translate(-50%, -50%);
+      z-index: 99;
+      pointer-events: none;
+    }
+
+    /* Линии ворот */
+    .goal-line {
+      position: absolute;
+      height: 3px;
+      background: rgba(255, 255, 0, 0.7);
+      z-index: 98;
+      pointer-events: none;
+    }
+
+    /* Информация о броске */
+    .shot-info {
+      position: absolute;
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      z-index: 200;
+      font-size: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      min-width: 140px;
+      backdrop-filter: blur(5px);
+    }
+
+    /* Инструкция на схеме */
+    #fieldInstruction {
+      position: absolute;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 25px;
+      font-size: 14px;
+      z-index: 45;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      text-align: center;
+      max-width: 90%;
+      white-space: nowrap;
+    }
+
+    /* Заголовок текущей вкладки */
+    #currentTabTitle {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      z-index: 45;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      display: none;
+    }
+
+    /* Панель информации о выстреле */
+    #shotInfoPanel {
+      position: absolute;
+      top: 50px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      display: none;
+      z-index: 100;
+      min-width: 150px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
     /* Модальное окно выбора */
     #choiceModal {
       position: fixed;
@@ -264,7 +365,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.9);
+      background: rgba(0, 0, 0, 0.95);
       display: none;
       align-items: center;
       justify-content: center;
@@ -324,41 +425,20 @@
       background: linear-gradient(135deg, #1565c0, #2196f3);
     }
 
-    /* Инструкция на схеме */
-    #fieldInstruction {
-      position: absolute;
-      bottom: 15px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.8);
-      color: white;
-      padding: 10px 20px;
-      border-radius: 25px;
-      font-size: 14px;
-      z-index: 45;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      text-align: center;
-      max-width: 90%;
-      white-space: nowrap;
-    }
-
-    /* Заголовок текущей вкладки */
-    #currentTabTitle {
+    /* Оверлей для отладки */
+    #debugOverlay {
       position: absolute;
       top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.8);
+      left: 10px;
+      background: rgba(0, 0, 0, 0.7);
       color: white;
-      padding: 6px 16px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 500;
-      z-index: 45;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 11px;
+      z-index: 1000;
       display: none;
+      max-width: 200px;
+      font-family: monospace;
     }
   </style>
 </head>
@@ -386,6 +466,13 @@
     <!-- Заголовок текущей вкладки -->
     <div id="currentTabTitle">🎥 Видео матча</div>
 
+    <!-- Панель информации о выстреле -->
+    <div id="shotInfoPanel">
+      <div style="font-weight: bold; margin-bottom: 10px; color: #4fc3f7;">Параметры броска</div>
+      <div>Дистанция: <span id="shotDistance">-</span> м</div>
+      <div>Угол атаки: <span id="shotAngle">-</span>°</div>
+    </div>
+
     <!-- Индикатор записи -->
     <div id="recordingIndicator">
       <div class="recordingDot"></div>
@@ -408,27 +495,34 @@
 
     <!-- Контейнер схемы -->
     <div id="fieldContainer" class="content-container">
-      <img id="fieldImage" src="1648780124_3-abrakadabra-fun-p-khokkeinoe-pole-sverkhu-10.jpg" alt="Хоккейная площадка">
-      <div id="fieldInstruction">Нажмите на поле, чтобы поставить точку</div>
+      <div id="fieldImageContainer">
+        <img id="fieldImage" src="1648780124_3-abrakadabra-fun-p-khokkeinoe-pole-sverkhu-10.jpg" alt="Хоккейная площадка">
+      </div>
+      <div id="fieldInstruction">Нажмите на поле, чтобы поставить точку броска</div>
     </div>
-  </div>
 
-  <!-- Модальное окно выбора гол/сэйв -->
-  <div id="choiceModal">
-    <div class="modal-content">
-      <div class="modal-title">Выберите тип события</div>
-      <div class="choice-buttons">
-        <button id="goalBtn" class="choice-btn">Гол</button>
-        <button id="saveBtn" class="choice-btn">Сэйв</button>
+    <!-- Модальное окно выбора гол/сэйв -->
+    <div id="choiceModal">
+      <div class="modal-content">
+        <div class="modal-title">Выберите тип события</div>
+        <div class="choice-buttons">
+          <button id="goalBtn" class="choice-btn">Гол</button>
+          <button id="saveBtn" class="choice-btn">Сэйв</button>
+        </div>
       </div>
     </div>
+
+    <!-- Оверлей для отладки -->
+    <div id="debugOverlay"></div>
   </div>
 
   <script>
     // Инициализация Telegram Web App
-    if (window.Telegram?.WebApp) {
-      Telegram.WebApp.ready();
-      Telegram.WebApp.expand();
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      tg.enableClosingConfirmation();
     }
 
     // Элементы
@@ -437,10 +531,11 @@
     const tabsPanel = document.getElementById('tabsPanel');
     const videoContainer = document.getElementById('videoContainer');
     const fieldContainer = document.getElementById('fieldContainer');
+    const fieldImage = document.getElementById('fieldImage');
+    const fieldImageContainer = document.getElementById('fieldImageContainer');
     const videoFrame = document.getElementById('videoFrame');
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
-    const fieldImage = document.getElementById('fieldImage');
     const fieldInstruction = document.getElementById('fieldInstruction');
     const recordingIndicator = document.getElementById('recordingIndicator');
     const recordingTimer = document.getElementById('recordingTimer');
@@ -448,7 +543,11 @@
     const goalBtn = document.getElementById('goalBtn');
     const saveBtn = document.getElementById('saveBtn');
     const currentTabTitle = document.getElementById('currentTabTitle');
+    const shotInfoPanel = document.getElementById('shotInfoPanel');
+    const shotDistance = document.getElementById('shotDistance');
+    const shotAngle = document.getElementById('shotAngle');
     const tabs = document.querySelectorAll('.tab');
+    const debugOverlay = document.getElementById('debugOverlay');
 
     // Переменные состояния
     let isRecording = false;
@@ -465,29 +564,227 @@
     let recordingStopTime = 0;
     let videoCurrentTime = 0;
     let isVideoPaused = false;
-
+    
     // Параметры из URL
     const urlParams = new URLSearchParams(window.location.search);
     const videoUrl = urlParams.get('video');
+    const matchDate = urlParams.get('date');
+    const opponent = urlParams.get('opponent');
+    const iceTime = urlParams.get('ice_time');
 
-    // Загружаем видео
-    if (videoUrl) {
-      let finalUrl = videoUrl;
-      if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
-        let videoId;
-        if (videoUrl.includes('youtu.be/')) {
-          videoId = videoUrl.split('youtu.be/')[1].split('?')[0];
-        } else {
-          videoId = videoUrl.split('v=')[1]?.split('&')[0];
-        }
-        if (videoId) {
-          finalUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&controls=1&enablejsapi=1`;
-        }
-      } else if (videoUrl.includes('vimeo.com')) {
-        const vimeoId = videoUrl.split('/').pop();
-        finalUrl = `https://player.vimeo.com/video/${vimeoId}?autoplay=0`;
+    // Исходные координаты ворот (оригинальное изображение 2050×860)
+    const ORIGINAL_IMAGE_SIZE = { width: 2050, height: 860 };
+    
+    const ORIGINAL_GOAL_COORDS = {
+      leftGoal: {
+        leftPost: { x: 188, y: 401 },    // Левая штанга (для вратаря в левых воротах)
+        rightPost: { x: 188, y: 458 },   // Правая штанга (для вратаря в левых воротах)
+        center: { x: 188, y: 429.5 }     // Центр левых ворот
+      },
+      rightGoal: {
+        leftPost: { x: 1861, y: 457 },   // Левая штанга (для вратаря в правых воротах)
+        rightPost: { x: 1861, y: 401 },  // Правая штанга (для вратаря в правых воротах)
+        center: { x: 1861, y: 429 }      // Центр правых ворот
       }
-      videoFrame.src = finalUrl;
+    };
+
+    // Размеры ворот в реальных метрах
+    const REAL_GOAL_WIDTH = 1.83;   // 1.83 метра (ширина между штангами)
+    const REAL_GOAL_HEIGHT = 1.22;  // 1.22 метра (высота от льда до перекладины)
+    const RINK_WIDTH_METERS = 30;   // ~30 метров (стандартная ширина площадки NHL)
+    const RINK_LENGTH_METERS = 61;  // ~61 метр (стандартная длина площадки NHL)
+
+    // Масштаб и преобразованные координаты
+    let scaleFactor = 1;
+    let currentGoalCoords = {};
+    let pixelsPerMeter = 0;
+    let imageDisplayRect = { x: 0, y: 0, width: 0, height: 0 };
+
+    // Инициализация
+    function init() {
+      loadVideo();
+      setupEventListeners();
+      initializeGoalCoordinates();
+      checkOrientation();
+      startBtn.disabled = false;
+    }
+
+    // Загрузка видео
+    function loadVideo() {
+      if (videoUrl) {
+        let finalUrl = videoUrl;
+        if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
+          let videoId;
+          if (videoUrl.includes('youtu.be/')) {
+            videoId = videoUrl.split('youtu.be/')[1].split('?')[0];
+          } else {
+            videoId = videoUrl.split('v=')[1]?.split('&')[0];
+          }
+          if (videoId) {
+            finalUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&controls=1&enablejsapi=1`;
+          }
+        } else if (videoUrl.includes('vimeo.com')) {
+          const vimeoId = videoUrl.split('/').pop();
+          finalUrl = `https://player.vimeo.com/video/${vimeoId}?autoplay=0`;
+        }
+        videoFrame.src = finalUrl;
+      }
+    }
+
+    // Инициализация координат ворот с учетом масштаба
+    function initializeGoalCoordinates() {
+      // Ждем загрузки изображения
+      if (!fieldImage.complete) {
+        fieldImage.onload = function() {
+          setTimeout(updateGoalCoordinates, 100);
+        };
+      } else {
+        updateGoalCoordinates();
+      }
+    }
+
+    // Обновление координат ворот при изменении размера
+    function updateGoalCoordinates() {
+      const containerRect = fieldImageContainer.getBoundingClientRect();
+      const imgRect = fieldImage.getBoundingClientRect();
+      
+      // Сохраняем отображаемую область изображения
+      imageDisplayRect = {
+        x: imgRect.left - containerRect.left,
+        y: imgRect.top - containerRect.top,
+        width: imgRect.width,
+        height: imgRect.height
+      };
+      
+      // Коэффициент масштабирования
+      scaleFactor = imgRect.width / ORIGINAL_IMAGE_SIZE.width;
+      
+      // Масштабируем координаты ворот
+      currentGoalCoords = {
+        leftGoal: scaleCoordinates(ORIGINAL_GOAL_COORDS.leftGoal),
+        rightGoal: scaleCoordinates(ORIGINAL_GOAL_COORDS.rightGoal)
+      };
+      
+      // Вычисляем пикселей на метр (на основе высоты ворот)
+      const originalGoalHeight = Math.abs(
+        ORIGINAL_GOAL_COORDS.leftGoal.rightPost.y - ORIGINAL_GOAL_COORDS.leftGoal.leftPost.y
+      );
+      pixelsPerMeter = (originalGoalHeight * scaleFactor) / REAL_GOAL_HEIGHT;
+      
+      // Отображаем маркеры ворот
+      drawGoalMarkers();
+      
+      // Отладка
+      updateDebugInfo();
+    }
+
+    // Масштабирование координат
+    function scaleCoordinates(coords) {
+      return {
+        leftPost: {
+          x: coords.leftPost.x * scaleFactor + imageDisplayRect.x,
+          y: coords.leftPost.y * scaleFactor + imageDisplayRect.y
+        },
+        rightPost: {
+          x: coords.rightPost.x * scaleFactor + imageDisplayRect.x,
+          y: coords.rightPost.y * scaleFactor + imageDisplayRect.y
+        },
+        center: {
+          x: coords.center.x * scaleFactor + imageDisplayRect.x,
+          y: coords.center.y * scaleFactor + imageDisplayRect.y
+        }
+      };
+    }
+
+    // Обратное преобразование координат (для сохранения)
+    function unscaleCoordinates(x, y) {
+      return {
+        x: (x - imageDisplayRect.x) / scaleFactor,
+        y: (y - imageDisplayRect.y) / scaleFactor
+      };
+    }
+
+    // Определение, в какие ворота бьют
+    function determineActiveGoal(shootPoint) {
+      const containerCenter = fieldImageContainer.getBoundingClientRect().width / 2;
+      const relativeX = shootPoint.x - imageDisplayRect.x;
+      
+      // Если точка броска в левой половине изображения - бьют в правые ворота
+      if (relativeX < imageDisplayRect.width / 2) {
+        return 'rightGoal';
+      } else {
+        return 'leftGoal';
+      }
+    }
+
+    // Расчет расстояния в метрах
+    function calculateDistance(point1, point2) {
+      const dx = point2.x - point1.x;
+      const dy = point2.y - point1.y;
+      const distancePixels = Math.sqrt(dx * dx + dy * dy);
+      return distancePixels / pixelsPerMeter;
+    }
+
+    // Расчет угла атаки в градусах
+    function calculateAttackAngle(shootPoint, goalCoords) {
+      const dx = shootPoint.x - goalCoords.center.x;
+      const dy = shootPoint.y - goalCoords.center.y;
+      
+      // Угол от -90 до +90 градусов относительно линии ворот
+      let angleRad = Math.atan2(dx, Math.abs(dy));
+      let angleDeg = angleRad * (180 / Math.PI);
+      
+      // Нормализуем угол (0° - прямой бросок в центр, ±90° - с края)
+      return angleDeg;
+    }
+
+    // Отображение маркеров ворот
+    function drawGoalMarkers() {
+      // Удаляем старые маркеры
+      document.querySelectorAll('.goal-marker, .goal-line').forEach(el => el.remove());
+      
+      // Маркеры для левых ворот
+      createGoalMarker(currentGoalCoords.leftGoal.center, 'left-center');
+      createGoalMarker(currentGoalCoords.leftGoal.leftPost, 'left-left');
+      createGoalMarker(currentGoalCoords.leftGoal.rightPost, 'left-right');
+      
+      // Маркеры для правых ворот
+      createGoalMarker(currentGoalCoords.rightGoal.center, 'right-center');
+      createGoalMarker(currentGoalCoords.rightGoal.leftPost, 'right-left');
+      createGoalMarker(currentGoalCoords.rightGoal.rightPost, 'right-right');
+      
+      // Линии ворот
+      createGoalLine(
+        currentGoalCoords.leftGoal.leftPost,
+        currentGoalCoords.leftGoal.rightPost,
+        'left-goal-line'
+      );
+      
+      createGoalLine(
+        currentGoalCoords.rightGoal.leftPost,
+        currentGoalCoords.rightGoal.rightPost,
+        'right-goal-line'
+      );
+    }
+
+    function createGoalMarker(coords, id) {
+      const marker = document.createElement('div');
+      marker.className = 'goal-marker';
+      marker.id = id;
+      marker.style.left = coords.x + 'px';
+      marker.style.top = coords.y + 'px';
+      fieldContainer.appendChild(marker);
+    }
+
+    function createGoalLine(start, end, id) {
+      const line = document.createElement('div');
+      line.className = 'goal-line';
+      line.id = id;
+      line.style.left = start.x + 'px';
+      line.style.top = start.y + 'px';
+      line.style.width = Math.abs(end.x - start.x) + 'px';
+      line.style.height = Math.abs(end.y - start.y) + 'px';
+      fieldContainer.appendChild(line);
     }
 
     // Проверка ориентации
@@ -495,9 +792,12 @@
       const isLandscape = window.innerWidth > window.innerHeight;
       rotateScreen.style.display = isLandscape ? 'none' : 'flex';
       mainInterface.style.display = isLandscape ? 'block' : 'none';
+      
+      if (isLandscape) {
+        // Обновляем координаты при изменении размера
+        setTimeout(updateGoalCoordinates, 100);
+      }
     }
-    window.addEventListener('resize', checkOrientation);
-    checkOrientation();
 
     // Форматирование времени
     function formatTime(ms) {
@@ -516,18 +816,209 @@
       }
     }
 
-    // Пауза видео
-    function pauseYouTubeVideo() {
-      try {
-        if (videoFrame.contentWindow) {
-          videoFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-        }
-      } catch (e) {}
+    // Создание маркера
+    function createMarker(x, y) {
+      if (currentMarker) currentMarker.remove();
+      
+      currentMarker = document.createElement('div');
+      currentMarker.className = 'marker-point';
+      currentMarker.style.left = x + 'px';
+      currentMarker.style.top = y + 'px';
+      
+      currentMarker.addEventListener('mousedown', startDrag);
+      currentMarker.addEventListener('touchstart', startDragTouch);
+      
+      fieldContainer.appendChild(currentMarker);
+      
+      // Показываем панель информации
+      updateShotInfo(x, y);
+      
+      // Показываем модальное окно выбора
+      setTimeout(() => {
+        choiceModal.classList.add('visible');
+      }, 300);
     }
 
-    // Получить текущее время видео
-    function getVideoCurrentTime() {
-      return videoCurrentTime;
+    // Обновление информации о броске
+    function updateShotInfo(x, y) {
+      const shootPoint = { x, y };
+      const targetGoal = determineActiveGoal(shootPoint);
+      const goalCoords = currentGoalCoords[targetGoal];
+      
+      const distance = calculateDistance(shootPoint, goalCoords.center);
+      const angle = calculateAttackAngle(shootPoint, goalCoords);
+      
+      shotDistance.textContent = distance.toFixed(2);
+      shotAngle.textContent = angle.toFixed(1);
+      shotInfoPanel.style.display = 'block';
+      
+      // Сохраняем для использования в handleChoice
+      window.lastShotData = {
+        point: shootPoint,
+        goal: targetGoal,
+        distance: distance,
+        angle: angle,
+        originalCoords: unscaleCoordinates(x, y)
+      };
+    }
+
+    // Обработка выбора
+    async function handleChoice(type) {
+      choiceModal.classList.remove('visible');
+      
+      if (!currentMarker || !window.lastShotData) return;
+      
+      const shotData = window.lastShotData;
+      const eventTime = Date.now() - recordingStartTime;
+      
+      const eventData = {
+        type: type,
+        timestamp: eventTime,
+        videoTime: videoCurrentTime,
+        shotParams: {
+          distance: shotData.distance.toFixed(2),
+          angle: shotData.angle.toFixed(1),
+          goal: shotData.goal,
+          originalX: shotData.originalCoords.x,
+          originalY: shotData.originalCoords.y
+        },
+        matchInfo: {
+          date: matchDate,
+          opponent: opponent,
+          iceTime: iceTime
+        }
+      };
+      
+      events.push(eventData);
+      
+      // Отправляем данные в Telegram бот
+      await sendDataToBot(eventData);
+      
+      // Показываем уведомление
+      showNotification(`✅ Данные сохранены: ${type === 'goal' ? 'Гол' : 'Сэйв'} на ${shotData.distance.toFixed(1)}м, угол ${shotData.angle.toFixed(0)}°`);
+      
+      // Очищаем
+      if (currentMarker) {
+        currentMarker.remove();
+        currentMarker = null;
+      }
+      
+      shotInfoPanel.style.display = 'none';
+      switchTab('video');
+      tabsPanel.classList.remove('visible');
+      startBtn.style.display = 'block';
+      stopBtn.style.display = 'none';
+      isVideoPaused = false;
+    }
+
+    // Отправка данных в бот
+    async function sendDataToBot(eventData) {
+      if (!tg) {
+        console.log('Данные для отправки:', eventData);
+        return;
+      }
+      
+      try {
+        const message = 
+          `🎯 *Новое событие*\n` +
+          `📅 ${matchDate} | ${opponent}\n` +
+          `⏱️ ${formatTime(eventData.timestamp)}\n` +
+          `🎯 *${eventData.type === 'goal' ? 'ГОЛ' : 'СЭЙВ'}*\n` +
+          `📏 Дистанция: ${eventData.shotParams.distance} м\n` +
+          `📐 Угол атаки: ${eventData.shotParams.angle}°\n` +
+          `🎯 Ворота: ${eventData.shotParams.goal === 'leftGoal' ? 'Левые' : 'Правые'}`;
+        
+        // Отправляем данные через Telegram WebApp
+        tg.sendData(JSON.stringify({
+          action: 'save_event',
+          event: eventData
+        }));
+        
+        // Также можно показать уведомление в боте
+        tg.showAlert(`Событие сохранено: ${eventData.type === 'goal' ? 'Гол' : 'Сэйв'}`);
+        
+      } catch (error) {
+        console.error('Ошибка отправки данных:', error);
+      }
+    }
+
+    // Показать уведомление
+    function showNotification(text) {
+      if (tg) {
+        tg.showAlert(text);
+      } else {
+        alert(text);
+      }
+    }
+
+    // Начало записи
+    function startRecording() {
+      if (isRecording) return;
+      isRecording = true;
+      recordingStartTime = Date.now();
+      events = [];
+      recordingIndicator.style.display = 'flex';
+      recordingTimer.style.display = 'block';
+      startBtn.style.display = 'none';
+      stopBtn.style.display = 'block';
+      updateTimer();
+      timerInterval = setInterval(updateTimer, 1000);
+      
+      showNotification('⏺️ Запись начата');
+    }
+
+    // Остановка записи
+    function stopRecording() {
+      if (!isRecording) return;
+      isRecording = false;
+      recordingStopTime = Date.now();
+      
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      
+      recordingIndicator.style.display = 'none';
+      recordingTimer.style.display = 'none';
+      
+      // Сохраняем все события
+      if (events.length > 0) {
+        saveAllEvents();
+      }
+      
+      showNotification(`⏹️ Запись остановлена. Событий: ${events.length}`);
+      
+      tabsPanel.classList.add('visible');
+      switchTab('field');
+    }
+
+    // Сохранение всех событий
+    async function saveAllEvents() {
+      if (!tg) {
+        console.log('Все события:', events);
+        return;
+      }
+      
+      try {
+        const summary = {
+          action: 'save_summary',
+          matchInfo: {
+            date: matchDate,
+            opponent: opponent,
+            iceTime: iceTime,
+            totalEvents: events.length,
+            goals: events.filter(e => e.type === 'goal').length,
+            saves: events.filter(e => e.type === 'save').length
+          },
+          events: events
+        };
+        
+        tg.sendData(JSON.stringify(summary));
+        tg.showAlert(`Анализ завершен! Событий: ${events.length}`);
+        
+      } catch (error) {
+        console.error('Ошибка сохранения:', error);
+      }
     }
 
     // Переключение вкладок
@@ -546,37 +1037,38 @@
         fieldContainer.classList.remove('active');
         currentTabTitle.textContent = '🎥 Видео матча';
         currentTabTitle.style.display = 'block';
-        if (isVideoPaused) pauseYouTubeVideo();
       } else {
         videoContainer.classList.remove('active');
         fieldContainer.classList.add('active');
         currentTabTitle.textContent = '🏒 Схема поля';
         currentTabTitle.style.display = 'block';
-        pauseYouTubeVideo();
-        isVideoPaused = true;
       }
     }
 
-    // Создание точки
-    function createMarker(x, y) {
-      if (currentMarker) currentMarker.remove();
+    // Обработка кликов по схеме
+    function handleFieldClick(e) {
+      if (e.target.classList.contains('marker-point') || 
+          e.target.classList.contains('goal-marker') ||
+          e.target.classList.contains('goal-line')) {
+        return;
+      }
       
-      currentMarker = document.createElement('div');
-      currentMarker.className = 'marker-point';
-      currentMarker.style.left = x + 'px';
-      currentMarker.style.top = y + 'px';
+      const rect = fieldContainer.getBoundingClientRect();
+      let x, y;
       
-      currentMarker.addEventListener('mousedown', startDrag);
-      currentMarker.addEventListener('touchstart', startDragTouch);
+      if (e.type === 'click' || e.type === 'mousedown') {
+        x = e.clientX - rect.left;
+        y = e.clientY - rect.top;
+      } else if (e.type === 'touchstart') {
+        const touch = e.touches[0];
+        x = touch.clientX - rect.left;
+        y = touch.clientY - rect.top;
+      }
       
-      fieldContainer.appendChild(currentMarker);
-      
-      setTimeout(() => {
-        choiceModal.classList.add('visible');
-      }, 300);
+      createMarker(x, y);
     }
 
-    // Перетаскивание точки
+    // Функции для перетаскивания
     function startDrag(e) {
       e.preventDefault();
       e.stopPropagation();
@@ -611,13 +1103,9 @@
       const deltaY = e.clientY - dragStartY;
       const newX = markerStartX + deltaX;
       const newY = markerStartY + deltaY;
-      const rect = fieldContainer.getBoundingClientRect();
-      const maxX = rect.width;
-      const maxY = rect.height;
-      const clampedX = Math.max(0, Math.min(newX, maxX));
-      const clampedY = Math.max(0, Math.min(newY, maxY));
-      currentMarker.style.left = clampedX + 'px';
-      currentMarker.style.top = clampedY + 'px';
+      currentMarker.style.left = newX + 'px';
+      currentMarker.style.top = newY + 'px';
+      updateShotInfo(newX, newY);
     }
 
     function dragTouch(e) {
@@ -627,13 +1115,9 @@
       const deltaY = touch.clientY - dragStartY;
       const newX = markerStartX + deltaX;
       const newY = markerStartY + deltaY;
-      const rect = fieldContainer.getBoundingClientRect();
-      const maxX = rect.width;
-      const maxY = rect.height;
-      const clampedX = Math.max(0, Math.min(newX, maxX));
-      const clampedY = Math.max(0, Math.min(newY, maxY));
-      currentMarker.style.left = clampedX + 'px';
-      currentMarker.style.top = clampedY + 'px';
+      currentMarker.style.left = newX + 'px';
+      currentMarker.style.top = newY + 'px';
+      updateShotInfo(newX, newY);
     }
 
     function stopDrag() {
@@ -650,141 +1134,82 @@
       document.removeEventListener('touchend', stopDragTouch);
     }
 
-    // Обработка кликов по схеме
-    function handleFieldClick(e) {
-      if (e.target.classList.contains('marker-point')) return;
-      const rect = fieldContainer.getBoundingClientRect();
-      let x, y;
-      if (e.type === 'click' || e.type === 'mousedown') {
-        x = e.clientX - rect.left;
-        y = e.clientY - rect.top;
-      } else if (e.type === 'touchstart') {
-        const touch = e.touches[0];
-        x = touch.clientX - rect.left;
-        y = touch.clientY - rect.top;
-      }
-      createMarker(x, y);
-    }
-
-    // Начало записи
-    function startRecording() {
-      if (isRecording) return;
-      isRecording = true;
-      recordingStartTime = Date.now();
-      events = [];
-      recordingIndicator.style.display = 'flex';
-      recordingTimer.style.display = 'block';
-      startBtn.style.display = 'none';
-      stopBtn.style.display = 'block';
-      updateTimer();
-      timerInterval = setInterval(updateTimer, 1000);
-    }
-
-    // Остановка записи
-    function stopRecording() {
-      if (!isRecording) return;
-      isRecording = false;
-      recordingStopTime = Date.now();
-      videoCurrentTime = getVideoCurrentTime();
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-      }
-      recordingIndicator.style.display = 'none';
-      recordingTimer.style.display = 'none';
-      pauseYouTubeVideo();
-      isVideoPaused = true;
-      tabsPanel.classList.add('visible');
-      switchTab('field');
-    }
-
-    // Обработка выбора гол/сэйв
-    function handleChoice(type) {
-      choiceModal.classList.remove('visible');
-      const eventData = {
-        type: type,
-        timestamp: Date.now() - recordingStartTime,
-        videoTime: videoCurrentTime,
-        markerPosition: currentMarker ? {
-          x: currentMarker.offsetLeft,
-          y: currentMarker.offsetTop
-        } : null
-      };
-      events.push(eventData);
-      if (currentMarker) {
-        currentMarker.remove();
-        currentMarker = null;
-      }
-      switchTab('video');
-      tabsPanel.classList.remove('visible');
-      startBtn.style.display = 'block';
-      stopBtn.style.display = 'none';
-      isVideoPaused = false;
-    }
-
-    // Обработчики кнопок
-    startBtn.addEventListener('click', startRecording);
-    stopBtn.addEventListener('click', stopRecording);
-
-    // Обработчики для вкладок
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        const tabName = tab.getAttribute('data-tab');
-        switchTab(tabName);
+    // Настройка обработчиков событий
+    function setupEventListeners() {
+      // Ориентация
+      window.addEventListener('resize', checkOrientation);
+      window.addEventListener('orientationchange', checkOrientation);
+      
+      // Кнопки
+      startBtn.addEventListener('click', startRecording);
+      stopBtn.addEventListener('click', stopRecording);
+      
+      // Вкладки
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const tabName = tab.getAttribute('data-tab');
+          switchTab(tabName);
+        });
       });
-    });
-
-    // Обработчики для схемы
-    fieldContainer.addEventListener('click', handleFieldClick);
-    fieldContainer.addEventListener('touchstart', function(e) {
-      e.preventDefault();
-      const touch = e.touches[0];
-      const rect = fieldContainer.getBoundingClientRect();
-      const x = touch.clientX - rect.left;
-      const y = touch.clientY - rect.top;
-      createMarker(x, y);
-    });
-
-    // Обработчики для выбора
-    goalBtn.addEventListener('click', () => handleChoice('goal'));
-    saveBtn.addEventListener('click', () => handleChoice('save'));
-
-    // Проверяем, когда видео готово
-    function checkVideoReady() {
-      window.addEventListener('message', (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.event === 'onReady') {
-            startBtn.disabled = false;
-          }
-          if (data.info && data.info.currentTime !== undefined) {
-            videoCurrentTime = data.info.currentTime;
-          }
-          if (data.event === 'infoDelivery' && data.info && data.info.currentTime !== undefined) {
-            videoCurrentTime = data.info.currentTime;
-          }
-        } catch (e) {}
+      
+      // Схема
+      fieldContainer.addEventListener('click', handleFieldClick);
+      fieldContainer.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 1) {
+          e.preventDefault();
+          const touch = e.touches[0];
+          const rect = fieldContainer.getBoundingClientRect();
+          const x = touch.clientX - rect.left;
+          const y = touch.clientY - rect.top;
+          createMarker(x, y);
+        }
       });
-      setTimeout(() => {
-        startBtn.disabled = false;
-      }, 3000);
+      
+      // Выбор
+      goalBtn.addEventListener('click', () => handleChoice('goal'));
+      saveBtn.addEventListener('click', () => handleChoice('save'));
+      
+      // Видео
+      window.addEventListener('message', handleVideoMessage);
+      
+      // Изображение
+      fieldImage.addEventListener('load', updateGoalCoordinates);
     }
-    checkVideoReady();
 
-    // Загрузка изображения
-    fieldImage.onload = function() {
-      console.log('Изображение загружено');
-    };
-    fieldImage.onerror = function() {
-      fieldInstruction.textContent = 'Изображение не загрузилось';
-      fieldInstruction.style.backgroundColor = 'rgba(198, 40, 40, 0.9)';
-    };
+    // Обработка сообщений от видео
+    function handleVideoMessage(event) {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.event === 'onReady') {
+          startBtn.disabled = false;
+        }
+        if (data.info && data.info.currentTime !== undefined) {
+          videoCurrentTime = data.info.currentTime;
+        }
+      } catch (e) {}
+    }
 
-    // Инициализация
-    document.addEventListener('DOMContentLoaded', function() {
-      currentTabTitle.style.display = 'block';
+    // Отладочная информация
+    function updateDebugInfo() {
+      if (debugOverlay.style.display === 'block') {
+        debugOverlay.innerHTML = `
+          Масштаб: ${scaleFactor.toFixed(4)}<br>
+          Пикс/метр: ${pixelsPerMeter.toFixed(2)}<br>
+          Изображение: ${imageDisplayRect.width.toFixed(0)}×${imageDisplayRect.height.toFixed(0)}<br>
+          Левые ворота X: ${currentGoalCoords.leftGoal?.center.x.toFixed(0)}<br>
+          Правые ворота X: ${currentGoalCoords.rightGoal?.center.x.toFixed(0)}
+        `;
+      }
+    }
+
+    // Для отладки - показать/скрыть информацию
+    document.addEventListener('dblclick', function() {
+      debugOverlay.style.display = debugOverlay.style.display === 'block' ? 'none' : 'block';
+      updateDebugInfo();
     });
+
+    // Инициализация при загрузке
+    document.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 </html>
-
