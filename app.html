@@ -203,9 +203,6 @@
       left: 0;
       width: 100%;
       height: 100%;
-    }
-
-    .content-container:not(.active) {
       display: none;
     }
 
@@ -360,6 +357,12 @@
       text-align: center;
       max-width: 90%;
       white-space: nowrap;
+      /* Скрыта по умолчанию, показывается только на вкладке поля */
+      display: none;
+    }
+
+    #fieldContainer.active #fieldInstruction {
+      display: block;
     }
 
     #currentTabTitle {
@@ -377,6 +380,10 @@
       backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.2);
       display: none;
+    }
+
+    .content-container.active #currentTabTitle {
+      display: block;
     }
 
     #tempInfo {
@@ -414,6 +421,10 @@
       border: 1px solid rgba(255, 255, 255, 0.3);
       text-align: center;
       display: none;
+    }
+
+    #fieldContainer.active #goalSelectionPanel {
+      display: block;
     }
 
     .image-loaded #fieldContainer {
@@ -611,59 +622,72 @@
         videoContainer.classList.add('active');
         fieldContainer.classList.remove('active');
         currentTabTitle.textContent = '🎥 Видео матча';
-        currentTabTitle.style.display = 'block';
         if (isVideoPaused) pauseYouTubeVideo();
       } else {
         videoContainer.classList.remove('active');
         fieldContainer.classList.add('active');
         currentTabTitle.textContent = '🏒 Схема поля';
-        currentTabTitle.style.display = 'block';
         pauseYouTubeVideo();
         isVideoPaused = true;
         
         // Обновляем координаты при переключении на вкладку поля
         setTimeout(updateGoalCoordinates, 100);
+        
+        // Сбрасываем выбор ворот
+        if (selectedGoal) {
+          selectGoal(selectedGoal);
+        }
       }
     }
 
     function updateGoalCoordinates() {
-      if (!isImageLoaded) return;
+      if (!isImageLoaded) {
+        console.log('Изображение еще не загружено');
+        return;
+      }
       
-      imageRect = fieldImage.getBoundingClientRect();
-      const containerRect = fieldContainer.getBoundingClientRect();
-      
-      // Рассчитываем масштабный коэффициент
-      scaleFactor = imageRect.width / ORIGINAL_IMAGE_WIDTH;
-      
-      // Рассчитываем смещение изображения относительно контейнера
-      const offsetX = imageRect.left - containerRect.left;
-      const offsetY = imageRect.top - containerRect.top;
-      
-      // Масштабируем координаты ворот относительно изображения
-      currentGoalCoords = {
-        leftGoal: {
-          x: ORIGINAL_GOAL_COORDS.leftGoal.x * scaleFactor + offsetX,
-          y: ORIGINAL_GOAL_COORDS.leftGoal.y * scaleFactor + offsetY
-        },
-        rightGoal: {
-          x: ORIGINAL_GOAL_COORDS.rightGoal.x * scaleFactor + offsetX,
-          y: ORIGINAL_GOAL_COORDS.rightGoal.y * scaleFactor + offsetY
-        }
-      };
-      
-      // Вычисляем пикселей на метр
-      pixelsPerMeter = (ORIGINAL_IMAGE_WIDTH * scaleFactor) / RINK_LENGTH_METERS;
-      
-      console.log('Updated goal coordinates:', currentGoalCoords);
-      console.log('Scale factor:', scaleFactor);
-      console.log('Pixels per meter:', pixelsPerMeter);
-      
-      createGoalMarkers();
+      try {
+        imageRect = fieldImage.getBoundingClientRect();
+        const containerRect = fieldContainer.getBoundingClientRect();
+        
+        console.log('Image rect:', imageRect);
+        console.log('Container rect:', containerRect);
+        
+        // Рассчитываем масштабный коэффициент
+        scaleFactor = imageRect.width / ORIGINAL_IMAGE_WIDTH;
+        
+        // Рассчитываем координаты ворот относительно контейнера
+        currentGoalCoords = {
+          leftGoal: {
+            x: (ORIGINAL_GOAL_COORDS.leftGoal.x * scaleFactor) + (imageRect.left - containerRect.left),
+            y: (ORIGINAL_GOAL_COORDS.leftGoal.y * scaleFactor) + (imageRect.top - containerRect.top)
+          },
+          rightGoal: {
+            x: (ORIGINAL_GOAL_COORDS.rightGoal.x * scaleFactor) + (imageRect.left - containerRect.left),
+            y: (ORIGINAL_GOAL_COORDS.rightGoal.y * scaleFactor) + (imageRect.top - containerRect.top)
+          }
+        };
+        
+        // Вычисляем пикселей на метр
+        pixelsPerMeter = (ORIGINAL_IMAGE_WIDTH * scaleFactor) / RINK_LENGTH_METERS;
+        
+        console.log('Updated goal coordinates:', currentGoalCoords);
+        console.log('Scale factor:', scaleFactor);
+        console.log('Pixels per meter:', pixelsPerMeter);
+        
+        createGoalMarkers();
+      } catch (error) {
+        console.error('Error updating goal coordinates:', error);
+      }
     }
 
     function createGoalMarkers() {
       // Удаляем старые маркеры
-      goalMarkers.forEach(marker => marker.remove());
+      goalMarkers.forEach(marker => {
+        if (marker && marker.parentNode) {
+          marker.remove();
+        }
+      });
       goalMarkers = [];
       
       // Создаем маркер для левых ворот
@@ -688,32 +712,29 @@
       fieldContainer.appendChild(rightGoalMarker);
       goalMarkers.push(rightGoalMarker);
       
-      // Сбрасываем выбор
-      selectedGoal = null;
-      goalMarkers.forEach(marker => marker.classList.remove('selected'));
-      
-      // Показываем инструкцию
-      fieldInstruction.textContent = 'Выберите ворота, в которых стоите';
-      goalSelectionPanel.style.display = 'block';
+      console.log('Goal markers created:', goalMarkers.length);
     }
 
     function selectGoal(goalType) {
+      console.log('Selecting goal:', goalType);
+      
       // Снимаем выделение со всех маркеров
-      goalMarkers.forEach(marker => marker.classList.remove('selected'));
+      goalMarkers.forEach(marker => {
+        if (marker) marker.classList.remove('selected');
+      });
       
       // Выделяем выбранные ворота
       selectedGoal = goalType;
       goalMarkers.forEach(marker => {
-        if (marker.dataset.goal === goalType) {
+        if (marker && marker.dataset.goal === goalType) {
           marker.classList.add('selected');
         }
       });
       
       // Обновляем инструкцию
       fieldInstruction.textContent = 'Нажмите на поле, чтобы указать точку броска';
-      goalSelectionPanel.style.display = 'none';
       
-      console.log('Selected goal:', goalType);
+      console.log('Selected goal:', goalType, 'Instruction updated');
     }
 
     function calculateDistanceAndAngle(shootPointX, shootPointY) {
@@ -775,7 +796,6 @@
     function createMarker(x, y) {
       if (!selectedGoal) {
         fieldInstruction.textContent = 'Сначала выберите ворота!';
-        goalSelectionPanel.style.display = 'block';
         return;
       }
       
@@ -802,8 +822,7 @@
         x, y, 
         goal: selectedGoal,
         distance: result.distance, 
-        angle: result.angle,
-        pixelsPerMeter: pixelsPerMeter 
+        angle: result.angle
       });
       
       // Показываем временную информацию
@@ -897,6 +916,7 @@
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       
+      console.log('Field click at:', x, y);
       createMarker(x, y);
     }
 
@@ -917,6 +937,7 @@
       const x = touch.clientX - rect.left;
       const y = touch.clientY - rect.top;
       
+      console.log('Field touch at:', x, y);
       createMarker(x, y);
     }
 
@@ -1000,7 +1021,10 @@
       
       // Сбрасываем выбор ворот
       selectedGoal = null;
-      goalMarkers.forEach(marker => marker.classList.remove('selected'));
+      goalMarkers.forEach(marker => {
+        if (marker) marker.classList.remove('selected');
+      });
+      fieldInstruction.textContent = 'Выберите ворота, в которых стоите';
       
       // Переключаемся на видео и скрываем панель вкладок
       switchTab('video');
@@ -1024,7 +1048,7 @@
 
       // Обработчики для кликов и касаний на поле
       fieldContainer.addEventListener('click', handleFieldClick);
-      fieldContainer.addEventListener('touchstart', handleFieldTouch);
+      fieldContainer.addEventListener('touchstart', handleFieldTouch, { passive: false });
 
       goalBtn.addEventListener('click', () => handleChoice('goal'));
       saveBtn.addEventListener('click', () => handleChoice('save'));
@@ -1055,6 +1079,8 @@
         isImageLoaded = true;
         document.body.classList.add('image-loaded');
         console.log('Изображение загружено');
+        
+        // Обновляем координаты
         updateGoalCoordinates();
         
         // Обновляем координаты при изменении размера
@@ -1062,17 +1088,18 @@
       };
       
       fieldImage.onerror = function() {
+        console.error('Ошибка загрузки изображения');
         fieldInstruction.textContent = 'Ошибка загрузки изображения';
         fieldInstruction.style.backgroundColor = 'rgba(198, 40, 40, 0.9)';
       };
 
       // Предзагрузка изображения на случай, если оно уже загружено
-      if (fieldImage.complete) {
+      if (fieldImage.complete && fieldImage.naturalWidth > 0) {
         fieldImage.onload();
       }
 
       document.addEventListener('DOMContentLoaded', function() {
-        currentTabTitle.style.display = 'block';
+        console.log('DOM loaded');
       });
     }
 
