@@ -389,37 +389,72 @@
     }
 
     #shotInfo {
-      position: absolute;
-      top: 60px;
+      position: fixed;
+      top: 50%;
       left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.9);
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.95);
       color: white;
-      padding: 15px 25px;
+      padding: 20px 30px;
       border-radius: 15px;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 500;
-      z-index: 46;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      z-index: 9999;
+      backdrop-filter: blur(15px);
+      border: 2px solid rgba(255, 255, 255, 0.4);
       text-align: center;
-      max-width: 90%;
+      max-width: 85%;
       display: none;
       animation: fadeIn 0.3s ease;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+      min-width: 280px;
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+      from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+      to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
     }
 
-    .shot-info-line {
-      margin: 5px 0;
+    .shot-info-header {
+      font-size: 18px;
+      font-weight: bold;
+      color: #4fc3f7;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .shot-info-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .shot-info-label {
+      color: #aaa;
     }
 
     .shot-info-value {
-      color: #4fc3f7;
+      color: white;
       font-weight: bold;
+    }
+
+    .shot-info-goal {
+      color: #4caf50;
+      font-weight: bold;
+    }
+
+    .shot-info-save {
+      color: #2196f3;
+      font-weight: bold;
+    }
+
+    .shot-info-footer {
+      margin-top: 15px;
+      font-size: 12px;
+      color: #888;
+      text-align: center;
     }
 
     .active-tab {
@@ -527,6 +562,7 @@
     let selectedGoal = null;
     let goalMarkers = [];
     let isImageLoaded = false;
+    let lastShotData = null;
 
     // Константы
     const ORIGINAL_IMAGE_WIDTH = 2050;
@@ -541,9 +577,10 @@
     let currentGoalCoords = {};
     let pixelsPerMeter = 0;
 
-    // Получаем URL видео из параметров
+    // Получаем параметры из URL
     const urlParams = new URLSearchParams(window.location.search);
     const videoUrl = urlParams.get('video');
+    const matchId = urlParams.get('match_id') || 1; // ID матча по умолчанию
 
     if (videoUrl) {
       let finalUrl = videoUrl;
@@ -663,10 +700,6 @@
       const imageRect = fieldImage.getBoundingClientRect();
       const containerRect = fieldContainer.getBoundingClientRect();
       
-      console.log('Размер изображения:', imageRect.width, 'x', imageRect.height);
-      console.log('Позиция изображения:', imageRect.left, imageRect.top);
-      console.log('Позиция контейнера:', containerRect.left, containerRect.top);
-      
       // Рассчитываем масштаб
       scaleFactor = imageRect.width / ORIGINAL_IMAGE_WIDTH;
       
@@ -688,9 +721,6 @@
       
       // Вычисляем пикселей на метр
       pixelsPerMeter = (ORIGINAL_IMAGE_WIDTH * scaleFactor) / RINK_LENGTH_METERS;
-      
-      console.log('Координаты ворот:', currentGoalCoords);
-      console.log('Масштаб:', scaleFactor, 'Пикселей на метр:', pixelsPerMeter);
       
       createGoalMarkers();
     }
@@ -715,14 +745,12 @@
       leftMarker.style.left = currentGoalCoords.leftGoal.x + 'px';
       leftMarker.style.top = currentGoalCoords.leftGoal.y + 'px';
       
-      // Обработчик клика для левого маркера
       leftMarker.addEventListener('click', function(e) {
         console.log('Клик по левым воротам');
         e.stopPropagation();
         selectGoal('leftGoal');
       });
       
-      // Обработчик касания для левого маркера
       leftMarker.addEventListener('touchstart', function(e) {
         console.log('Касание левых ворот');
         e.stopPropagation();
@@ -741,14 +769,12 @@
       rightMarker.style.left = currentGoalCoords.rightGoal.x + 'px';
       rightMarker.style.top = currentGoalCoords.rightGoal.y + 'px';
       
-      // Обработчик клика для правого маркера
       rightMarker.addEventListener('click', function(e) {
         console.log('Клик по правым воротам');
         e.stopPropagation();
         selectGoal('rightGoal');
       });
       
-      // Обработчик касания для правого маркера
       rightMarker.addEventListener('touchstart', function(e) {
         console.log('Касание правых ворот');
         e.stopPropagation();
@@ -765,20 +791,16 @@
       
       // Обновляем инструкцию
       fieldInstruction.textContent = 'Выберите ворота, в которых стоите';
-      
-      console.log('Маркеры созданы:', goalMarkers.length);
     }
 
     // Выбор ворот
     function selectGoal(goalType) {
       console.log('Выбор ворот:', goalType);
       
-      // Снимаем выделение со всех маркеров
       goalMarkers.forEach(marker => {
         if (marker) marker.classList.remove('selected');
       });
       
-      // Выделяем выбранные ворота
       selectedGoal = goalType;
       
       goalMarkers.forEach(marker => {
@@ -787,10 +809,8 @@
         }
       });
       
-      // Обновляем инструкцию
       fieldInstruction.textContent = 'Нажмите на поле, чтобы указать точку броска';
       
-      // Показываем подтверждение
       showTempMessage(`Выбраны ${goalType === 'leftGoal' ? 'левые' : 'правые'} ворота`);
     }
 
@@ -804,34 +824,39 @@
       }, 1500);
     }
 
-    // Показ информации о броске
-    function showShotInfo(distance, angle, goalType) {
+    // Показ информации о броске после сохранения
+    function showShotResult(eventType, distance, angle, goalType) {
       const goalName = goalType === 'leftGoal' ? 'Левые' : 'Правые';
+      const eventName = eventType === 'goal' ? 'Гол' : 'Сэйв';
+      const eventColor = eventType === 'goal' ? 'shot-info-goal' : 'shot-info-save';
       
       shotInfo.innerHTML = `
-        <div style="margin-bottom: 10px; font-size: 16px; font-weight: bold; color: #4fc3f7;">
-          📊 Параметры броска
+        <div class="shot-info-header">✅ Событие сохранено</div>
+        <div class="shot-info-row">
+          <span class="shot-info-label">Тип:</span>
+          <span class="shot-info-value ${eventColor}">${eventName}</span>
         </div>
-        <div class="shot-info-line">
-          🏒 Дистанция: <span class="shot-info-value">${distance.toFixed(2)} м</span>
+        <div class="shot-info-row">
+          <span class="shot-info-label">Дистанция:</span>
+          <span class="shot-info-value">${distance.toFixed(2)} м</span>
         </div>
-        <div class="shot-info-line">
-          📐 Угол: <span class="shot-info-value">${angle.toFixed(1)}°</span>
+        <div class="shot-info-row">
+          <span class="shot-info-label">Угол:</span>
+          <span class="shot-info-value">${angle.toFixed(1)}°</span>
         </div>
-        <div class="shot-info-line">
-          🥅 Ворота: <span class="shot-info-value">${goalName}</span>
+        <div class="shot-info-row">
+          <span class="shot-info-label">Ворота:</span>
+          <span class="shot-info-value">${goalName}</span>
         </div>
-        <div style="margin-top: 10px; font-size: 12px; color: #aaa;">
-          Сообщение исчезнет через 5 секунд
-        </div>
+        <div class="shot-info-footer">Сообщение исчезнет через 6 секунд</div>
       `;
       
       shotInfo.style.display = 'block';
       
-      // Скрываем через 5 секунд
+      // Скрываем через 6 секунд
       setTimeout(() => {
         shotInfo.style.display = 'none';
-      }, 5000);
+      }, 6000);
     }
 
     // Расчет дистанции и угла
@@ -896,8 +921,14 @@
       const result = calculateDistanceAndAngle(x, y);
       console.log('Дистанция:', result.distance, 'м, Угол:', result.angle, '°');
       
-      // Показываем информацию о броске
-      showShotInfo(result.distance, result.angle, selectedGoal);
+      // Сохраняем данные для модального окна
+      lastShotData = {
+        x: x,
+        y: y,
+        distance: result.distance,
+        angle: result.angle,
+        goal: selectedGoal
+      };
       
       // Показываем модальное окно
       setTimeout(() => {
@@ -944,9 +975,15 @@
       currentMarker.style.left = newX + 'px';
       currentMarker.style.top = newY + 'px';
       
-      // При перетаскивании обновляем информацию о броске
+      // Обновляем данные при перетаскивании
       const result = calculateDistanceAndAngle(newX, newY);
-      showShotInfo(result.distance, result.angle, selectedGoal);
+      lastShotData = {
+        x: newX,
+        y: newY,
+        distance: result.distance,
+        angle: result.angle,
+        goal: selectedGoal
+      };
     }
 
     function dragTouch(e) {
@@ -960,9 +997,15 @@
       currentMarker.style.left = newX + 'px';
       currentMarker.style.top = newY + 'px';
       
-      // При перетаскивании обновляем информацию о броске
+      // Обновляем данные при перетаскивании
       const result = calculateDistanceAndAngle(newX, newY);
-      showShotInfo(result.distance, result.angle, selectedGoal);
+      lastShotData = {
+        x: newX,
+        y: newY,
+        distance: result.distance,
+        angle: result.angle,
+        goal: selectedGoal
+      };
     }
 
     // Остановка перетаскивания
@@ -982,25 +1025,16 @@
 
     // Обработчик клика по полю
     function handleFieldClick(e) {
-      console.log('Клик по полю, target:', e.target.className);
-      
-      // Если клик по маркеру ворот - игнорируем (уже обработано)
-      if (e.target.classList.contains('goal-marker')) {
+      if (e.target.classList.contains('goal-marker') || 
+          e.target.classList.contains('marker-point')) {
         return;
       }
       
-      // Если клик по точке броска - игнорируем
-      if (e.target.classList.contains('marker-point')) {
-        return;
-      }
-      
-      // Если ворота не выбраны
       if (!selectedGoal) {
         showTempMessage('Сначала выберите ворота!');
         return;
       }
       
-      // Получаем координаты клика
       const rect = fieldContainer.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
@@ -1016,18 +1050,15 @@
       const touch = e.touches[0];
       const element = document.elementFromPoint(touch.clientX, touch.clientY);
       
-      // Если касание по маркеру ворот - игнорируем
       if (element && element.classList.contains('goal-marker')) {
         return;
       }
       
-      // Если ворота не выбраны
       if (!selectedGoal) {
         showTempMessage('Сначала выберите ворота!');
         return;
       }
       
-      // Получаем координаты касания
       const rect = fieldContainer.getBoundingClientRect();
       const x = touch.clientX - rect.left;
       const y = touch.clientY - rect.top;
@@ -1073,44 +1104,85 @@
       switchTab('field');
     }
 
+    // Отправка данных в базу данных
+    async function saveToDatabase(eventData) {
+      try {
+        const response = await fetch('/api/save-event', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(eventData)
+        });
+        
+        if (response.ok) {
+          console.log('Данные успешно сохранены в БД');
+          return true;
+        } else {
+          console.error('Ошибка сохранения в БД:', response.status);
+          return false;
+        }
+      } catch (error) {
+        console.error('Ошибка при отправке в БД:', error);
+        return false;
+      }
+    }
+
     // Обработка выбора события
-    function handleChoice(type) {
+    async function handleChoice(type) {
       choiceModal.classList.remove('visible');
       
       let distance = 0;
       let angle = 0;
+      let originalX = 0;
+      let originalY = 0;
       
-      if (currentMarker && selectedGoal) {
-        const result = calculateDistanceAndAngle(
-          currentMarker.offsetLeft,
-          currentMarker.offsetTop
-        );
-        distance = result.distance;
-        angle = result.angle;
+      if (lastShotData) {
+        distance = lastShotData.distance;
+        angle = lastShotData.angle;
+        originalX = lastShotData.x;
+        originalY = lastShotData.y;
       }
       
-      const eventData = {
-        type: type,
-        timestamp: Date.now() - recordingStartTime,
-        videoTime: videoCurrentTime,
-        shotParams: {
-          distance: distance.toFixed(2),
-          angle: angle.toFixed(1),
-          goal: selectedGoal
-        }
+      const timestamp = Date.now() - recordingStartTime;
+      const videoTime = videoCurrentTime;
+      const goalType = selectedGoal;
+      
+      // Показываем результат
+      showShotResult(type, distance, angle, goalType);
+      
+      // Подготавливаем данные для БД
+      const dbData = {
+        match_id: parseInt(matchId),
+        event_type: type,
+        timestamp: timestamp,
+        video_time: videoTime,
+        distance: parseFloat(distance.toFixed(2)),
+        angle: parseFloat(angle.toFixed(1)),
+        goal_type: goalType,
+        original_x: parseFloat(originalX.toFixed(2)),
+        original_y: parseFloat(originalY.toFixed(2))
       };
       
-      events.push(eventData);
-      console.log('Событие сохранено:', eventData);
+      console.log('Данные для сохранения в БД:', dbData);
       
+      // Сохраняем в БД
+      const dbSaved = await saveToDatabase(dbData);
+      
+      if (dbSaved) {
+        console.log('Данные успешно сохранены в базу данных');
+      }
+      
+      // Также отправляем в Telegram Web App если нужно
       if (window.Telegram?.WebApp) {
         try {
           Telegram.WebApp.sendData(JSON.stringify({
             action: 'save_event',
-            event: eventData
+            event: dbData
           }));
+          console.log('Данные отправлены в Telegram Web App');
         } catch (error) {
-          console.error('Ошибка отправки данных:', error);
+          console.error('Ошибка отправки в Telegram:', error);
         }
       }
       
@@ -1119,9 +1191,6 @@
         currentMarker.remove();
         currentMarker = null;
       }
-      
-      // Скрываем информацию о броске
-      shotInfo.style.display = 'none';
       
       // Сбрасываем выбор ворот
       selectedGoal = null;
@@ -1136,11 +1205,14 @@
       startBtn.style.display = 'block';
       stopBtn.style.display = 'none';
       isVideoPaused = false;
+      
+      // Сохраняем в локальный массив событий
+      events.push(dbData);
     }
 
     // Инициализация
     function init() {
-      console.log('Инициализация приложения');
+      console.log('Инициализация приложения, match_id:', matchId);
       
       // Обработчики кнопок
       startBtn.addEventListener('click', startRecording);
