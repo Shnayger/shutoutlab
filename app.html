@@ -6,7 +6,6 @@
   <title>Анализ матча</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    /* Сброс */
     * {
       margin: 0;
       padding: 0;
@@ -23,7 +22,6 @@
       position: relative;
     }
 
-    /* Экран поворота */
     #rotateScreen {
       display: flex;
       flex-direction: column;
@@ -40,7 +38,6 @@
       z-index: 1000;
     }
 
-    /* Основной интерфейс (видео) */
     #mainInterface {
       display: none;
       height: 100vh;
@@ -48,7 +45,6 @@
       background: #000;
     }
 
-    /* Индикатор записи */
     #recordingIndicator {
       position: absolute;
       top: 10px;
@@ -81,7 +77,6 @@
       100% { opacity: 0.3; }
     }
 
-    /* Таймер записи */
     #recordingTimer {
       position: absolute;
       top: 10px;
@@ -98,7 +93,6 @@
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
-    /* Видео контейнер */
     #videoContainer {
       width: 100%;
       height: 100%;
@@ -114,7 +108,6 @@
       background: #000;
     }
 
-    /* Управление */
     #controls {
       position: absolute;
       bottom: 20px;
@@ -156,7 +149,6 @@
       transform: scale(0.95);
     }
 
-    /* Панель вкладок */
     #tabsPanel {
       position: fixed;
       left: -60px;
@@ -205,7 +197,6 @@
       font-size: 20px;
     }
 
-    /* Контейнеры контента */
     .content-container {
       position: absolute;
       top: 0;
@@ -222,20 +213,17 @@
       display: block;
     }
 
-    /* Контейнер схемы */
     #fieldContainer {
       background: #0d47a1;
     }
 
-    /* Изображение схемы */
     #fieldImage {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       display: block;
     }
 
-    /* Активная точка на схеме */
     .marker-point {
       position: absolute;
       width: 28px;
@@ -257,7 +245,24 @@
       box-shadow: 0 0 30px rgba(255, 0, 0, 1);
     }
 
-    /* Модальное окно выбора */
+    .goal-marker {
+      position: absolute;
+      width: 25px;
+      height: 25px;
+      background: rgba(0, 255, 0, 0.7);
+      border-radius: 50%;
+      border: 3px solid white;
+      transform: translate(-50%, -50%);
+      z-index: 90;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+
+    .goal-marker.selected {
+      background: rgba(255, 255, 0, 0.9);
+      box-shadow: 0 0 20px rgba(255, 255, 0, 0.8);
+    }
+
     #choiceModal {
       position: fixed;
       top: 0;
@@ -324,7 +329,6 @@
       background: linear-gradient(135deg, #1565c0, #2196f3);
     }
 
-    /* Инструкция на схеме */
     #fieldInstruction {
       position: absolute;
       bottom: 15px;
@@ -343,7 +347,6 @@
       white-space: nowrap;
     }
 
-    /* Заголовок текущей вкладки */
     #currentTabTitle {
       position: absolute;
       top: 10px;
@@ -361,7 +364,6 @@
       display: none;
     }
 
-    /* Временное информационное окно */
     #tempInfo {
       position: absolute;
       top: 50%;
@@ -381,10 +383,26 @@
       box-shadow: 0 5px 20px rgba(0, 0, 0, 0.7);
       min-width: 200px;
     }
+
+    #goalSelectionPanel {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      z-index: 45;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      text-align: center;
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <!-- Экран поворота -->
   <div id="rotateScreen">
     <svg viewBox="0 0 24 24" fill="white" width="60" height="60">
       <path d="M19 12h-1.5c-.82 0-1.5-.68-1.5-1.5V5.5C16 4.67 16.67 4 17.5 4H19c.83 0 1.5.67 1.5 1.5v3.5c0 .83-.67 1.5-1.5 1.5H1L1.01 21c0 1.1.89 2 2 2H21c1.1 0 2-.9 2-2L22.99 14H19zm-5.5-9H8.5V8h4V4zm6 14H2v2h18v-2z"/>
@@ -392,9 +410,7 @@
     <p style="margin-top: 20px;">Пожалуйста, поверните устройство в горизонтальное положение.</p>
   </div>
 
-  <!-- Основной интерфейс -->
   <div id="mainInterface">
-    <!-- Панель вкладок -->
     <div id="tabsPanel">
       <div class="tab active" data-tab="video">
         <div class="tab-icon">🎥</div>
@@ -404,36 +420,33 @@
       </div>
     </div>
 
-    <!-- Заголовок текущей вкладки -->
     <div id="currentTabTitle">🎥 Видео матча</div>
 
-    <!-- Индикатор записи -->
+    <div id="goalSelectionPanel">Выберите ворота для атаки</div>
+
+    <div id="tempInfo"></div>
+
     <div id="recordingIndicator">
       <div class="recordingDot"></div>
       <span>Идет запись</span>
     </div>
 
-    <!-- Таймер записи -->
     <div id="recordingTimer">00:00:00</div>
 
-    <!-- Контейнер видео -->
     <div id="videoContainer" class="content-container active">
       <iframe id="videoFrame" allowfullscreen></iframe>
       
-      <!-- Управление -->
       <div id="controls">
         <button id="startBtn" class="control-btn" disabled>Начать запись</button>
         <button id="stopBtn" class="control-btn">Стоп</button>
       </div>
     </div>
 
-    <!-- Контейнер схемы -->
     <div id="fieldContainer" class="content-container">
       <img id="fieldImage" src="1648780124_3-abrakadabra-fun-p-khokkeinoe-pole-sverkhu-10.jpg" alt="Хоккейная площадка">
-      <div id="fieldInstruction">Нажмите на поле, чтобы поставить точку</div>
+      <div id="fieldInstruction">Выберите ворота для атаки</div>
     </div>
 
-    <!-- Модальное окно выбора гол/сэйв -->
     <div id="choiceModal">
       <div class="modal-content">
         <div class="modal-title">Выберите тип события</div>
@@ -443,19 +456,14 @@
         </div>
       </div>
     </div>
-
-    <!-- Временное информационное окно -->
-    <div id="tempInfo"></div>
   </div>
 
   <script>
-    // Инициализация Telegram Web App
     if (window.Telegram?.WebApp) {
       Telegram.WebApp.ready();
       Telegram.WebApp.expand();
     }
 
-    // Элементы
     const rotateScreen = document.getElementById('rotateScreen');
     const mainInterface = document.getElementById('mainInterface');
     const tabsPanel = document.getElementById('tabsPanel');
@@ -473,9 +481,9 @@
     const saveBtn = document.getElementById('saveBtn');
     const currentTabTitle = document.getElementById('currentTabTitle');
     const tempInfo = document.getElementById('tempInfo');
+    const goalSelectionPanel = document.getElementById('goalSelectionPanel');
     const tabs = document.querySelectorAll('.tab');
 
-    // Переменные состояния
     let isRecording = false;
     let recordingStartTime = null;
     let timerInterval = null;
@@ -487,36 +495,30 @@
     let dragStartY = 0;
     let markerStartX = 0;
     let markerStartY = 0;
-    let recordingStopTime = 0;
     let videoCurrentTime = 0;
     let isVideoPaused = false;
+    let selectedGoal = null;
+    let goalMarkers = [];
 
-    // Константы для расчета расстояния и угла
     const ORIGINAL_IMAGE_SIZE = { width: 2050, height: 860 };
     const ORIGINAL_GOAL_COORDS = {
       leftGoal: {
-        leftPost: { x: 188, y: 401 },
-        rightPost: { x: 188, y: 458 },
         center: { x: 188, y: 429.5 }
       },
       rightGoal: {
-        leftPost: { x: 1861, y: 457 },
-        rightPost: { x: 1861, y: 401 },
         center: { x: 1861, y: 429 }
       }
     };
-    const REAL_GOAL_HEIGHT = 1.22; // метра
     
+    const REAL_GOAL_WIDTH = 1.83;
     let scaleFactor = 1;
     let currentGoalCoords = {};
     let pixelsPerMeter = 0;
     let imageDisplayRect = { x: 0, y: 0, width: 0, height: 0 };
 
-    // Параметры из URL
     const urlParams = new URLSearchParams(window.location.search);
     const videoUrl = urlParams.get('video');
 
-    // Загружаем видео
     if (videoUrl) {
       let finalUrl = videoUrl;
       if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
@@ -536,7 +538,6 @@
       videoFrame.src = finalUrl;
     }
 
-    // Проверка ориентации
     function checkOrientation() {
       const isLandscape = window.innerWidth > window.innerHeight;
       rotateScreen.style.display = isLandscape ? 'none' : 'flex';
@@ -545,7 +546,6 @@
     window.addEventListener('resize', checkOrientation);
     checkOrientation();
 
-    // Форматирование времени
     function formatTime(ms) {
       const totalSeconds = Math.floor(ms / 1000);
       const hours = Math.floor(totalSeconds / 3600);
@@ -554,7 +554,6 @@
       return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
 
-    // Обновление таймера
     function updateTimer() {
       if (recordingStartTime) {
         const elapsed = Date.now() - recordingStartTime;
@@ -562,7 +561,6 @@
       }
     }
 
-    // Пауза видео
     function pauseYouTubeVideo() {
       try {
         if (videoFrame.contentWindow) {
@@ -571,12 +569,10 @@
       } catch (e) {}
     }
 
-    // Получить текущее время видео
     function getVideoCurrentTime() {
       return videoCurrentTime;
     }
 
-    // Переключение вкладок
     function switchTab(tabName) {
       currentTab = tabName;
       tabs.forEach(tab => {
@@ -603,7 +599,6 @@
       }
     }
 
-    // Функции для расчета расстояния и угла
     function initializeGoalCoordinates() {
       if (!fieldImage.complete) {
         fieldImage.onload = function() {
@@ -632,20 +627,13 @@
         rightGoal: scaleCoordinates(ORIGINAL_GOAL_COORDS.rightGoal)
       };
       
-      const originalGoalHeight = 57;
-      pixelsPerMeter = (originalGoalHeight * scaleFactor) / REAL_GOAL_HEIGHT;
+      pixelsPerMeter = (scaleFactor * ORIGINAL_IMAGE_SIZE.width) / 61;
+      
+      createGoalMarkers();
     }
 
     function scaleCoordinates(coords) {
       return {
-        leftPost: {
-          x: coords.leftPost.x * scaleFactor + imageDisplayRect.x,
-          y: coords.leftPost.y * scaleFactor + imageDisplayRect.y
-        },
-        rightPost: {
-          x: coords.rightPost.x * scaleFactor + imageDisplayRect.x,
-          y: coords.rightPost.y * scaleFactor + imageDisplayRect.y
-        },
         center: {
           x: coords.center.x * scaleFactor + imageDisplayRect.x,
           y: coords.center.y * scaleFactor + imageDisplayRect.y
@@ -653,14 +641,54 @@
       };
     }
 
-    function determineActiveGoal(markerX, markerY) {
-      const imageCenterX = imageDisplayRect.x + imageDisplayRect.width / 2;
-      return markerX < imageCenterX ? 'rightGoal' : 'leftGoal';
+    function createGoalMarkers() {
+      goalMarkers.forEach(marker => marker.remove());
+      goalMarkers = [];
+      
+      const leftGoalMarker = document.createElement('div');
+      leftGoalMarker.className = 'goal-marker';
+      leftGoalMarker.dataset.goal = 'leftGoal';
+      leftGoalMarker.style.left = currentGoalCoords.leftGoal.center.x + 'px';
+      leftGoalMarker.style.top = currentGoalCoords.leftGoal.center.y + 'px';
+      leftGoalMarker.addEventListener('click', () => selectGoal('leftGoal'));
+      fieldContainer.appendChild(leftGoalMarker);
+      goalMarkers.push(leftGoalMarker);
+      
+      const rightGoalMarker = document.createElement('div');
+      rightGoalMarker.className = 'goal-marker';
+      rightGoalMarker.dataset.goal = 'rightGoal';
+      rightGoalMarker.style.left = currentGoalCoords.rightGoal.center.x + 'px';
+      rightGoalMarker.style.top = currentGoalCoords.rightGoal.center.y + 'px';
+      rightGoalMarker.addEventListener('click', () => selectGoal('rightGoal'));
+      fieldContainer.appendChild(rightGoalMarker);
+      goalMarkers.push(rightGoalMarker);
     }
 
-    function calculateDistanceAndAngle(markerX, markerY, goalCoords) {
-      const dx = goalCoords.center.x - markerX;
-      const dy = goalCoords.center.y - markerY;
+    function selectGoal(goalType) {
+      if (selectedGoal) {
+        goalMarkers.forEach(marker => marker.classList.remove('selected'));
+      }
+      
+      selectedGoal = goalType;
+      goalMarkers.forEach(marker => {
+        if (marker.dataset.goal === goalType) {
+          marker.classList.add('selected');
+        }
+      });
+      
+      fieldInstruction.textContent = 'Нажмите на поле, чтобы поставить точку атаки';
+      goalSelectionPanel.style.display = 'none';
+    }
+
+    function calculateDistanceAndAngle(markerX, markerY) {
+      if (!selectedGoal || !currentGoalCoords[selectedGoal]) {
+        return { distance: 0, angle: 0 };
+      }
+      
+      const goalCenter = currentGoalCoords[selectedGoal].center;
+      
+      const dx = goalCenter.x - markerX;
+      const dy = goalCenter.y - markerY;
       
       const distancePixels = Math.sqrt(dx * dx + dy * dy);
       const distanceMeters = distancePixels / pixelsPerMeter;
@@ -668,7 +696,7 @@
       let angleRad = Math.atan2(dx, dy);
       let angleDeg = angleRad * (180 / Math.PI);
       
-      if (goalCoords === currentGoalCoords.rightGoal) {
+      if (selectedGoal === 'rightGoal') {
         angleDeg = -angleDeg;
       }
       
@@ -678,7 +706,6 @@
       };
     }
 
-    // Функция для показа временного сообщения
     function showTempInfo(distance, angle, goalType) {
       const goalName = goalType === 'leftGoal' ? 'Левые' : 'Правые';
       tempInfo.innerHTML = `
@@ -694,8 +721,13 @@
       }, 3000);
     }
 
-    // Создание точки
     function createMarker(x, y) {
+      if (!selectedGoal) {
+        fieldInstruction.textContent = 'Сначала выберите ворота!';
+        goalSelectionPanel.style.display = 'block';
+        return;
+      }
+      
       if (currentMarker) currentMarker.remove();
       
       currentMarker = document.createElement('div');
@@ -708,18 +740,14 @@
       
       fieldContainer.appendChild(currentMarker);
       
-      // Показываем сообщение с расчетами на 3 секунды
-      const goalType = determineActiveGoal(x, y);
-      const goalCoords = currentGoalCoords[goalType];
-      const result = calculateDistanceAndAngle(x, y, goalCoords);
-      showTempInfo(result.distance, result.angle, goalType);
+      const result = calculateDistanceAndAngle(x, y);
+      showTempInfo(result.distance, result.angle, selectedGoal);
       
       setTimeout(() => {
         choiceModal.classList.add('visible');
       }, 300);
     }
 
-    // Перетаскивание точки
     function startDrag(e) {
       e.preventDefault();
       e.stopPropagation();
@@ -754,13 +782,11 @@
       const deltaY = e.clientY - dragStartY;
       const newX = markerStartX + deltaX;
       const newY = markerStartY + deltaY;
-      const rect = fieldContainer.getBoundingClientRect();
-      const maxX = rect.width;
-      const maxY = rect.height;
-      const clampedX = Math.max(0, Math.min(newX, maxX));
-      const clampedY = Math.max(0, Math.min(newY, maxY));
-      currentMarker.style.left = clampedX + 'px';
-      currentMarker.style.top = clampedY + 'px';
+      currentMarker.style.left = newX + 'px';
+      currentMarker.style.top = newY + 'px';
+      
+      const result = calculateDistanceAndAngle(newX, newY);
+      showTempInfo(result.distance, result.angle, selectedGoal);
     }
 
     function dragTouch(e) {
@@ -770,13 +796,11 @@
       const deltaY = touch.clientY - dragStartY;
       const newX = markerStartX + deltaX;
       const newY = markerStartY + deltaY;
-      const rect = fieldContainer.getBoundingClientRect();
-      const maxX = rect.width;
-      const maxY = rect.height;
-      const clampedX = Math.max(0, Math.min(newX, maxX));
-      const clampedY = Math.max(0, Math.min(newY, maxY));
-      currentMarker.style.left = clampedX + 'px';
-      currentMarker.style.top = clampedY + 'px';
+      currentMarker.style.left = newX + 'px';
+      currentMarker.style.top = newY + 'px';
+      
+      const result = calculateDistanceAndAngle(newX, newY);
+      showTempInfo(result.distance, result.angle, selectedGoal);
     }
 
     function stopDrag() {
@@ -793,9 +817,12 @@
       document.removeEventListener('touchend', stopDragTouch);
     }
 
-    // Обработка кликов по схеме
     function handleFieldClick(e) {
-      if (e.target.classList.contains('marker-point')) return;
+      if (e.target.classList.contains('marker-point') || 
+          e.target.classList.contains('goal-marker')) {
+        return;
+      }
+      
       const rect = fieldContainer.getBoundingClientRect();
       let x, y;
       if (e.type === 'click' || e.type === 'mousedown') {
@@ -809,7 +836,6 @@
       createMarker(x, y);
     }
 
-    // Начало записи
     function startRecording() {
       if (isRecording) return;
       isRecording = true;
@@ -823,11 +849,9 @@
       timerInterval = setInterval(updateTimer, 1000);
     }
 
-    // Остановка записи
     function stopRecording() {
       if (!isRecording) return;
       isRecording = false;
-      recordingStopTime = Date.now();
       videoCurrentTime = getVideoCurrentTime();
       if (timerInterval) {
         clearInterval(timerInterval);
@@ -839,24 +863,23 @@
       isVideoPaused = true;
       tabsPanel.classList.add('visible');
       switchTab('field');
+      
+      selectedGoal = null;
+      goalMarkers.forEach(marker => marker.classList.remove('selected'));
+      fieldInstruction.textContent = 'Выберите ворота для атаки';
+      goalSelectionPanel.style.display = 'block';
     }
 
-    // Обработка выбора гол/сэйв
     function handleChoice(type) {
       choiceModal.classList.remove('visible');
       
       let distance = 0;
       let angle = 0;
-      let goalType = 'unknown';
       
-      if (currentMarker) {
+      if (currentMarker && selectedGoal) {
         const markerX = currentMarker.offsetLeft;
         const markerY = currentMarker.offsetTop;
-        
-        goalType = determineActiveGoal(markerX, markerY);
-        const goalCoords = currentGoalCoords[goalType];
-        
-        const result = calculateDistanceAndAngle(markerX, markerY, goalCoords);
+        const result = calculateDistanceAndAngle(markerX, markerY);
         distance = result.distance;
         angle = result.angle;
       }
@@ -872,7 +895,7 @@
         shotParams: {
           distance: distance.toFixed(2),
           angle: angle.toFixed(1),
-          goal: goalType
+          goal: selectedGoal
         }
       };
       
@@ -894,6 +917,10 @@
         currentMarker.remove();
         currentMarker = null;
       }
+      
+      selectedGoal = null;
+      goalMarkers.forEach(marker => marker.classList.remove('selected'));
+      
       switchTab('video');
       tabsPanel.classList.remove('visible');
       startBtn.style.display = 'block';
@@ -901,11 +928,9 @@
       isVideoPaused = false;
     }
 
-    // Обработчики кнопок
     startBtn.addEventListener('click', startRecording);
     stopBtn.addEventListener('click', stopRecording);
 
-    // Обработчики для вкладок
     tabs.forEach(tab => {
       tab.addEventListener('click', () => {
         const tabName = tab.getAttribute('data-tab');
@@ -913,22 +938,26 @@
       });
     });
 
-    // Обработчики для схемы
     fieldContainer.addEventListener('click', handleFieldClick);
     fieldContainer.addEventListener('touchstart', function(e) {
-      e.preventDefault();
-      const touch = e.touches[0];
-      const rect = fieldContainer.getBoundingClientRect();
-      const x = touch.clientX - rect.left;
-      const y = touch.clientY - rect.top;
-      createMarker(x, y);
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        const rect = fieldContainer.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        
+        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (element && element.classList.contains('goal-marker')) {
+          return;
+        }
+        
+        createMarker(x, y);
+      }
     });
 
-    // Обработчики для выбора
     goalBtn.addEventListener('click', () => handleChoice('goal'));
     saveBtn.addEventListener('click', () => handleChoice('save'));
 
-    // Проверяем, когда видео готово
     function checkVideoReady() {
       window.addEventListener('message', (event) => {
         try {
@@ -939,9 +968,6 @@
           if (data.info && data.info.currentTime !== undefined) {
             videoCurrentTime = data.info.currentTime;
           }
-          if (data.event === 'infoDelivery' && data.info && data.info.currentTime !== undefined) {
-            videoCurrentTime = data.info.currentTime;
-          }
         } catch (e) {}
       });
       setTimeout(() => {
@@ -950,9 +976,7 @@
     }
     checkVideoReady();
 
-    // Загрузка изображения
     fieldImage.onload = function() {
-      console.log('Изображение загружено');
       initializeGoalCoordinates();
     };
     fieldImage.onerror = function() {
@@ -960,7 +984,6 @@
       fieldInstruction.style.backgroundColor = 'rgba(198, 40, 40, 0.9)';
     };
 
-    // Инициализация
     document.addEventListener('DOMContentLoaded', function() {
       currentTabTitle.style.display = 'block';
     });
