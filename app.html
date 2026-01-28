@@ -6,6 +6,7 @@
   <title>Анализ матча</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
+    /* ... все стили оставляем без изменений ... */
     * {
       margin: 0;
       padding: 0;
@@ -519,9 +520,13 @@
 
   <script>
     // Инициализация Telegram Web App
+    console.log('Initializing Telegram Web App...');
     if (window.Telegram?.WebApp) {
       Telegram.WebApp.ready();
       Telegram.WebApp.expand();
+      console.log('Telegram Web App initialized');
+    } else {
+      console.log('Telegram Web App not available - running in browser');
     }
 
     // Получаем элементы DOM
@@ -580,7 +585,16 @@
     // Получаем параметры из URL
     const urlParams = new URLSearchParams(window.location.search);
     const videoUrl = urlParams.get('video');
-    const matchId = urlParams.get('match_id') || 1; // ID матча по умолчанию
+    const matchId = urlParams.get('match_id') || 1;
+    const date = urlParams.get('date') || '';
+    const opponent = urlParams.get('opponent') || '';
+
+    console.log('URL Parameters:', {
+      videoUrl,
+      matchId,
+      date,
+      opponent
+    });
 
     if (videoUrl) {
       let finalUrl = videoUrl;
@@ -635,7 +649,9 @@
         if (videoFrame.contentWindow) {
           videoFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error('Error pausing YouTube video:', e);
+      }
     }
 
     // Переключение вкладок
@@ -1104,87 +1120,123 @@
       switchTab('field');
     }
 
-    // Отправка данных в базу данных
-    async function saveToDatabase(eventData) {
-      try {
-        const response = await fetch('/api/save-event', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+    // Отправка данных в Telegram Bot
+    function sendToTelegramBot(eventType, distance, angle, goalType, originalX, originalY) {
+      console.log('Отправка данных в Telegram Bot...');
+      
+      const timestamp = Date.now() - recordingStartTime;
+      const videoTime = videoCurrentTime;
+      
+      // Подготавливаем данные для отправки в бот
+      const eventData = {
+        action: 'save_event',
+        event: {
+          match_id: parseInt(matchId),
+          event_type: eventType,
+          type: eventType, // дублируем для совместимости
+          timestamp: timestamp,
+          video_time: videoTime,
+          videoTime: videoTime, // дублируем для совместимости
+          distance: parseFloat(distance.toFixed(2)),
+          angle: parseFloat(angle.toFixed(1)),
+          goal_type: goalType,
+          goal: goalType, // дублируем для совместимости
+          original_x: parseFloat(originalX.toFixed(2)),
+          originalX: parseFloat(originalX.toFixed(2)), // дублируем для совместимости
+          original_y: parseFloat(originalY.toFixed(2)),
+          originalY: parseFloat(originalY.toFixed(2)), // дублируем для совместимости
+          shotParams: {
+            distance: parseFloat(distance.toFixed(2)),
+            angle: parseFloat(angle.toFixed(1)),
+            goal: goalType
           },
-          body: JSON.stringify(eventData)
-        });
-        
-        if (response.ok) {
-          console.log('Данные успешно сохранены в БД');
-          return true;
-        } else {
-          console.error('Ошибка сохранения в БД:', response.status);
-          return false;
+          markerPosition: {
+            x: parseFloat(originalX.toFixed(2)),
+            y: parseFloat(originalY.toFixed(2))
+          }
         }
-      } catch (error) {
-        console.error('Ошибка при отправке в БД:', error);
-        return false;
+      };
+      
+      console.log('Данные для отправки:', eventData);
+      
+      // Проверяем доступность Telegram Web App
+      if (window.Telegram?.WebApp) {
+        try {
+          console.log('Отправка данных через Telegram.WebApp.sendData()');
+          Telegram.WebApp.sendData(JSON.stringify(eventData));
+          console.log('✅ Данные отправлены через Telegram Web App');
+          
+          // Также показываем подтверждение в интерфейсе
+          setTimeout(() => {
+            alert('✅ Данные отправлены в бота! Проверьте чат с ботом.');
+          }, 100);
+          
+        } catch (error) {
+          console.error('❌ Ошибка отправки через Telegram Web App:', error);
+          
+          // Если не сработало, пробуем альтернативный метод
+          try {
+            Telegram.WebApp.sendData(eventData);
+            console.log('✅ Данные отправлены (альтернативный метод)');
+          } catch (error2) {
+            console.error('❌ Ошибка альтернативного метода:', error2);
+            alert('⚠️ Ошибка отправки данных. Попробуйте еще раз.');
+          }
+        }
+      } else {
+        console.log('❌ Telegram Web App не доступен');
+        alert('⚠️ Telegram Web App не доступен. Данные не отправлены.');
+        
+        // Для отладки: выводим данные в консоль
+        console.log('Данные для ручной проверки:', JSON.stringify(eventData, null, 2));
       }
     }
 
     // Обработка выбора события
-    async function handleChoice(type) {
+    function handleChoice(type) {
+      console.log('Обработка выбора события:', type);
       choiceModal.classList.remove('visible');
       
       let distance = 0;
       let angle = 0;
       let originalX = 0;
       let originalY = 0;
+      let goalType = selectedGoal;
       
       if (lastShotData) {
         distance = lastShotData.distance;
         angle = lastShotData.angle;
         originalX = lastShotData.x;
         originalY = lastShotData.y;
+        goalType = lastShotData.goal;
       }
       
-      const timestamp = Date.now() - recordingStartTime;
-      const videoTime = videoCurrentTime;
-      const goalType = selectedGoal;
+      console.log('Данные для сохранения:', {
+        type,
+        distance,
+        angle,
+        goalType,
+        originalX,
+        originalY
+      });
       
       // Показываем результат
       showShotResult(type, distance, angle, goalType);
       
-      // Подготавливаем данные для БД
-      const dbData = {
-        match_id: parseInt(matchId),
-        event_type: type,
-        timestamp: timestamp,
-        video_time: videoTime,
-        distance: parseFloat(distance.toFixed(2)),
-        angle: parseFloat(angle.toFixed(1)),
-        goal_type: goalType,
-        original_x: parseFloat(originalX.toFixed(2)),
-        original_y: parseFloat(originalY.toFixed(2))
-      };
+      // Отправляем данные в Telegram Bot
+      sendToTelegramBot(type, distance, angle, goalType, originalX, originalY);
       
-      console.log('Данные для сохранения в БД:', dbData);
-      
-      // Сохраняем в БД
-      const dbSaved = await saveToDatabase(dbData);
-      
-      if (dbSaved) {
-        console.log('Данные успешно сохранены в базу данных');
-      }
-      
-      // Также отправляем в Telegram Web App если нужно
-      if (window.Telegram?.WebApp) {
-        try {
-          Telegram.WebApp.sendData(JSON.stringify({
-            action: 'save_event',
-            event: dbData
-          }));
-          console.log('Данные отправлены в Telegram Web App');
-        } catch (error) {
-          console.error('Ошибка отправки в Telegram:', error);
-        }
-      }
+      // Сохраняем в локальный массив событий
+      events.push({
+        type: type,
+        timestamp: Date.now() - recordingStartTime,
+        videoTime: videoCurrentTime,
+        distance: distance,
+        angle: angle,
+        goal: goalType,
+        originalX: originalX,
+        originalY: originalY
+      });
       
       // Удаляем маркер
       if (currentMarker) {
@@ -1205,14 +1257,13 @@
       startBtn.style.display = 'block';
       stopBtn.style.display = 'none';
       isVideoPaused = false;
-      
-      // Сохраняем в локальный массив событий
-      events.push(dbData);
     }
 
     // Инициализация
     function init() {
-      console.log('Инициализация приложения, match_id:', matchId);
+      console.log('Инициализация приложения');
+      console.log('Match ID:', matchId);
+      console.log('Telegram Web App available:', !!window.Telegram?.WebApp);
       
       // Обработчики кнопок
       startBtn.addEventListener('click', startRecording);
@@ -1244,7 +1295,9 @@
           if (data.info && data.info.currentTime !== undefined) {
             videoCurrentTime = data.info.currentTime;
           }
-        } catch (e) {}
+        } catch (e) {
+          console.error('Ошибка обработки сообщения от YouTube:', e);
+        }
       });
       
       // Фолбэк для готовности видео
