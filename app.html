@@ -743,52 +743,94 @@
     }
 
     // Обработка выбора гол/сэйв
-    async function handleChoice(type) {
-      choiceModal.classList.remove('visible');
-      shotInfoPanel.style.display = 'none';
-      
-      if (!currentMarker || !lastShotData) return;
-      
-      const eventTime = Date.now() - recordingStartTime;
-      
-      const eventData = {
-        type: type,
-        timestamp: eventTime,
-        videoTime: videoCurrentTime,
-        shotParams: {
-          distance: lastShotData.distance.toFixed(2),
-          angle: lastShotData.angle.toFixed(1),
-          goal: lastShotData.goal
-        }
-      };
-      
-      events.push(eventData);
-      
-      // Отправляем данные в Telegram бот
-      if (window.Telegram?.WebApp) {
-        try {
-          Telegram.WebApp.sendData(JSON.stringify({
-            action: 'save_event',
-            event: eventData
-          }));
-          console.log('Data sent to bot:', eventData);
-        } catch (error) {
-          console.error('Error sending data:', error);
-        }
-      }
-      
-      if (currentMarker) {
-        currentMarker.remove();
-        currentMarker = null;
-      }
-      
-      // ВОЗВРАЩАЕМСЯ К ВИДЕО
-      tabsPanel.classList.remove('visible');
-      switchTab('video');
-      startBtn.style.display = 'block';
-      stopBtn.style.display = 'none';
-      isVideoPaused = false;
+    // В функции handleChoice() исправляем:
+async function handleChoice(type) {
+  choiceModal.classList.remove('visible');
+  shotInfoPanel.style.display = 'none';
+  
+  if (!currentMarker || !lastShotData) return;
+  
+  const eventTime = Date.now() - recordingStartTime;
+  
+  const eventData = {
+    type: type,
+    timestamp: eventTime,
+    videoTime: videoCurrentTime,
+    shotParams: {
+      distance: lastShotData.distance.toFixed(2),
+      angle: lastShotData.angle.toFixed(1),
+      goal: lastShotData.goal
     }
+  };
+  
+  events.push(eventData);
+  
+  // Отправляем данные в Telegram бот
+  if (window.Telegram?.WebApp) {
+    try {
+      Telegram.WebApp.sendData(JSON.stringify({
+        action: 'save_event',
+        event: eventData
+      }));
+      console.log('Data sent to bot:', eventData);
+    } catch (error) {
+      console.error('Error sending data:', error);
+    }
+  }
+  
+  // УДАЛЯЕМ МАРКЕР
+  if (currentMarker) {
+    currentMarker.remove();
+    currentMarker = null;
+  }
+  
+  // СКРЫВАЕМ ПАНЕЛЬ ВКЛАДОК (ВКЛАДКИ ИСЧЕЗАЮТ)
+  tabsPanel.classList.remove('visible');
+  
+  // ПЕРЕКИДЫВАЕМ НА ВИДЕО (АВТОМАТИЧЕСКИ)
+  switchTab('video');
+  
+  // ПОКАЗЫВАЕМ КНОПКУ "НАЧАТЬ ЗАПИСЬ" (если запись еще не начата)
+  // НО если запись уже идет, скрываем её
+  if (isRecording) {
+    startBtn.style.display = 'none';
+    stopBtn.style.display = 'block';
+  } else {
+    startBtn.style.display = 'block';
+    stopBtn.style.display = 'none';
+  }
+  
+  // СБРАСЫВАЕМ СОСТОЯНИЕ ПАУЗЫ
+  isVideoPaused = false;
+}
+
+// В функции stopRecording() исправляем:
+function stopRecording() {
+  if (!isRecording) return;
+  isRecording = false;
+  
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  
+  recordingIndicator.style.display = 'none';
+  recordingTimer.style.display = 'none';
+  
+  // ПАУЗИМ ВИДЕО
+  pauseYouTubeVideo();
+  isVideoPaused = true;
+  
+  // ПОКАЗЫВАЕМ ПАНЕЛЬ ВКЛАДОК (вкладки появляются)
+  tabsPanel.classList.add('visible');
+  
+  // ПЕРЕКИДЫВАЕМ НА СХЕМУ (автоматически)
+  switchTab('field');
+  
+  // СКРЫВАЕМ КНОПКИ (после "Стоп" кнопок быть не должно)
+  startBtn.style.display = 'none';
+  stopBtn.style.display = 'none';
+}
 
     // Обработка кликов по схеме
     function handleFieldClick(e) {
@@ -923,3 +965,4 @@
   </script>
 </body>
 </html>
+
