@@ -388,20 +388,42 @@
       max-width: 90%;
     }
 
-    .active-tab {
-      display: block !important;
+    #shotInfo {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 15px 25px;
+      border-radius: 15px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 46;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      text-align: center;
+      max-width: 90%;
+      display: none;
+      animation: fadeIn 0.3s ease;
     }
 
-    .debug-info {
-      position: fixed;
-      top: 60px;
-      left: 10px;
-      background: rgba(0, 0, 0, 0.8);
-      color: lime;
-      padding: 10px;
-      font-size: 12px;
-      z-index: 1000;
-      display: none;
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    .shot-info-line {
+      margin: 5px 0;
+    }
+
+    .shot-info-value {
+      color: #4fc3f7;
+      font-weight: bold;
+    }
+
+    .active-tab {
+      display: block !important;
     }
   </style>
 </head>
@@ -426,6 +448,7 @@
     <div id="currentTabTitle">🎥 Видео матча</div>
 
     <div id="tempInfo"></div>
+    <div id="shotInfo"></div>
 
     <div id="recordingIndicator">
       <div class="recordingDot"></div>
@@ -484,6 +507,7 @@
     const saveBtn = document.getElementById('saveBtn');
     const currentTabTitle = document.getElementById('currentTabTitle');
     const tempInfo = document.getElementById('tempInfo');
+    const shotInfo = document.getElementById('shotInfo');
     const tabs = document.querySelectorAll('.tab');
 
     // Переменные состояния
@@ -780,6 +804,36 @@
       }, 1500);
     }
 
+    // Показ информации о броске
+    function showShotInfo(distance, angle, goalType) {
+      const goalName = goalType === 'leftGoal' ? 'Левые' : 'Правые';
+      
+      shotInfo.innerHTML = `
+        <div style="margin-bottom: 10px; font-size: 16px; font-weight: bold; color: #4fc3f7;">
+          📊 Параметры броска
+        </div>
+        <div class="shot-info-line">
+          🏒 Дистанция: <span class="shot-info-value">${distance.toFixed(2)} м</span>
+        </div>
+        <div class="shot-info-line">
+          📐 Угол: <span class="shot-info-value">${angle.toFixed(1)}°</span>
+        </div>
+        <div class="shot-info-line">
+          🥅 Ворота: <span class="shot-info-value">${goalName}</span>
+        </div>
+        <div style="margin-top: 10px; font-size: 12px; color: #aaa;">
+          Сообщение исчезнет через 5 секунд
+        </div>
+      `;
+      
+      shotInfo.style.display = 'block';
+      
+      // Скрываем через 5 секунд
+      setTimeout(() => {
+        shotInfo.style.display = 'none';
+      }, 5000);
+    }
+
     // Расчет дистанции и угла
     function calculateDistanceAndAngle(shootPointX, shootPointY) {
       if (!selectedGoal || !pixelsPerMeter) {
@@ -838,9 +892,12 @@
       
       fieldContainer.appendChild(currentMarker);
       
-      // Рассчитываем параметры
+      // Рассчитываем параметры броска
       const result = calculateDistanceAndAngle(x, y);
       console.log('Дистанция:', result.distance, 'м, Угол:', result.angle, '°');
+      
+      // Показываем информацию о броске
+      showShotInfo(result.distance, result.angle, selectedGoal);
       
       // Показываем модальное окно
       setTimeout(() => {
@@ -886,6 +943,10 @@
       const newY = markerStartY + deltaY;
       currentMarker.style.left = newX + 'px';
       currentMarker.style.top = newY + 'px';
+      
+      // При перетаскивании обновляем информацию о броске
+      const result = calculateDistanceAndAngle(newX, newY);
+      showShotInfo(result.distance, result.angle, selectedGoal);
     }
 
     function dragTouch(e) {
@@ -898,6 +959,10 @@
       const newY = markerStartY + deltaY;
       currentMarker.style.left = newX + 'px';
       currentMarker.style.top = newY + 'px';
+      
+      // При перетаскивании обновляем информацию о броске
+      const result = calculateDistanceAndAngle(newX, newY);
+      showShotInfo(result.distance, result.angle, selectedGoal);
     }
 
     // Остановка перетаскивания
@@ -1054,6 +1119,9 @@
         currentMarker.remove();
         currentMarker = null;
       }
+      
+      // Скрываем информацию о броске
+      shotInfo.style.display = 'none';
       
       // Сбрасываем выбор ворот
       selectedGoal = null;
