@@ -208,12 +208,12 @@
     }
 
     #fieldImage {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      display: block;
-      pointer-events: none;
-    }
+  width: 100%;
+  height: 100%;
+  object-fit: fill; /* ← ЗАПОЛНЯЕТ ВЕСЬ КОНТЕЙНЕР */
+  display: block;
+  pointer-events: none;
+}
 
     .marker-point {
       position: absolute;
@@ -1219,6 +1219,7 @@ function handleFieldTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
