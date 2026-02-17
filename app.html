@@ -235,37 +235,6 @@
       box-shadow: 0 0 30px rgba(255, 0, 0, 1);
     }
 
-    .goal-marker {
-      position: absolute;
-      width: 70px;
-      height: 70px;
-      background: rgba(0, 255, 0, 0.9);
-      border-radius: 50%;
-      border: 4px solid white;
-      transform: translate(-50%, -50%);
-      z-index: 100;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 26px;
-      font-weight: bold;
-      color: #000;
-      transition: all 0.3s;
-      box-shadow: 0 0 25px rgba(0, 255, 0, 0.8);
-    }
-
-    .goal-marker:hover {
-      transform: translate(-50%, -50%) scale(1.15);
-      background: rgba(0, 255, 0, 1);
-    }
-
-    .goal-marker.selected {
-      background: rgba(255, 255, 0, 0.95);
-      box-shadow: 0 0 35px rgba(255, 255, 0, 0.9);
-      transform: translate(-50%, -50%) scale(1.2);
-    }
-
     #choiceModal {
       position: fixed;
       top: 0;
@@ -557,7 +526,7 @@
 
     <div id="fieldContainer">
       <img id="fieldImage" src="1676331593_grizly-club-p-khokkeinoe-pole-klipart-16.jpg" alt="Хоккейная площадка">
-      <div id="fieldInstruction">Выберите ворота, в которых стоите</div>
+      <div id="fieldInstruction">Отметьте точку броска на поле</div>
     </div>
 
     <div id="choiceModal">
@@ -670,22 +639,17 @@
     let markerStartY = 0;
     let videoCurrentTime = 0;
     let isVideoPaused = false;
-    let selectedGoal = null;
-    let goalMarkers = [];
     let isImageLoaded = false;
     let lastShotData = null;
 
-    // Константы
-    const ORIGINAL_IMAGE_WIDTH = 2050;
+    // Константы (для половины поля)
+    const ORIGINAL_IMAGE_WIDTH = 1025;  // Половина от 2050
     const ORIGINAL_IMAGE_HEIGHT = 860;
-    const ORIGINAL_GOAL_COORDS = {
-      leftGoal: { x: 188, y: 430 },
-      rightGoal: { x: 1861, y: 430 }
-    };
-    const RINK_LENGTH_METERS = 61;
+    const ORIGINAL_GOAL_COORDS = { x: 930, y: 430 };  // Ворота справа (центр половины)
+    const RINK_LENGTH_METERS = 30.5;  // Половина площадки
 
     let scaleFactor = 1;
-    let currentGoalCoords = {};
+    let currentGoalCoords = { x: 0, y: 0 };
     let pixelsPerMeter = 0;
 
     // Получаем параметры из URL
@@ -789,95 +753,15 @@
       const offsetX = imageRect.left - containerRect.left;
       const offsetY = imageRect.top - containerRect.top;
       
+      // Ворота теперь фиксированные (без выбора лево/право)
       currentGoalCoords = {
-        leftGoal: {
-          x: (ORIGINAL_GOAL_COORDS.leftGoal.x * scaleFactor) + offsetX,
-          y: (ORIGINAL_GOAL_COORDS.leftGoal.y * scaleFactor) + offsetY
-        },
-        rightGoal: {
-          x: (ORIGINAL_GOAL_COORDS.rightGoal.x * scaleFactor) + offsetX,
-          y: (ORIGINAL_GOAL_COORDS.rightGoal.y * scaleFactor) + offsetY
-        }
+        x: (ORIGINAL_GOAL_COORDS.x * scaleFactor) + offsetX,
+        y: (ORIGINAL_GOAL_COORDS.y * scaleFactor) + offsetY
       };
       
       pixelsPerMeter = (ORIGINAL_IMAGE_WIDTH * scaleFactor) / RINK_LENGTH_METERS;
       
-      createGoalMarkers();
-    }
-
-    function createGoalMarkers() {
-      // Удаляем старые маркеры
-      goalMarkers.forEach(marker => {
-        if (marker && marker.parentNode) {
-          marker.remove();
-        }
-      });
-      goalMarkers = [];
-      
-      // Левый маркер
-      const leftMarker = document.createElement('div');
-      leftMarker.className = 'goal-marker';
-      leftMarker.dataset.goal = 'leftGoal';
-      leftMarker.textContent = 'Л';
-      leftMarker.style.left = currentGoalCoords.leftGoal.x + 'px';
-      leftMarker.style.top = currentGoalCoords.leftGoal.y + 'px';
-      
-      leftMarker.addEventListener('click', function(e) {
-        e.stopPropagation();
-        selectGoal('leftGoal');
-      });
-      
-      leftMarker.addEventListener('touchstart', function(e) {
-        e.stopPropagation();
-        e.preventDefault();
-        selectGoal('leftGoal');
-      }, { passive: false });
-      
-      fieldContainer.appendChild(leftMarker);
-      goalMarkers.push(leftMarker);
-      
-      // Правый маркер
-      const rightMarker = document.createElement('div');
-      rightMarker.className = 'goal-marker';
-      rightMarker.dataset.goal = 'rightGoal';
-      rightMarker.textContent = 'П';
-      rightMarker.style.left = currentGoalCoords.rightGoal.x + 'px';
-      rightMarker.style.top = currentGoalCoords.rightGoal.y + 'px';
-      
-      rightMarker.addEventListener('click', function(e) {
-        e.stopPropagation();
-        selectGoal('rightGoal');
-      });
-      
-      rightMarker.addEventListener('touchstart', function(e) {
-        e.stopPropagation();
-        e.preventDefault();
-        selectGoal('rightGoal');
-      }, { passive: false });
-      
-      fieldContainer.appendChild(rightMarker);
-      goalMarkers.push(rightMarker);
-      
-      selectedGoal = null;
-      goalMarkers.forEach(marker => marker.classList.remove('selected'));
-      fieldInstruction.textContent = 'Выберите ворота, в которых стоите';
-    }
-
-    function selectGoal(goalType) {
-      goalMarkers.forEach(marker => {
-        if (marker) marker.classList.remove('selected');
-      });
-      
-      selectedGoal = goalType;
-      
-      goalMarkers.forEach(marker => {
-        if (marker && marker.dataset.goal === goalType) {
-          marker.classList.add('selected');
-        }
-      });
-      
-      fieldInstruction.textContent = 'Нажмите на поле, чтобы указать точку броска';
-      showTempMessage(`Выбраны ${goalType === 'leftGoal' ? 'левые' : 'правые'} ворота`);
+      addDebugLog(`Ворота: x=${currentGoalCoords.x.toFixed(1)}, y=${currentGoalCoords.y.toFixed(1)}`);
     }
 
     function showTempMessage(message) {
@@ -889,8 +773,7 @@
       }, 1500);
     }
 
-    function showShotResult(eventType, distance, angle, goalType) {
-      const goalName = goalType === 'leftGoal' ? 'Левые' : 'Правые';
+    function showShotResult(eventType, distance, angle) {
       const eventName = eventType === 'goal' ? 'Гол' : 'Сэйв';
       const eventColor = eventType === 'goal' ? 'shot-info-goal' : 'shot-info-save';
       
@@ -908,10 +791,6 @@
           <span class="shot-info-label">Угол:</span>
           <span class="shot-info-value">${angle.toFixed(1)}°</span>
         </div>
-        <div class="shot-info-row">
-          <span class="shot-info-label">Ворота:</span>
-          <span class="shot-info-value">${goalName}</span>
-        </div>
         <div class="shot-info-footer">Сообщение исчезнет через 6 секунд</div>
       `;
       
@@ -923,25 +802,21 @@
     }
 
     function calculateDistanceAndAngle(shootPointX, shootPointY) {
-      if (!selectedGoal || !pixelsPerMeter) {
+      if (!pixelsPerMeter) {
         return { distance: 0, angle: 0 };
       }
       
-      const myGoal = currentGoalCoords[selectedGoal];
+      const goalX = currentGoalCoords.x;
+      const goalY = currentGoalCoords.y;
       
-      const dx = myGoal.x - shootPointX;
-      const dy = myGoal.y - shootPointY;
+      const dx = goalX - shootPointX;
+      const dy = goalY - shootPointY;
       
       const distancePixels = Math.sqrt(dx * dx + dy * dy);
       const distanceMeters = distancePixels / pixelsPerMeter;
       
-      let angleRad;
-      if (selectedGoal === 'leftGoal') {
-        angleRad = Math.atan2(dx, -dy);
-      } else {
-        angleRad = Math.atan2(-dx, -dy);
-      }
-      
+      // Угол относительно ворот (упрощенно)
+      let angleRad = Math.atan2(dx, -dy);
       let angleDeg = angleRad * (180 / Math.PI);
       
       if (angleDeg > 90) angleDeg = 90;
@@ -954,11 +829,6 @@
     }
 
     function createMarker(x, y) {
-      if (!selectedGoal) {
-        showTempMessage('Сначала выберите ворота!');
-        return;
-      }
-      
       if (currentMarker) {
         currentMarker.remove();
       }
@@ -978,10 +848,10 @@
         x: x,
         y: y,
         distance: result.distance,
-        angle: result.angle,
-        goal: selectedGoal
+        angle: result.angle
       };
       
+      // Сразу показываем выбор типа события (без выбора ворот)
       setTimeout(() => {
         choiceModal.classList.add('visible');
       }, 300);
@@ -1029,8 +899,7 @@
         x: newX,
         y: newY,
         distance: result.distance,
-        angle: result.angle,
-        goal: selectedGoal
+        angle: result.angle
       };
     }
 
@@ -1050,8 +919,7 @@
         x: newX,
         y: newY,
         distance: result.distance,
-        angle: result.angle,
-        goal: selectedGoal
+        angle: result.angle
       };
     }
 
@@ -1070,13 +938,7 @@
     }
 
     function handleFieldClick(e) {
-      if (e.target.classList.contains('goal-marker') || 
-          e.target.classList.contains('marker-point')) {
-        return;
-      }
-      
-      if (!selectedGoal) {
-        showTempMessage('Сначала выберите ворота!');
+      if (e.target.classList.contains('marker-point')) {
         return;
       }
       
@@ -1094,12 +956,7 @@
       const touch = e.touches[0];
       const element = document.elementFromPoint(touch.clientX, touch.clientY);
       
-      if (element && element.classList.contains('goal-marker')) {
-        return;
-      }
-      
-      if (!selectedGoal) {
-        showTempMessage('Сначала выберите ворота!');
+      if (element && element.classList.contains('marker-point')) {
         return;
       }
       
@@ -1146,7 +1003,7 @@
     }
 
     // === ОТПРАВКА ДАННЫХ В TELEGRAM БОТ ===
-    function sendToTelegramBot(eventType, distance, angle, goalType, originalX, originalY) {
+    function sendToTelegramBot(eventType, distance, angle, originalX, originalY) {
       addDebugLog(`🔄 Пытаюсь отправить данные в бота...`);
       addDebugLog(`Тип: ${eventType}, Дистанция: ${distance}, Угол: ${angle}`);
       
@@ -1159,32 +1016,28 @@
       const timestamp = Date.now() - recordingStartTime;
       const videoTime = videoCurrentTime;
       
-      // Подготавливаем данные для бота
       const eventData = {
         action: 'save_event',
         event: {
             match_id: parseInt(matchId),
             event_type: eventType,
-            type: 1,  // Это значение из лога, но лучше сделать eventType
+            type: eventType,
             timestamp: timestamp,
             video_time: videoTime,
             distance: parseFloat(distance.toFixed(2)),
             angle: parseFloat(angle.toFixed(1)),
-            goal_type: goalType,
-            goal: goalType,
+            goal_type: 'half_rink',  // Фиксированное значение
             original_x: parseFloat(originalX.toFixed(2)),
             original_y: parseFloat(originalY.toFixed(2))
         }
-    };
+      };
       
       addDebugLog(`📦 Данные для отправки: ${JSON.stringify(eventData)}`);
       
       try {
-        // Преобразуем в JSON строку
         const jsonString = JSON.stringify(eventData);
         addDebugLog(`📤 Отправляю JSON: ${jsonString}`);
         
-        // Отправляем через Telegram WebApp
         Telegram.WebApp.sendData(jsonString);
         addDebugLog('✅ Данные отправлены через Telegram.WebApp.sendData()', 'success');
         
@@ -1192,17 +1045,7 @@
         
       } catch (error) {
         addDebugLog(`❌ Ошибка отправки: ${error.message}`, 'error');
-        
-        // Пробуем альтернативный метод
-        try {
-          addDebugLog('🔄 Пробую альтернативный метод...');
-          Telegram.WebApp.sendData(eventData);
-          addDebugLog('✅ Данные отправлены (альтернативный метод)', 'success');
-          return true;
-        } catch (error2) {
-          addDebugLog(`❌ Альтернативный метод тоже не сработал: ${error2.message}`, 'error');
-          return false;
-        }
+        return false;
       }
     }
 
@@ -1215,21 +1058,19 @@
       let angle = 0;
       let originalX = 0;
       let originalY = 0;
-      let goalType = selectedGoal;
       
       if (lastShotData) {
         distance = lastShotData.distance;
         angle = lastShotData.angle;
         originalX = lastShotData.x;
         originalY = lastShotData.y;
-        goalType = lastShotData.goal;
       }
       
       // Показываем результат пользователю
-      showShotResult(type, distance, angle, goalType);
+      showShotResult(type, distance, angle);
       
       // Отправляем данные в бота
-      const success = sendToTelegramBot(type, distance, angle, goalType, originalX, originalY);
+      const success = sendToTelegramBot(type, distance, angle, originalX, originalY);
       
       if (success) {
         addDebugLog('✅ Событие обработано успешно', 'success');
@@ -1243,12 +1084,8 @@
         currentMarker = null;
       }
       
-      // Сбрасываем выбор ворот
-      selectedGoal = null;
-      goalMarkers.forEach(marker => {
-        if (marker) marker.classList.remove('selected');
-      });
-      fieldInstruction.textContent = 'Выберите ворота, в которых стоите';
+      // Сбрасываем состояние
+      fieldInstruction.textContent = 'Отметьте точку броска на поле';
       
       // Переключаемся на видео
       switchTab('video');
@@ -1344,6 +1181,9 @@
       // Обновление координат
       window.addEventListener('resize', updateGoalCoordinates);
       
+      // Устанавливаем инструкцию для половины поля
+      fieldInstruction.textContent = 'Отметьте точку броска на поле';
+      
       addDebugLog('✅ Инициализация завершена', 'success');
     }
 
@@ -1352,5 +1192,3 @@
   </script>
 </body>
 </html>
-
-
