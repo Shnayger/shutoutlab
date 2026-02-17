@@ -645,9 +645,7 @@
     const ORIGINAL_IMAGE_WIDTH = 484;    // px
 const ORIGINAL_IMAGE_HEIGHT = 432;   // px
 const ORIGINAL_GOAL_COORDS = { x: 244, y: 371 };
-const RINK_WIDTH_METERS = 26;        // ширина поля
-const RINK_LENGTH_METERS = 26;       // от центра до ворот
-const PIXELS_PER_METER = 14.2857;    // 1 / 0.07 = 14.2857 px/м
+const METERS_PER_PIXEL = 0.07;  // 1 пиксель = 0.07 метра
 
        let scaleFactor = 1;
     let currentGoalCoords = { x: 0, y: 0 };
@@ -748,19 +746,14 @@ const PIXELS_PER_METER = 14.2857;    // 1 / 0.07 = 14.2857 px/м
   if (!isImageLoaded) return;
   
   const imageRect = fieldImage.getBoundingClientRect();
-  
   scaleFactor = imageRect.width / ORIGINAL_IMAGE_WIDTH;
   
-  // Координаты ворот ОТНОСИТЕЛЬНО ИЗОБРАЖЕНИЯ (без offsetX/Y)
   currentGoalCoords = {
     x: ORIGINAL_GOAL_COORDS.x * scaleFactor,
     y: ORIGINAL_GOAL_COORDS.y * scaleFactor
   };
   
-  pixelsPerMeterX = (ORIGINAL_IMAGE_WIDTH * scaleFactor) / RINK_WIDTH_METERS;
-  pixelsPerMeterY = (ORIGINAL_IMAGE_HEIGHT * scaleFactor) / RINK_LENGTH_METERS;
-  
-  addDebugLog(`Ворота (относительно изображения): x=${currentGoalCoords.x.toFixed(1)}, y=${currentGoalCoords.y.toFixed(1)}`);
+  addDebugLog(`Ворота: x=${currentGoalCoords.x.toFixed(1)}, y=${currentGoalCoords.y.toFixed(1)}`);
 }
 
     function showTempMessage(message) {
@@ -801,26 +794,25 @@ const PIXELS_PER_METER = 14.2857;    // 1 / 0.07 = 14.2857 px/м
     }
 
           function calculateDistanceAndAngle(shootPointX, shootPointY) {
-  if (!scaleFactor) return { distance: 0, angle: 0 };
-  
   const goalX = currentGoalCoords.x;
   const goalY = currentGoalCoords.y;
   
   const dx = goalX - shootPointX;
   const dy = goalY - shootPointY;
   
-  const dxMeters = dx / pixelsPerMeterX;
-  const dyMeters = dy / pixelsPerMeterY;
+  // Расстояние в пикселях
+  const distancePixels = Math.sqrt(dx * dx + dy * dy);
   
-  const distanceMeters = Math.sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
+  // Конвертируем в метры (1 пиксель = 0.07 метра)
+  const distanceMeters = distancePixels * METERS_PER_PIXEL;
   
-  let angleRad = Math.atan2(dxMeters, dyMeters);
-  let angleDeg = angleRad * (180 / Math.PI);
-  angleDeg = Math.round(angleDeg * 10) / 10;
+  // Угол в градусах
+  const angleRad = Math.atan2(dx, dy);
+  const angleDeg = angleRad * (180 / Math.PI);
   
   return {
     distance: Math.round(distanceMeters * 100) / 100,
-    angle: angleDeg
+    angle: Math.round(angleDeg * 10) / 10
   };
 }
     
@@ -1198,6 +1190,7 @@ const PIXELS_PER_METER = 14.2857;    // 1 / 0.07 = 14.2857 px/м
   </script>
 </body>
 </html>
+
 
 
 
