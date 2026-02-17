@@ -798,11 +798,11 @@ const METERS_PER_PIXEL_Y = 8.4 / 120;  // = 0.07 м/px (ваш реальный 
   const goalX = 244;
   const goalY = 371;
   
-  const dx = shootPointX - goalX;    // Горизонталь от центра ворот
+  const dx = goalX - shootPointX;    // Горизонталь от центра ворот
   const dy = goalY - shootPointY;    // Вертикаль от ворот к игроку
   
   const dxMeters = dx * (26 / 484);     // ≈ dx * 0.0537
-  const dyMeters = dy * (8.4 / 120);    // = dy * 0.07
+  const dyMeters = dy * (30 / 432);    // = dy * 0.07
   
   const distance = Math.sqrt(dxMeters**2 + dyMeters**2);
   const angle = Math.atan2(dxMeters, dyMeters) * (180 / Math.PI);
@@ -1187,6 +1187,7 @@ const METERS_PER_PIXEL_Y = 8.4 / 120;  // = 0.07 м/px (ваш реальный 
   </script>
 </body>
 </html>
+
 
 
 
