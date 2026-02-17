@@ -795,16 +795,21 @@ const METERS_PER_PIXEL_Y = 30 / 432;  // ≈ 0.0694 м/px
     }
 
           function calculateDistanceAndAngle(shootPointX, shootPointY) {
-  const goalX = currentGoalCoords.x;
-  const goalY = currentGoalCoords.y;
+  const goalX = currentGoalCoords.x; // 244
+  const goalY = currentGoalCoords.y; // 371
   
-  const dx = goalX - shootPointX;
-  const dy = goalY - shootPointY;
+  // dx: горизонтальное смещение от центра ворот
+  const dx = shootPointX - goalX;
   
-  const dxMeters = dx * METERS_PER_PIXEL_X;
-  const dyMeters = dy * METERS_PER_PIXEL_Y;
+  // dy: вертикальное расстояние ОТ ВОРОТ (чем больше dy, тем дальше игрок)
+  const dy = goalY - shootPointY; // ← КЛЮЧЕВОЕ ИЗМЕНЕНИЕ
+  
+  const dxMeters = dx * (26 / 484);
+  const dyMeters = dy * (30 / 432);
   
   const distanceMeters = Math.sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
+  
+  // Угол: 0° = прямо перед воротами, ±90° = острые углы
   const angleRad = Math.atan2(dxMeters, dyMeters);
   const angleDeg = angleRad * (180 / Math.PI);
   
@@ -1188,6 +1193,7 @@ const METERS_PER_PIXEL_Y = 30 / 432;  // ≈ 0.0694 м/px
   </script>
 </body>
 </html>
+
 
 
 
