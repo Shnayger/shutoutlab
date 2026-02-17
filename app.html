@@ -642,12 +642,12 @@
     let isImageLoaded = false;
     let lastShotData = null;
 
-    const ORIGINAL_IMAGE_WIDTH = 484;
-const ORIGINAL_IMAGE_HEIGHT = 432;
+    const ORIGINAL_IMAGE_WIDTH = 484;    // px
+const ORIGINAL_IMAGE_HEIGHT = 432;   // px
 const ORIGINAL_GOAL_COORDS = { x: 244, y: 371 };
-const ORIGINAL_CENTER_LINE = { x: 244, y: 1 };  // Центральная линия
-const RINK_WIDTH_METERS = 26;
-const RINK_LENGTH_METERS = 26;  // От центральной линии до ворот
+const RINK_WIDTH_METERS = 26;        // ширина поля
+const RINK_LENGTH_METERS = 26;       // от центра до ворот
+const PIXELS_PER_METER = 14.2857;    // 1 / 0.07 = 14.2857 px/м
 
        let scaleFactor = 1;
     let currentGoalCoords = { x: 0, y: 0 };
@@ -1198,6 +1198,7 @@ const RINK_LENGTH_METERS = 26;  // От центральной линии до �
   </script>
 </body>
 </html>
+
 
 
 
