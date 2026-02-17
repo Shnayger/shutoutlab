@@ -642,12 +642,12 @@
     let isImageLoaded = false;
     let lastShotData = null;
 
-    const ORIGINAL_IMAGE_WIDTH = 484;    // px
-const ORIGINAL_IMAGE_HEIGHT = 432;   // px
-const ORIGINAL_GOAL_COORDS = { x: 244, y: 371 };
-const METERS_PER_PIXEL_X = 26 / 484;   // ≈ 0.0537 м/px
-const METERS_PER_PIXEL_Y = 8.4 / 120;  // = 0.07 м/px (ваш реальный замер)
-
+   const ORIGINAL_IMAGE_WIDTH = 402;
+const ORIGINAL_IMAGE_HEIGHT = 463;
+const ORIGINAL_GOAL_COORDS = { x: 201, y: 406 };
+const METERS_PER_PIXEL_X = 26 / 402;  // ≈ 0.0647
+const METERS_PER_PIXEL_Y = 30 / 463;  // ≈ 0.0648
+    
        let scaleFactor = 1;
     let currentGoalCoords = { x: 0, y: 0 };
     let pixelsPerMeterX = 0;
@@ -795,21 +795,21 @@ const METERS_PER_PIXEL_Y = 8.4 / 120;  // = 0.07 м/px (ваш реальный 
     }
 
          function calculateDistanceAndAngle(shootPointX, shootPointY) {
-  const goalX = 244;
-  const goalY = 371;
-  
-  const dx = goalX - shootPointX;    // Горизонталь от центра ворот
-  const dy = goalY - shootPointY;    // Вертикаль от ворот к игроку
-  
-  const dxMeters = dx * (26 / 484);     // ≈ dx * 0.0537
-  const dyMeters = dy * (30 / 432);    // = dy * 0.07
-  
-  const distance = Math.sqrt(dxMeters**2 + dyMeters**2);
-  const angle = Math.atan2(dxMeters, dyMeters) * (180 / Math.PI);
-  
+  const goalX = currentGoalCoords.x; // 201 * scaleFactor
+  const goalY = currentGoalCoords.y; // 406 * scaleFactor
+
+  const dx = shootPointX - goalX;    // Горизонталь от центра ворот
+  const dy = goalY - shootPointY;    // Вертикаль ОТ ВОРОТ к игроку
+
+  const dxMeters = dx * METERS_PER_PIXEL_X;
+  const dyMeters = dy * METERS_PER_PIXEL_Y;
+
+  const distanceMeters = Math.sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
+  const angleDeg = Math.atan2(dxMeters, dyMeters) * (180 / Math.PI);
+
   return {
-    distance: Math.round(distance * 100) / 100,
-    angle: Math.round(angle * 10) / 10
+    distance: Math.round(distanceMeters * 100) / 100,
+    angle: Math.round(angleDeg * 10) / 10
   };
 }
     
@@ -1187,6 +1187,7 @@ const METERS_PER_PIXEL_Y = 8.4 / 120;  // = 0.07 м/px (ваш реальный 
   </script>
 </body>
 </html>
+
 
 
 
