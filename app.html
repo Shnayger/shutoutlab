@@ -642,13 +642,12 @@
     let isImageLoaded = false;
     let lastShotData = null;
 
-    // Константы (для половины поля - Канадское поле)
-    const ORIGINAL_IMAGE_WIDTH = 484;    // Ширина изображения (26 метров)
-    const ORIGINAL_IMAGE_HEIGHT = 432;   // Высота изображения (30 метров)
-    const ORIGINAL_GOAL_COORDS = { x: 244, y: 371 };  // Центр ворот
-    const RINK_WIDTH_METERS = 26;        // Ширина поля (метры)
-    const RINK_LENGTH_METERS = 30;       // Длина половины поля (метры)
-    const GOAL_DISTANCE_FROM_BOARDS = 4; // Ворота в 4 метрах от борта
+    const ORIGINAL_IMAGE_WIDTH = 484;
+const ORIGINAL_IMAGE_HEIGHT = 432;
+const ORIGINAL_GOAL_COORDS = { x: 244, y: 371 };
+const ORIGINAL_CENTER_LINE = { x: 244, y: 1 };  // Центральная линия
+const RINK_WIDTH_METERS = 26;
+const RINK_LENGTH_METERS = 26;  // От центральной линии до ворот
 
        let scaleFactor = 1;
     let currentGoalCoords = { x: 0, y: 0 };
@@ -1199,6 +1198,7 @@
   </script>
 </body>
 </html>
+
 
 
 
