@@ -762,9 +762,10 @@ const METERS_PER_PIXEL_Y = 30 / 463;  // ≈ 0.0648
     y: ORIGINAL_GOAL_COORDS.y * scaleFactor
   };
   
+  addDebugLog(`Scale factor: ${scaleFactor.toFixed(3)}`);
   addDebugLog(`Ворота: x=${currentGoalCoords.x.toFixed(1)}, y=${currentGoalCoords.y.toFixed(1)}`);
 }
-
+    
     function showTempMessage(message) {
       tempInfo.textContent = message;
       tempInfo.style.display = 'block';
@@ -806,11 +807,17 @@ const METERS_PER_PIXEL_Y = 30 / 463;  // ≈ 0.0648
   const goalX = currentGoalCoords.x;
   const goalY = currentGoalCoords.y;
   
-  // dx: от центра ворот к точке (горизонталь)
-  const dx = shootPointX - goalX;
-  // dy: от ворот к игроку (вертикаль)
-  const dy = goalY - shootPointY;
+  // Переводим экранные координаты в координаты оригинального изображения
+  const originalShootX = shootPointX / scaleFactor;
+  const originalShootY = shootPointY / scaleFactor;
+  const originalGoalX = ORIGINAL_GOAL_COORDS.x;
+  const originalGoalY = ORIGINAL_GOAL_COORDS.y;
   
+  // Вычисляем разницу в координатах оригинального изображения
+  const dx = originalShootX - originalGoalX;
+  const dy = originalGoalY - originalShootY;
+  
+  // Конвертируем пиксели оригинального изображения в метры
   const dxMeters = dx * METERS_PER_PIXEL_X;
   const dyMeters = dy * METERS_PER_PIXEL_Y;
   
@@ -1219,6 +1226,7 @@ function handleFieldTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
