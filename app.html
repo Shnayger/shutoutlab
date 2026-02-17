@@ -747,7 +747,15 @@ const METERS_PER_PIXEL_Y = 30 / 463;  // ≈ 0.0648
   if (!isImageLoaded) return;
   
   const imageRect = fieldImage.getBoundingClientRect();
+  const containerRect = fieldContainer.getBoundingClientRect();
+  
   scaleFactor = imageRect.width / ORIGINAL_IMAGE_WIDTH;
+  
+  // Сохраняем смещение изображения внутри контейнера
+  window.imageOffset = {
+    left: imageRect.left - containerRect.left,
+    top: imageRect.top - containerRect.top
+  };
   
   currentGoalCoords = {
     x: ORIGINAL_GOAL_COORDS.x * scaleFactor,
@@ -795,18 +803,20 @@ const METERS_PER_PIXEL_Y = 30 / 463;  // ≈ 0.0648
     }
 
          function calculateDistanceAndAngle(shootPointX, shootPointY) {
-  const goalX = currentGoalCoords.x; // 201 * scaleFactor
-  const goalY = currentGoalCoords.y; // 406 * scaleFactor
-
-  const dx = goalX - shootPointX;    // Горизонталь от центра ворот
-  const dy = goalY - shootPointY;    // Вертикаль ОТ ВОРОТ к игроку
-
+  const goalX = currentGoalCoords.x;
+  const goalY = currentGoalCoords.y;
+  
+  // dx: от центра ворот к точке (горизонталь)
+  const dx = shootPointX - goalX;
+  // dy: от ворот к игроку (вертикаль)
+  const dy = goalY - shootPointY;
+  
   const dxMeters = dx * METERS_PER_PIXEL_X;
   const dyMeters = dy * METERS_PER_PIXEL_Y;
-
+  
   const distanceMeters = Math.sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
   const angleDeg = Math.atan2(dxMeters, dyMeters) * (180 / Math.PI);
-
+  
   return {
     distance: Math.round(distanceMeters * 100) / 100,
     angle: Math.round(angleDeg * 10) / 10
@@ -933,9 +943,31 @@ const METERS_PER_PIXEL_Y = 30 / 463;  // ≈ 0.0648
     return;
   }
   
-  // Координаты относительно изображения (не контейнера!)
-  const x = e.clientX - imageRect.left;
-  const y = e.clientY - imageRect.top;
+  // Координаты относительно ИЗОБРАЖЕНИЯ
+  const x = (e.clientX - imageRect.left);
+  const y = (e.clientY - imageRect.top);
+  
+  createMarker(x, y);
+}
+
+function handleFieldTouch(e) {
+  if (e.touches.length !== 1) return;
+  e.preventDefault();
+  
+  const touch = e.touches[0];
+  const element = document.elementFromPoint(touch.clientX, touch.clientY);
+  
+  if (element && element.classList.contains('marker-point')) return;
+  
+  const imageRect = fieldImage.getBoundingClientRect();
+  
+  if (touch.clientX < imageRect.left || touch.clientX > imageRect.right ||
+      touch.clientY < imageRect.top || touch.clientY > imageRect.bottom) {
+    return;
+  }
+  
+  const x = touch.clientX - imageRect.left;
+  const y = touch.clientY - imageRect.top;
   
   createMarker(x, y);
 }
@@ -1187,6 +1219,7 @@ const METERS_PER_PIXEL_Y = 30 / 463;  // ≈ 0.0648
   </script>
 </body>
 </html>
+
 
 
 
