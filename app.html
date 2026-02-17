@@ -642,11 +642,19 @@
     let isImageLoaded = false;
     let lastShotData = null;
 
-   const ORIGINAL_IMAGE_WIDTH = 402;
+   const HALF_RINK_WIDTH_METERS = 26;     // ширина полной площадки
+const HALF_RINK_LENGTH_METERS = 30;    // ДЛИНА ПОЛОВИНЫ площадки (от центра до ворот)
+
+// Оригинальные размеры изображения (половина площадки)
+const ORIGINAL_IMAGE_WIDTH = 402;
 const ORIGINAL_IMAGE_HEIGHT = 463;
+
+// Координаты ворот в ОРИГИНАЛЬНОМ изображении (пиксели)
 const ORIGINAL_GOAL_COORDS = { x: 201, y: 406 };
-const METERS_PER_PIXEL_X = 26 / 402;  // ≈ 0.0647
-const METERS_PER_PIXEL_Y = 30 / 463;  // ≈ 0.0648
+
+// Коэффициенты пересчета пикселей в метры для ОРИГИНАЛЬНОГО изображения
+const METERS_PER_PIXEL_X = HALF_RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;        // 26/402 ≈ 0.0647 м/пикс
+const METERS_PER_PIXEL_Y = HALF_RINK_LENGTH_METERS / ORIGINAL_IMAGE_HEIGHT;      // 30/463 ≈ 0.0648 м/пикс
     
        let scaleFactor = 1;
     let currentGoalCoords = { x: 0, y: 0 };
@@ -803,32 +811,60 @@ const METERS_PER_PIXEL_Y = 30 / 463;  // ≈ 0.0648
       }, 6000);
     }
 
-         function calculateDistanceAndAngle(shootPointX, shootPointY) {
-  const goalX = currentGoalCoords.x;
-  const goalY = currentGoalCoords.y;
+         function calculateDistanceAndAngle(screenX, screenY) {
+  // ШАГ 1: Получаем координаты клика относительно изображения на экране
+  const imageRect = fieldImage.getBoundingClientRect();
   
-  // Переводим экранные координаты в координаты оригинального изображения
-  const originalShootX = shootPointX / scaleFactor;
-  const originalShootY = shootPointY / scaleFactor;
-  const originalGoalX = ORIGINAL_GOAL_COORDS.x;
-  const originalGoalY = ORIGINAL_GOAL_COORDS.y;
+  // Проверка: клик внутри изображения?
+  if (screenX < imageRect.left || screenX > imageRect.right ||
+      screenY < imageRect.top || screenY > imageRect.bottom) {
+    return null;
+  }
   
-  // Вычисляем разницу в координатах оригинального изображения
-  const dx = originalShootX - originalGoalX;
-  const dy = originalGoalY - originalShootY;
+  // Координаты клика ВНУТРИ изображения на экране (в пикселях экрана)
+  const clickInImageX = screenX - imageRect.left;
+  const clickInImageY = screenY - imageRect.top;
   
-  // Конвертируем пиксели оригинального изображения в метры
-  const dxMeters = dx * METERS_PER_PIXEL_X;
-  const dyMeters = dy * METERS_PER_PIXEL_Y;
+  // ШАГ 2: Переводим в координаты ОРИГИНАЛЬНОГО изображения
+  const scaleFactor = imageRect.width / ORIGINAL_IMAGE_WIDTH;
+  const originalX = clickInImageX / scaleFactor;
+  const originalY = clickInImageY / scaleFactor;
   
+  // ШАГ 3: Считаем разницу в ОРИГИНАЛЬНЫХ пикселях
+  // dx: смещение по ширине от центра ворот
+  const dxOriginal = originalX - ORIGINAL_GOAL_COORDS.x;
+  
+  // dy: расстояние от точки броска до ворот ПО ВЕРТИКАЛИ
+  // ВНИМАНИЕ: на изображении верх - это дальняя от ворот часть (центр площадки)
+  // низ - это сами ворота (y=406)
+  const dyOriginal = ORIGINAL_GOAL_COORDS.y - originalY;  // положительное значение - игрок дальше от ворот
+  
+  // ШАГ 4: Переводим в МЕТРЫ
+  const dxMeters = dxOriginal * METERS_PER_PIXEL_X;
+  const dyMeters = dyOriginal * METERS_PER_PIXEL_Y;
+  
+  // ШАГ 5: Вычисляем расстояние и угол
   const distanceMeters = Math.sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
-  const angleDeg = Math.atan2(dxMeters, dyMeters) * (180 / Math.PI);
+  
+  // Угол: 0° - прямо на ворота, положительный - направо, отрицательный - налево
+  let angleDeg = Math.atan2(dxMeters, dyMeters) * (180 / Math.PI);
+  
+  // Диагностика
+  console.log('=== ДИАГНОСТИКА РАСЧЕТА ===');
+  console.log('Оригинальные координаты:', { originalX, originalY });
+  console.log('Смещение в пикселях:', { dxOriginal, dyOriginal });
+  console.log('Смещение в метрах:', { dxMeters, dyMeters });
+  console.log('Результат:', { 
+    distance: Math.round(distanceMeters * 100) / 100,
+    angle: Math.round(angleDeg * 10) / 10
+  });
   
   return {
     distance: Math.round(distanceMeters * 100) / 100,
     angle: Math.round(angleDeg * 10) / 10
   };
 }
+
     
     function createMarker(x, y) {
       if (currentMarker) {
@@ -1226,6 +1262,7 @@ function handleFieldTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
