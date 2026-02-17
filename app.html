@@ -798,7 +798,7 @@ const METERS_PER_PIXEL_Y = 30 / 463;  // ≈ 0.0648
   const goalX = currentGoalCoords.x; // 201 * scaleFactor
   const goalY = currentGoalCoords.y; // 406 * scaleFactor
 
-  const dx = shootPointX - goalX;    // Горизонталь от центра ворот
+  const dx = goalX - shootPointX;    // Горизонталь от центра ворот
   const dy = goalY - shootPointY;    // Вертикаль ОТ ВОРОТ к игроку
 
   const dxMeters = dx * METERS_PER_PIXEL_X;
@@ -1187,6 +1187,7 @@ const METERS_PER_PIXEL_Y = 30 / 463;  // ≈ 0.0648
   </script>
 </body>
 </html>
+
 
 
 
