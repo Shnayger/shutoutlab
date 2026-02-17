@@ -642,16 +642,19 @@
     let isImageLoaded = false;
     let lastShotData = null;
 
-    // Константы (для половины поля)
-    const ORIGINAL_IMAGE_WIDTH = 484;   // Ширина изображения
-    const ORIGINAL_IMAGE_HEIGHT = 432;  // Высота изображения
+    // Константы (для половины поля - Канадское поле)
+    const ORIGINAL_IMAGE_WIDTH = 484;    // Ширина изображения (26 метров)
+    const ORIGINAL_IMAGE_HEIGHT = 432;   // Высота изображения (30 метров)
     const ORIGINAL_GOAL_COORDS = { x: 244, y: 371 };  // Центр ворот
-    const RINK_LENGTH_METERS = 30;    // Половина площадки (метры)
+    const RINK_WIDTH_METERS = 26;        // Ширина поля (метры)
+    const RINK_LENGTH_METERS = 30;       // Длина половины поля (метры)
+    const GOAL_DISTANCE_FROM_BOARDS = 4; // Ворота в 4 метрах от борта
 
-    let scaleFactor = 1;
+       let scaleFactor = 1;
     let currentGoalCoords = { x: 0, y: 0 };
-    let pixelsPerMeter = 0;
-
+    let pixelsPerMeterX = 0;
+    let pixelsPerMeterY = 0;
+    
     // Получаем параметры из URL
     const urlParams = new URLSearchParams(window.location.search);
     const videoUrl = urlParams.get('video');
@@ -742,7 +745,7 @@
       updateGoalCoordinates();
     }
 
-    function updateGoalCoordinates() {
+       function updateGoalCoordinates() {
       if (!isImageLoaded) return;
       
       const imageRect = fieldImage.getBoundingClientRect();
@@ -753,15 +756,18 @@
       const offsetX = imageRect.left - containerRect.left;
       const offsetY = imageRect.top - containerRect.top;
       
-      // Ворота теперь фиксированные (без выбора лево/право)
+      // Ворота фиксированные
       currentGoalCoords = {
         x: (ORIGINAL_GOAL_COORDS.x * scaleFactor) + offsetX,
         y: (ORIGINAL_GOAL_COORDS.y * scaleFactor) + offsetY
       };
       
-      pixelsPerMeter = (ORIGINAL_IMAGE_WIDTH * scaleFactor) / RINK_LENGTH_METERS;
+      // Масштаб по осям (разный для X и Y)
+      pixelsPerMeterX = (ORIGINAL_IMAGE_WIDTH * scaleFactor) / RINK_WIDTH_METERS;
+      pixelsPerMeterY = (ORIGINAL_IMAGE_HEIGHT * scaleFactor) / RINK_LENGTH_METERS;
       
       addDebugLog(`Ворота: x=${currentGoalCoords.x.toFixed(1)}, y=${currentGoalCoords.y.toFixed(1)}`);
+      addDebugLog(`Масштаб: X=${pixelsPerMeterX.toFixed(2)} px/m, Y=${pixelsPerMeterY.toFixed(2)} px/m`);
     }
 
     function showTempMessage(message) {
@@ -801,29 +807,39 @@
       }, 6000);
     }
 
-    function calculateDistanceAndAngle(shootPointX, shootPointY) {
-      if (!pixelsPerMeter) {
+       function calculateDistanceAndAngle(shootPointX, shootPointY) {
+      if (!scaleFactor) {
         return { distance: 0, angle: 0 };
       }
       
       const goalX = currentGoalCoords.x;
       const goalY = currentGoalCoords.y;
       
+      // Раздельный масштаб для X и Y (так как пропорции изображения отличаются от реальных)
+      const pixelsPerMeterX = ORIGINAL_IMAGE_WIDTH / RINK_WIDTH_METERS;
+      const pixelsPerMeterY = ORIGINAL_IMAGE_HEIGHT / RINK_LENGTH_METERS;
+      
+      // Разница в пикселях
       const dx = goalX - shootPointX;
       const dy = goalY - shootPointY;
       
-      const distancePixels = Math.sqrt(dx * dx + dy * dy);
-      const distanceMeters = distancePixels / pixelsPerMeter;
+      // Конвертируем в метры с учётом разного масштаба по осям
+      const dxMeters = dx / pixelsPerMeterX;
+      const dyMeters = dy / pixelsPerMeterY;
       
-      // Угол относительно ворот (упрощенно)
-      let angleRad = Math.atan2(dx, -dy);
+      // Расстояние (теорема Пифагора в метрах)
+      const distanceMeters = Math.sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
+      
+      // Угол: 0° = прямо перед воротами, +90° = справа, -90° = слева
+      // dyMeters > 0 означает что игрок дальше от ворот (больше расстояние)
+      let angleRad = Math.atan2(dxMeters, dyMeters);
       let angleDeg = angleRad * (180 / Math.PI);
       
-      if (angleDeg > 90) angleDeg = 90;
-      if (angleDeg < -90) angleDeg = -90;
+      // Округляем до 1 знака
+      angleDeg = Math.round(angleDeg * 10) / 10;
       
       return {
-        distance: distanceMeters,
+        distance: Math.round(distanceMeters * 100) / 100,
         angle: angleDeg
       };
     }
@@ -1192,5 +1208,6 @@
   </script>
 </body>
 </html>
+
 
 
