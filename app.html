@@ -807,7 +807,7 @@
       }, 6000);
     }
 
-       function calculateDistanceAndAngle(shootPointX, shootPointY) {
+          function calculateDistanceAndAngle(shootPointX, shootPointY) {
       if (!scaleFactor) {
         return { distance: 0, angle: 0 };
       }
@@ -815,15 +815,11 @@
       const goalX = currentGoalCoords.x;
       const goalY = currentGoalCoords.y;
       
-      // Раздельный масштаб для X и Y (так как пропорции изображения отличаются от реальных)
-      const pixelsPerMeterX = ORIGINAL_IMAGE_WIDTH / RINK_WIDTH_METERS;
-      const pixelsPerMeterY = ORIGINAL_IMAGE_HEIGHT / RINK_LENGTH_METERS;
-      
       // Разница в пикселях
       const dx = goalX - shootPointX;
       const dy = goalY - shootPointY;
       
-      // Конвертируем в метры с учётом разного масштаба по осям
+      // Конвертируем в метры с учётом масштаба экрана (из updateGoalCoordinates)
       const dxMeters = dx / pixelsPerMeterX;
       const dyMeters = dy / pixelsPerMeterY;
       
@@ -831,19 +827,22 @@
       const distanceMeters = Math.sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
       
       // Угол: 0° = прямо перед воротами, +90° = справа, -90° = слева
-      // dyMeters > 0 означает что игрок дальше от ворот (больше расстояние)
       let angleRad = Math.atan2(dxMeters, dyMeters);
       let angleDeg = angleRad * (180 / Math.PI);
       
       // Округляем до 1 знака
       angleDeg = Math.round(angleDeg * 10) / 10;
       
+      addDebugLog(`dx=${dx.toFixed(1)}px, dy=${dy.toFixed(1)}px`);
+      addDebugLog(`dxMeters=${dxMeters.toFixed(2)}м, dyMeters=${dyMeters.toFixed(2)}м`);
+      addDebugLog(`distance=${distanceMeters.toFixed(2)}м, angle=${angleDeg.toFixed(1)}°`);
+      
       return {
         distance: Math.round(distanceMeters * 100) / 100,
         angle: angleDeg
       };
     }
-
+    
     function createMarker(x, y) {
       if (currentMarker) {
         currentMarker.remove();
@@ -1208,6 +1207,7 @@
   </script>
 </body>
 </html>
+
 
 
 
