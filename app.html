@@ -746,29 +746,23 @@
     }
 
        function updateGoalCoordinates() {
-      if (!isImageLoaded) return;
-      
-      const imageRect = fieldImage.getBoundingClientRect();
-      const containerRect = fieldContainer.getBoundingClientRect();
-      
-      scaleFactor = imageRect.width / ORIGINAL_IMAGE_WIDTH;
-      
-      const offsetX = imageRect.left - containerRect.left;
-      const offsetY = imageRect.top - containerRect.top;
-      
-      // Ворота фиксированные
-      currentGoalCoords = {
-        x: (ORIGINAL_GOAL_COORDS.x * scaleFactor) + offsetX,
-        y: (ORIGINAL_GOAL_COORDS.y * scaleFactor) + offsetY
-      };
-      
-      // Масштаб по осям (разный для X и Y)
-      pixelsPerMeterX = (ORIGINAL_IMAGE_WIDTH * scaleFactor) / RINK_WIDTH_METERS;
-      pixelsPerMeterY = (ORIGINAL_IMAGE_HEIGHT * scaleFactor) / RINK_LENGTH_METERS;
-      
-      addDebugLog(`Ворота: x=${currentGoalCoords.x.toFixed(1)}, y=${currentGoalCoords.y.toFixed(1)}`);
-      addDebugLog(`Масштаб: X=${pixelsPerMeterX.toFixed(2)} px/m, Y=${pixelsPerMeterY.toFixed(2)} px/m`);
-    }
+  if (!isImageLoaded) return;
+  
+  const imageRect = fieldImage.getBoundingClientRect();
+  
+  scaleFactor = imageRect.width / ORIGINAL_IMAGE_WIDTH;
+  
+  // Координаты ворот ОТНОСИТЕЛЬНО ИЗОБРАЖЕНИЯ (без offsetX/Y)
+  currentGoalCoords = {
+    x: ORIGINAL_GOAL_COORDS.x * scaleFactor,
+    y: ORIGINAL_GOAL_COORDS.y * scaleFactor
+  };
+  
+  pixelsPerMeterX = (ORIGINAL_IMAGE_WIDTH * scaleFactor) / RINK_WIDTH_METERS;
+  pixelsPerMeterY = (ORIGINAL_IMAGE_HEIGHT * scaleFactor) / RINK_LENGTH_METERS;
+  
+  addDebugLog(`Ворота (относительно изображения): x=${currentGoalCoords.x.toFixed(1)}, y=${currentGoalCoords.y.toFixed(1)}`);
+}
 
     function showTempMessage(message) {
       tempInfo.textContent = message;
@@ -952,36 +946,46 @@
       document.removeEventListener('touchend', stopDragTouch);
     }
 
-    function handleFieldClick(e) {
-      if (e.target.classList.contains('marker-point')) {
-        return;
-      }
-      
-      const rect = fieldContainer.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      
-      createMarker(x, y);
-    }
+   function handleFieldClick(e) {
+  if (e.target.classList.contains('marker-point')) return;
+  
+  const imageRect = fieldImage.getBoundingClientRect();
+  
+  // Проверка: клик внутри изображения
+  if (e.clientX < imageRect.left || e.clientX > imageRect.right ||
+      e.clientY < imageRect.top || e.clientY > imageRect.bottom) {
+    return;
+  }
+  
+  // Координаты относительно изображения (не контейнера!)
+  const x = e.clientX - imageRect.left;
+  const y = e.clientY - imageRect.top;
+  
+  createMarker(x, y);
+}
 
     function handleFieldTouch(e) {
-      if (e.touches.length !== 1) return;
-      e.preventDefault();
-      
-      const touch = e.touches[0];
-      const element = document.elementFromPoint(touch.clientX, touch.clientY);
-      
-      if (element && element.classList.contains('marker-point')) {
-        return;
-      }
-      
-      const rect = fieldContainer.getBoundingClientRect();
-      const x = touch.clientX - rect.left;
-      const y = touch.clientY - rect.top;
-      
-      createMarker(x, y);
-    }
-
+  if (e.touches.length !== 1) return;
+  e.preventDefault();
+  
+  const touch = e.touches[0];
+  const element = document.elementFromPoint(touch.clientX, touch.clientY);
+  
+  if (element && element.classList.contains('marker-point')) return;
+  
+  const imageRect = fieldImage.getBoundingClientRect();
+  
+  if (touch.clientX < imageRect.left || touch.clientX > imageRect.right ||
+      touch.clientY < imageRect.top || touch.clientY > imageRect.bottom) {
+    return;
+  }
+  
+  const x = touch.clientX - imageRect.left;
+  const y = touch.clientY - imageRect.top;
+  
+  createMarker(x, y);
+}
+    
     function startRecording() {
       if (isRecording) return;
       
@@ -1207,6 +1211,7 @@
   </script>
 </body>
 </html>
+
 
 
 
