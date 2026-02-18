@@ -662,15 +662,31 @@ const METERS_PER_PIXEL_X = 26 / ORIGINAL_IMAGE_WIDTH;  // 26 / 417 = 0.06235 м/
       }
 
       // === ОРИЕНТАЦИЯ ===
-      function checkOrientation() {
-        const isLandscape = window.innerWidth > window.innerHeight;
-        rotateScreen.style.display = isLandscape ? 'none' : 'flex';
-        mainInterface.style.display = isLandscape ? 'block' : 'none';
-        if (isLandscape && isImageLoaded) updateImageMetrics();
-      }
-      window.addEventListener('resize', checkOrientation);
-      checkOrientation();
-
+      // === ОРИЕНТАЦИЯ ===
+function checkOrientation() {
+  // Получаем реальные размеры окна
+  const windowWidth = window.innerWidth;
+  const windowHeight = window.innerHeight;
+  
+  // Определяем ориентацию по соотношению сторон
+  const isLandscape = windowWidth > windowHeight;
+  
+  console.log('Ориентация:', isLandscape ? 'Горизонтально' : 'Вертикально', windowWidth + 'x' + windowHeight);
+  
+  // Показываем/скрываем экран поворота
+  if (isLandscape) {
+    rotateScreen.style.display = 'none';
+    mainInterface.style.display = 'block';
+    
+    // Обновляем метрики изображения, если оно загружено
+    if (isImageLoaded) {
+      updateImageMetrics();
+    }
+  } else {
+    rotateScreen.style.display = 'flex';
+    mainInterface.style.display = 'none';
+  }
+}
       // === ОБНОВЛЕНИЕ МЕТРИК ИЗОБРАЖЕНИЯ ===
       function updateImageMetrics() {
         if (!isImageLoaded) return;
@@ -1187,6 +1203,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
