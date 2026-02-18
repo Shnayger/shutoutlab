@@ -307,6 +307,33 @@
       background: linear-gradient(135deg, #1565c0, #2196f3);
     }
 
+        #missBtn {
+      background: linear-gradient(135deg, #b0bec5, #90a4ae);
+      color: #333;
+    }
+    #cornerBtn {
+      background: linear-gradient(135deg, #ff8f00, #ffb300);
+    }
+    #reboundBtn {
+      background: linear-gradient(135deg, #c62828, #ef5350);
+    }
+    #controlBtn {
+      background: linear-gradient(135deg, #6a1b9a, #8e24aa);
+    }
+    
+    .shot-info-miss {
+      color: #b0bec5;
+      font-weight: bold;
+    }
+    .shot-info-danger {
+      color: #ef5350;
+      font-weight: bold;
+    }
+    .shot-info-control {
+      color: #ba68c8;
+      font-weight: bold;
+    }
+
     #fieldInstruction {
       position: absolute;
       bottom: 20px;
@@ -536,17 +563,30 @@
       <div id="fieldInstruction">Отметьте точку броска на поле</div>
     </div>
 
+    <!-- Модальное окно для первого выбора (Гол/Сэйв/Мимо) -->
     <div id="choiceModal">
       <div class="modal-content">
         <div class="modal-title">Выберите тип события</div>
         <div class="choice-buttons">
           <button id="goalBtn" class="choice-btn">Гол</button>
           <button id="saveBtn" class="choice-btn">Сэйв</button>
+          <button id="missBtn" class="choice-btn">Мимо</button>
         </div>
       </div>
     </div>
-  </div>
 
+    <!-- Модальное окно для типа сэйва -->
+    <div id="saveTypeModal">
+      <div class="modal-content">
+        <div class="modal-title">Тип сэйва</div>
+        <div class="choice-buttons">
+          <button id="cornerBtn" class="choice-btn">В угол</button>
+          <button id="reboundBtn" class="choice-btn">На пятак</button>
+          <button id="controlBtn" class="choice-btn">Фиксация</button>
+        </div>
+      </div>
+    </div>
+    
   <button id="debugToggle">🐛</button>
   <div id="debugPanel"></div>
 
@@ -608,6 +648,11 @@ const RIGHT_POST_X = ORIGINAL_GOAL_COORDS.x + (GOAL_WIDTH_METERS / 2) / METERS_P
       const choiceModal = document.getElementById('choiceModal');
       const goalBtn = document.getElementById('goalBtn');
       const saveBtn = document.getElementById('saveBtn');
+      const missBtn = document.getElementById('missBtn');
+      const saveTypeModal = document.getElementById('saveTypeModal');
+      const cornerBtn = document.getElementById('cornerBtn');
+      const reboundBtn = document.getElementById('reboundBtn');
+      const controlBtn = document.getElementById('controlBtn');
       const currentTabTitle = document.getElementById('currentTabTitle');
       const shotInfo = document.getElementById('shotInfo');
       const tabs = document.querySelectorAll('.tab');
@@ -1176,9 +1221,35 @@ function dragTouch(e) {
         }
       }
 
-      function showShotResult(eventType, distance, angle) {
-        const eventName = eventType === 'goal' ? 'Гол' : 'Сэйв';
-        const eventColor = eventType === 'goal' ? 'shot-info-goal' : 'shot-info-save';
+            function showShotResult(eventType, distance, angle) {
+        let eventName = '';
+        let eventColor = '';
+        
+        switch(eventType) {
+          case 'goal':
+            eventName = 'Гол';
+            eventColor = 'shot-info-goal';
+            break;
+          case 'miss':
+            eventName = 'Мимо';
+            eventColor = 'shot-info-miss';
+            break;
+          case 'save_corner':
+            eventName = 'Сэйв (в угол)';
+            eventColor = 'shot-info-save';
+            break;
+          case 'save_rebound':
+            eventName = 'Сэйв (на пятак)';
+            eventColor = 'shot-info-danger';
+            break;
+          case 'save_control':
+            eventName = 'Сэйв (фиксация)';
+            eventColor = 'shot-info-control';
+            break;
+          default:
+            eventName = eventType;
+            eventColor = 'shot-info-save';
+        }
         
         shotInfo.innerHTML = `
           <div class="shot-info-header">✅ Событие сохранено</div>
@@ -1200,14 +1271,41 @@ function dragTouch(e) {
         setTimeout(() => { shotInfo.style.display = 'none'; }, 6000);
       }
 
-      function handleChoice(type) {
+            function handleChoice(type) {
         choiceModal.classList.remove('visible');
         
+        if (type === 'save') {
+          // Показываем выбор типа сэйва
+          saveTypeModal.classList.add('visible');
+        } else if (type === 'miss') {
+          // Сразу отправляем "мимо"
+          if (lastShotData) {
+            showShotResult('miss', lastShotData.distance, lastShotData.angle);
+            sendToTelegramBot('miss', lastShotData.distance, lastShotData.angle, lastShotData.originalX, lastShotData.originalY);
+          }
+          clearMarkerAndReturn();
+        } else {
+          // Гол
+          if (lastShotData) {
+            showShotResult('goal', lastShotData.distance, lastShotData.angle);
+            sendToTelegramBot('goal', lastShotData.distance, lastShotData.angle, lastShotData.originalX, lastShotData.originalY);
+          }
+          clearMarkerAndReturn();
+        }
+      }
+
+            function handleSaveType(saveType) {
+        saveTypeModal.classList.remove('visible');
+        
         if (lastShotData) {
-          showShotResult(type, lastShotData.distance, lastShotData.angle);
-          sendToTelegramBot(type, lastShotData.distance, lastShotData.angle, lastShotData.originalX, lastShotData.originalY);
+          showShotResult('save_' + saveType, lastShotData.distance, lastShotData.angle);
+          sendToTelegramBot('save_' + saveType, lastShotData.distance, lastShotData.angle, lastShotData.originalX, lastShotData.originalY);
         }
         
+        clearMarkerAndReturn();
+      }
+
+      function clearMarkerAndReturn() {
         if (currentMarker) {
           currentMarker.remove();
           currentMarker = null;
@@ -1219,25 +1317,7 @@ function dragTouch(e) {
         stopBtn.style.display = 'none';
         isVideoPaused = false;
         
-        // Показываем табличку видео и запускаем таймер
         showTemporary(currentTabTitle, 3000);
-      }
-
-      // === ЗАГРУЗКА ИЗОБРАЖЕНИЯ ===
-      fieldImage.onload = () => {
-        isImageLoaded = true;
-        updateImageMetrics();
-        addDebugLog('✅ Изображение загружено', 'success');
-      };
-      
-      fieldImage.onerror = () => {
-        addDebugLog('❌ Ошибка загрузки изображения', 'error');
-        fieldInstruction.textContent = 'Ошибка загрузки изображения';
-        fieldInstruction.style.backgroundColor = 'rgba(198, 40, 40, 0.9)';
-      };
-
-      if (fieldImage.complete && fieldImage.naturalWidth > 0) {
-        fieldImage.onload();
       }
 
       // === ВИДЕО ===
@@ -1278,8 +1358,13 @@ function dragTouch(e) {
      imageWrapper.addEventListener('click', handleImageClick);
       imageWrapper.addEventListener('touchstart', handleImageTouch, { passive: false });
       
-      goalBtn.addEventListener('click', () => handleChoice('goal'));
+            goalBtn.addEventListener('click', () => handleChoice('goal'));
       saveBtn.addEventListener('click', () => handleChoice('save'));
+      missBtn.addEventListener('click', () => handleChoice('miss'));
+      
+      cornerBtn.addEventListener('click', () => handleSaveType('corner'));
+      reboundBtn.addEventListener('click', () => handleSaveType('rebound'));
+      controlBtn.addEventListener('click', () => handleSaveType('control'));
       
       window.addEventListener('resize', () => {
         if (isImageLoaded) updateImageMetrics();
@@ -1295,6 +1380,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
