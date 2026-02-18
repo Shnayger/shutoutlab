@@ -662,27 +662,29 @@ const METERS_PER_PIXEL_X = 26 / ORIGINAL_IMAGE_WIDTH;  // 26 / 417 = 0.06235 м/
       }
 
       function checkOrientation() {
-  const isLandscape = window.innerWidth > window.innerHeight;
+  // Получаем актуальные размеры
+  const width = window.innerWidth;
+  const height = window.innerHeight;
   
-  console.log('Ориентация:', isLandscape ? 'Горизонт' : 'Вертикаль');
-  console.log('rotateScreen сейчас:', rotateScreen.style.display);
-  console.log('mainInterface сейчас:', mainInterface.style.display);
+  // Более надежная проверка landscape
+  const isLandscape = width > height;
   
+  console.log('Ориентация:', isLandscape ? 'Горизонт' : 'Вертикаль', width + 'x' + height);
+  
+  // Принудительно меняем display
   if (isLandscape) {
     rotateScreen.style.display = 'none';
-    mainInterface.style.display = 'block';  // принудительно block
+    mainInterface.style.display = 'block';
   } else {
     rotateScreen.style.display = 'flex';
     mainInterface.style.display = 'none';
   }
   
-  // Проверка после изменения
-  console.log('После:');
-  console.log('rotateScreen:', rotateScreen.style.display);
-  console.log('mainInterface:', mainInterface.style.display);
+  // Дополнительная проверка для Telegram WebApp
+  if (window.Telegram?.WebApp) {
+    Telegram.WebApp.expand(); // Растягиваем на весь экран
+  }
 }
-
-
       
       // === ОБНОВЛЕНИЕ МЕТРИК ИЗОБРАЖЕНИЯ ===
       function updateImageMetrics() {
@@ -1209,6 +1211,7 @@ addDebugLog('✅ Инициализация завершена', 'success');
   </script>
 </body>
 </html>
+
 
 
 
