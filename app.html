@@ -320,7 +320,7 @@
       white-space: nowrap;
     }
 
-    #currentTabTitle {
+     #currentTabTitle {
       position: absolute;
       top: 10px;
       left: 50%;
@@ -544,7 +544,7 @@
 
   <script>
     (function() {
-      // === ОСНОВНЫЕ КОНСТАНТЫ (откалиброваны по твоим тестам) ===
+     // === ОСНОВНЫЕ КОНСТАНТЫ (откалиброваны по твоим тестам) ===
 const HALF_RINK_WIDTH_METERS = 26;
 const HALF_RINK_LENGTH_METERS = 30;  // может быть не 30, но нам важны пиксели
 
@@ -564,6 +564,7 @@ const PIXELS_TO_CENTER = GOAL_Y - CENTER_Y;  // 130.2
 const METERS_PER_PIXEL_Y = CENTER_DISTANCE / PIXELS_TO_CENTER;  // 26.06 / 130.2 = 0.2002
 
 const METERS_PER_PIXEL_X = HALF_RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;  // 0.0647
+
 
 
       // === TELEGRAM ===
@@ -722,7 +723,6 @@ const METERS_PER_PIXEL_X = HALF_RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;  // 0.
     angle: Math.round(angle * 10) / 10
   };
 }
-
       // === ПОЛУЧЕНИЕ КООРДИНАТ КЛИКА В РАЗНЫХ СИСТЕМАХ ===
       function getClickCoordinates(e, isTouch = false) {
   let clientX, clientY;
@@ -1105,4 +1105,5 @@ const METERS_PER_PIXEL_X = HALF_RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;  // 0.
   </script>
 </body>
 </html>
+
 
