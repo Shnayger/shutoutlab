@@ -552,13 +552,13 @@ const ORIGINAL_IMAGE_WIDTH = 402;
 const ORIGINAL_IMAGE_HEIGHT = 463;
 
 // Координаты ворот в оригинальной системе (из твоих логов)
-const ORIGINAL_GOAL_COORDS = { x: 201, y: 135 };
+const ORIGINAL_GOAL_COORDS = { x: 201, y: 410 };
 
 // Вычисляем правильный коэффициент по вертикали
 // Центр площадки: originalY=4.8, расстояние=26.06 м
 const GOAL_Y = ORIGINAL_GOAL_COORDS.y;  // 135
-const CENTER_Y = 4.8;  // из твоего лога
-const CENTER_DISTANCE = 26.06;  // из твоего лога
+const CENTER_Y = 1;  // из твоего лога
+const CENTER_DISTANCE = 26;  // из твоего лога
 
 const PIXELS_TO_CENTER = GOAL_Y - CENTER_Y;  // 130.2
 const METERS_PER_PIXEL_Y = CENTER_DISTANCE / PIXELS_TO_CENTER;  // 26.06 / 130.2 = 0.2002
@@ -1105,5 +1105,6 @@ const METERS_PER_PIXEL_X = HALF_RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;  // 0.
   </script>
 </body>
 </html>
+
 
 
