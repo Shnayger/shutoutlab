@@ -1172,34 +1172,44 @@ function dragTouch(e) {
 
       setTimeout(() => { startBtn.disabled = false; }, 3000);
 
-      // === ПОДПИСКИ ===
-      startBtn.addEventListener('click', startRecording);
-      stopBtn.addEventListener('click', stopRecording);
-      
-      tabs.forEach(tab => {
-        tab.addEventListener('click', () => switchTab(tab.getAttribute('data-tab')));
-      });
-      
-      fieldContainer.addEventListener('click', handleFieldClick);
-      fieldContainer.addEventListener('touchstart', handleFieldTouch, { passive: false });
-      
-      goalBtn.addEventListener('click', () => handleChoice('goal'));
-      saveBtn.addEventListener('click', () => handleChoice('save'));
-      
-      window.addEventListener('resize', () => {
-        if (isImageLoaded) updateImageMetrics();
-      });
+     // === ПОДПИСКИ ===
+startBtn.addEventListener('click', startRecording);
+stopBtn.addEventListener('click', stopRecording);
 
-      // Показываем табличку видео при загрузке
-      setTimeout(() => {
-        showTemporary(currentTabTitle, 3000);
-      }, 500);
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => switchTab(tab.getAttribute('data-tab')));
+});
 
-      addDebugLog('✅ Инициализация завершена', 'success');
+fieldContainer.addEventListener('click', handleFieldClick);
+fieldContainer.addEventListener('touchstart', handleFieldTouch, { passive: false });
+
+goalBtn.addEventListener('click', () => handleChoice('goal'));
+saveBtn.addEventListener('click', () => handleChoice('save'));
+
+window.addEventListener('resize', () => {
+  if (isImageLoaded) updateImageMetrics();
+});
+
+// ✅ ВАЖНО: добавляем проверку ориентации
+window.addEventListener('resize', checkOrientation);
+window.addEventListener('orientationchange', function() {
+  setTimeout(checkOrientation, 100);
+});
+
+// Показываем табличку видео при загрузке
+setTimeout(() => {
+  showTemporary(currentTabTitle, 3000);
+}, 500);
+
+// ✅ Запускаем проверку ориентации сразу
+checkOrientation();
+
+addDebugLog('✅ Инициализация завершена', 'success');
     })();
   </script>
 </body>
 </html>
+
 
 
 
