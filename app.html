@@ -544,15 +544,27 @@
 
   <script>
     (function() {
-      // === КОНСТАНТЫ ===
-      const HALF_RINK_WIDTH_METERS = 26;
-      const HALF_RINK_LENGTH_METERS = 30;
-      const ORIGINAL_IMAGE_WIDTH = 402;
-      const ORIGINAL_IMAGE_HEIGHT = 463;
-      const ORIGINAL_GOAL_COORDS = { x: 201, y: 407 }; // Точные координаты ворот
-      
-      const METERS_PER_PIXEL_X = HALF_RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;
-      const METERS_PER_PIXEL_Y = HALF_RINK_LENGTH_METERS / ORIGINAL_IMAGE_HEIGHT;
+      // === ОСНОВНЫЕ КОНСТАНТЫ (откалиброваны по твоим тестам) ===
+const HALF_RINK_WIDTH_METERS = 26;
+const HALF_RINK_LENGTH_METERS = 30;  // может быть не 30, но нам важны пиксели
+
+const ORIGINAL_IMAGE_WIDTH = 402;
+const ORIGINAL_IMAGE_HEIGHT = 463;
+
+// Координаты ворот в оригинальной системе (из твоих логов)
+const ORIGINAL_GOAL_COORDS = { x: 201, y: 135 };
+
+// Вычисляем правильный коэффициент по вертикали
+// Центр площадки: originalY=4.8, расстояние=26.06 м
+const GOAL_Y = ORIGINAL_GOAL_COORDS.y;  // 135
+const CENTER_Y = 4.8;  // из твоего лога
+const CENTER_DISTANCE = 26.06;  // из твоего лога
+
+const PIXELS_TO_CENTER = GOAL_Y - CENTER_Y;  // 130.2
+const METERS_PER_PIXEL_Y = CENTER_DISTANCE / PIXELS_TO_CENTER;  // 26.06 / 130.2 = 0.2002
+
+const METERS_PER_PIXEL_X = HALF_RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;  // 0.0647
+
 
       // === TELEGRAM ===
       let telegramAvailable = false;
@@ -695,22 +707,21 @@
         }
       }
 
-      // === РАСЧЕТ РАССТОЯНИЯ И УГЛА (ПО ОРИГИНАЛЬНЫМ КООРДИНАТАМ) ===
       function calculateDistanceAndAngleFromOriginal(originalX, originalY) {
-        const dxOriginal = originalX - ORIGINAL_GOAL_COORDS.x;
-        const dyOriginal = ORIGINAL_GOAL_COORDS.y - originalY;
-        
-        const dxMeters = dxOriginal * METERS_PER_PIXEL_X;
-        const dyMeters = dyOriginal * METERS_PER_PIXEL_Y;
-        
-        const distance = Math.sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
-        let angle = Math.atan2(dxMeters, dyMeters) * (180 / Math.PI);
-        
-        return {
-          distance: Math.round(distance * 100) / 100,
-          angle: Math.round(angle * 10) / 10
-        };
-      }
+  const dxOriginal = originalX - ORIGINAL_GOAL_COORDS.x;
+  const dyOriginal = ORIGINAL_GOAL_COORDS.y - originalY;
+  
+  const dxMeters = dxOriginal * METERS_PER_PIXEL_X;
+  const dyMeters = dyOriginal * METERS_PER_PIXEL_Y;
+  
+  const distance = Math.sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
+  const angle = Math.atan2(dxMeters, dyMeters) * (180 / Math.PI);
+  
+  return {
+    distance: Math.round(distance * 100) / 100,
+    angle: Math.round(angle * 10) / 10
+  };
+}
 
       // === ПОЛУЧЕНИЕ КООРДИНАТ КЛИКА В РАЗНЫХ СИСТЕМАХ ===
       function getClickCoordinates(e, isTouch = false) {
@@ -1094,4 +1105,5 @@
   </script>
 </body>
 </html>
+
 
