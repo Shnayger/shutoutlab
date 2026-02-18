@@ -198,7 +198,7 @@
       font-size: 20px;
     }
 
-    #fieldContainer {
+        #fieldContainer {
       width: 100%;
       height: 100%;
       background: #000;
@@ -207,27 +207,29 @@
       display: none;
     }
 
-      #imageWrapper {
+    #imageWrapper {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: auto;
-      height: auto;
-      max-width: 100%;
-      max-height: 100%;
+      width: auto;           /* Автоматическая ширина */
+      height: auto;          /* Автоматическая высота */
+      max-width: 100%;       /* Не больше контейнера */
+      max-height: 100%;      /* Не больше контейнера */
       display: flex;
       justify-content: center;
       align-items: center;
+      pointer-events: none;
     }
 
-       #fieldImage {
-      width: 100%;      /* Чуть шире */
-      height: auto;     /* Чуть выше */
-      object-fit: cover;
+    #fieldImage {
+      width: auto;           /* Оригинальная ширина */
+      height: auto;          /* Оригинальная высота */
+      max-width: 100%;       /* Не больше wrapper */
+      max-height: 100%;      /* Не больше wrapper */
+      object-fit: contain;   /* Сохраняем пропорции */
       display: block;
       pointer-events: auto;
-      margin: -1%;      /* Компенсируем смещение */
     }
 
     .marker-point {
@@ -1304,6 +1306,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
