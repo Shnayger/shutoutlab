@@ -264,14 +264,15 @@
       /* Наследуют стили от .modal */
     }
 
-    .modal-content {
+           .modal-content {
       background: rgba(30, 30, 30, 0.95);
-      padding: 30px;
+      padding: 30px 20px;
       border-radius: 20px;
       text-align: center;
-      max-width: 300px;
-      width: 90%;
+      max-width: 350px;
+      width: 95%;
       border: 1px solid rgba(255, 255, 255, 0.2);
+      box-sizing: border-box;
     }
 
     .modal-title {
@@ -281,23 +282,28 @@
       color: white;
     }
 
-    .choice-buttons {
+          .choice-buttons {
       display: flex;
-      gap: 15px;
+      gap: 10px;
       justify-content: center;
+      flex-wrap: wrap;
+      width: 100%;
     }
 
-    .choice-btn {
-      padding: 15px 25px;
+            .choice-btn {
+      padding: 15px 10px;
       font-size: 16px;
       font-weight: bold;
       border: none;
       border-radius: 15px;
       cursor: pointer;
       color: white;
-      flex: 1;
+      flex: 1 1 auto;
       transition: all 0.2s;
-      min-width: 100px;
+      min-width: 90px;
+      white-space: nowrap;
+      text-align: center;
+      box-sizing: border-box;
     }
 
     .choice-btn:active {
@@ -1385,6 +1391,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
