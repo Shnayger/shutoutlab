@@ -661,31 +661,28 @@ const METERS_PER_PIXEL_X = 26 / ORIGINAL_IMAGE_WIDTH;  // 26 / 417 = 0.06235 м/
         }
       }
 
-      // === ОРИЕНТАЦИЯ ===
-function checkOrientation() {
-  const windowWidth = window.innerWidth;
-  const windowHeight = window.innerHeight;
-  const isLandscape = windowWidth > windowHeight;
+      function checkOrientation() {
+  const isLandscape = window.innerWidth > window.innerHeight;
   
-  console.log('Ориентация:', isLandscape ? 'Горизонт' : 'Вертикаль', windowWidth + 'x' + windowHeight);
+  console.log('Ориентация:', isLandscape ? 'Горизонт' : 'Вертикаль');
+  console.log('rotateScreen сейчас:', rotateScreen.style.display);
+  console.log('mainInterface сейчас:', mainInterface.style.display);
   
   if (isLandscape) {
     rotateScreen.style.display = 'none';
-    mainInterface.style.display = 'block';
-    if (isImageLoaded) updateImageMetrics();
+    mainInterface.style.display = 'block';  // принудительно block
   } else {
     rotateScreen.style.display = 'flex';
     mainInterface.style.display = 'none';
   }
+  
+  // Проверка после изменения
+  console.log('После:');
+  console.log('rotateScreen:', rotateScreen.style.display);
+  console.log('mainInterface:', mainInterface.style.display);
 }
 
-// Слушаем события
-window.addEventListener('resize', checkOrientation);
-window.addEventListener('orientationchange', () => setTimeout(checkOrientation, 100));
 
-// Запускаем с проверками
-checkOrientation();
-setTimeout(checkOrientation, 500);
       
       // === ОБНОВЛЕНИЕ МЕТРИК ИЗОБРАЖЕНИЯ ===
       function updateImageMetrics() {
@@ -1203,6 +1200,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
