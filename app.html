@@ -207,6 +207,21 @@
       display: none;
     }
 
+    #imageWrapper {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    }
+
     #fieldImage {
       width: 100%;
       height: 100%;
@@ -523,8 +538,10 @@
       </div>
     </div>
 
-    <div id="fieldContainer">
-      <img id="fieldImage" src="ice.png" alt="Хоккейная площадка">
+     <div id="fieldContainer">
+      <div id="imageWrapper">
+        <img id="fieldImage" src="ice.png" alt="Хоккейная площадка">
+      </div>
       <div id="fieldInstruction">Отметьте точку броска на поле</div>
     </div>
 
@@ -593,6 +610,7 @@ const RIGHT_POST_X = ORIGINAL_GOAL_COORDS.x + (GOAL_WIDTH_METERS / 2) / METERS_P
       const startBtn = document.getElementById('startBtn');
       const stopBtn = document.getElementById('stopBtn');
       const fieldImage = document.getElementById('fieldImage');
+      const imageWrapper = document.getElementById('imageWrapper');
       const fieldInstruction = document.getElementById('fieldInstruction');
       const recordingIndicator = document.getElementById('recordingIndicator');
       const recordingTimer = document.getElementById('recordingTimer');
@@ -893,6 +911,80 @@ function handleFieldTouch(e) {
     addDebugLog('❌ Тач вне изображения', 'error');
   }
 }
+
+            function handleImageClick(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const rect = fieldImage.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        createMarkerFromImageCoords(x, y);
+      }
+
+      function handleImageTouch(e) {
+        if (e.touches.length !== 1) return;
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const touch = e.touches[0];
+        const rect = fieldImage.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        
+        createMarkerFromImageCoords(x, y);
+      }
+
+      function createMarkerFromImageCoords(imageX, imageY) {
+        // Проверка, что координаты внутри изображения
+        if (imageX < 0 || imageX > fieldImage.clientWidth || 
+            imageY < 0 || imageY > fieldImage.clientHeight) {
+          addDebugLog('❌ Координаты вне изображения', 'error');
+          return;
+        }
+        
+        // Удаляем старый маркер
+        if (currentMarker) currentMarker.remove();
+        
+        // Получаем координаты относительно контейнера для маркера
+        const imageRect = fieldImage.getBoundingClientRect();
+        const containerRect = fieldContainer.getBoundingClientRect();
+        
+        const containerX = imageRect.left - containerRect.left + imageX;
+        const containerY = imageRect.top - containerRect.top + imageY;
+        
+        // Создаем маркер
+        currentMarker = document.createElement('div');
+        currentMarker.className = 'marker-point';
+        currentMarker.style.left = containerX + 'px';
+        currentMarker.style.top = containerY + 'px';
+        
+        currentMarker.addEventListener('mousedown', startDrag);
+        currentMarker.addEventListener('touchstart', startDragTouch, { passive: false });
+        
+        fieldContainer.appendChild(currentMarker);
+        
+        // Пересчет в оригинальные координаты
+        const scaleX = imageRect.width / ORIGINAL_IMAGE_WIDTH;
+        const scaleY = imageRect.height / ORIGINAL_IMAGE_HEIGHT;
+        
+        const originalX = imageX / scaleX;
+        const originalY = imageY / scaleY;
+        
+        const result = calculateDistanceAndAngleFromOriginal(originalX, originalY);
+        
+        lastShotData = {
+          originalX, originalY,
+          distance: result.distance,
+          angle: result.angle
+        };
+        
+        addDebugLog(`✅ Бросок: ориг(${originalX.toFixed(1)},${originalY.toFixed(1)}) → ${result.distance}м, ${result.angle}°`);
+        
+        setTimeout(() => choiceModal.classList.add('visible'), 300);
+      }
+      
       // === DRAG LOGIC ===
       function startDrag(e) {
         e.preventDefault();
@@ -922,52 +1014,50 @@ function handleFieldTouch(e) {
         document.addEventListener('touchend', stopDragTouch);
       }
 
-      function drag(e) {
-  if (!isDragging) return;
-  
-  // Двигаем маркер
-  const deltaX = e.clientX - dragStartX;
-  const deltaY = e.clientY - dragStartY;
-  let newX = markerStartX + deltaX;
-  let newY = markerStartY + deltaY;
-  
-  // Получаем границы изображения относительно контейнера
-  const imageRect = fieldImage.getBoundingClientRect();
-  const containerRect = fieldContainer.getBoundingClientRect();
-  
-  const imageLeft = imageRect.left - containerRect.left;
-  const imageRight = imageRect.right - containerRect.left;
-  const imageTop = imageRect.top - containerRect.top;
-  const imageBottom = imageRect.bottom - containerRect.top;
-  
-  // ✅ Ограничиваем перемещение маркера ТОЛЬКО внутри изображения
-  newX = Math.max(imageLeft, Math.min(imageRight, newX));
-  newY = Math.max(imageTop, Math.min(imageBottom, newY));
-  
-  currentMarker.style.left = newX + 'px';
-  currentMarker.style.top = newY + 'px';
-  
-  // Обновляем координаты для расчета
-  const markerWindowX = containerRect.left + newX;
-  const markerWindowY = containerRect.top + newY;
-  
-  const imageX = markerWindowX - imageRect.left;
-  const imageY = markerWindowY - imageRect.top;
-  
-  // Пересчет в оригинальные координаты
-  const scaleX = imageRect.width / ORIGINAL_IMAGE_WIDTH;
-  const scaleY = imageRect.height / ORIGINAL_IMAGE_HEIGHT;
-  const originalX = imageX / scaleX;
-  const originalY = imageY / scaleY;
-  
-  const result = calculateDistanceAndAngleFromOriginal(originalX, originalY);
-  
-  lastShotData = {
-    originalX, originalY,
-    distance: result.distance,
-    angle: result.angle
-  };
-}
+            function drag(e) {
+        if (!isDragging) return;
+        
+        const deltaX = e.clientX - dragStartX;
+        const deltaY = e.clientY - dragStartY;
+        let newX = markerStartX + deltaX;
+        let newY = markerStartY + deltaY;
+        
+        // Границы изображения относительно контейнера
+        const imageRect = fieldImage.getBoundingClientRect();
+        const containerRect = fieldContainer.getBoundingClientRect();
+        
+        const minX = imageRect.left - containerRect.left;
+        const maxX = imageRect.right - containerRect.left;
+        const minY = imageRect.top - containerRect.top;
+        const maxY = imageRect.bottom - containerRect.top;
+        
+        // Ограничиваем
+        newX = Math.max(minX, Math.min(maxX, newX));
+        newY = Math.max(minY, Math.min(maxY, newY));
+        
+        currentMarker.style.left = newX + 'px';
+        currentMarker.style.top = newY + 'px';
+        
+        // Обновляем координаты для расчета
+        const markerWindowX = containerRect.left + newX;
+        const markerWindowY = containerRect.top + newY;
+        
+        const imageX = markerWindowX - imageRect.left;
+        const imageY = markerWindowY - imageRect.top;
+        
+        const scaleX = imageRect.width / ORIGINAL_IMAGE_WIDTH;
+        const scaleY = imageRect.height / ORIGINAL_IMAGE_HEIGHT;
+        const originalX = imageX / scaleX;
+        const originalY = imageY / scaleY;
+        
+        const result = calculateDistanceAndAngleFromOriginal(originalX, originalY);
+        
+        lastShotData = {
+          originalX, originalY,
+          distance: result.distance,
+          angle: result.angle
+        };
+      }
 
 function dragTouch(e) {
   if (!isDragging || e.touches.length !== 1) return;
@@ -979,22 +1069,23 @@ function dragTouch(e) {
   let newX = markerStartX + deltaX;
   let newY = markerStartY + deltaY;
   
-  // Те же границы
+  // Границы изображения относительно контейнера
   const imageRect = fieldImage.getBoundingClientRect();
   const containerRect = fieldContainer.getBoundingClientRect();
   
-  const imageLeft = imageRect.left - containerRect.left;
-  const imageRight = imageRect.right - containerRect.left;
-  const imageTop = imageRect.top - containerRect.top;
-  const imageBottom = imageRect.bottom - containerRect.top;
+  const minX = imageRect.left - containerRect.left;
+  const maxX = imageRect.right - containerRect.left;
+  const minY = imageRect.top - containerRect.top;
+  const maxY = imageRect.bottom - containerRect.top;
   
-  newX = Math.max(imageLeft, Math.min(imageRight, newX));
-  newY = Math.max(imageTop, Math.min(imageBottom, newY));
+  // Ограничиваем
+  newX = Math.max(minX, Math.min(maxX, newX));
+  newY = Math.max(minY, Math.min(maxY, newY));
   
   currentMarker.style.left = newX + 'px';
   currentMarker.style.top = newY + 'px';
   
-  // Обновляем координаты
+  // Обновляем координаты для расчета
   const markerWindowX = containerRect.left + newX;
   const markerWindowY = containerRect.top + newY;
   
@@ -1193,8 +1284,8 @@ function dragTouch(e) {
         tab.addEventListener('click', () => switchTab(tab.getAttribute('data-tab')));
       });
       
-      fieldContainer.addEventListener('click', handleFieldClick);
-      fieldContainer.addEventListener('touchstart', handleFieldTouch, { passive: false });
+     imageWrapper.addEventListener('click', handleImageClick);
+      imageWrapper.addEventListener('touchstart', handleImageTouch, { passive: false });
       
       goalBtn.addEventListener('click', () => handleChoice('goal'));
       saveBtn.addEventListener('click', () => handleChoice('save'));
@@ -1213,6 +1304,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
