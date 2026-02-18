@@ -208,12 +208,12 @@
     }
 
     #fieldImage {
-  width: 100%;
-  height: 100%;
-  object-fit: contain; /* ← ЗАПОЛНЯЕТ ВЕСЬ КОНТЕЙНЕР */
-  display: block;
-  pointer-events: none;
-}
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      pointer-events: none;
+    }
 
     .marker-point {
       position: absolute;
@@ -430,7 +430,6 @@
       display: block !important;
     }
 
-    /* Дебаг стили */
     #debugToggle {
       position: fixed;
       top: 10px;
@@ -540,644 +539,500 @@
     </div>
   </div>
 
-  <!-- Дебаг элементы -->
   <button id="debugToggle">🐛</button>
   <div id="debugPanel"></div>
 
   <script>
-    // === ИНИЦИАЛИЗАЦИЯ TELEGRAM WEB APP ===
-    console.log('=== ИНИЦИАЛИЗАЦИЯ TELEGRAM WEB APP ===');
-    
-    let telegramAvailable = false;
-    if (window.Telegram?.WebApp) {
-      telegramAvailable = true;
-      console.log('✅ Telegram WebApp доступен');
-      console.log('Версия:', Telegram.WebApp.version);
-      console.log('Платформа:', Telegram.WebApp.platform);
-      console.log('Init Data:', Telegram.WebApp.initData);
+    (function() {
+      // === КОНСТАНТЫ ===
+      const HALF_RINK_WIDTH_METERS = 26;
+      const HALF_RINK_LENGTH_METERS = 30;
+      const ORIGINAL_IMAGE_WIDTH = 402;
+      const ORIGINAL_IMAGE_HEIGHT = 463;
+      const ORIGINAL_GOAL_COORDS = { x: 201, y: 407 }; // Точные координаты ворот
       
-      Telegram.WebApp.ready();
-      Telegram.WebApp.expand();
-      console.log('✅ Telegram WebApp инициализирован');
-    } else {
-      console.log('❌ Telegram WebApp НЕ доступен! Запускаете в браузере?');
-      console.log('Примечание: Для отправки данных необходимо запускать через Telegram бота');
-    }
+      const METERS_PER_PIXEL_X = HALF_RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;
+      const METERS_PER_PIXEL_Y = HALF_RINK_LENGTH_METERS / ORIGINAL_IMAGE_HEIGHT;
 
-    // === ДЕБАГ ФУНКЦИИ ===
-    let debugLogs = [];
-    
-    function addDebugLog(message, type = 'info') {
-      const timestamp = new Date().toLocaleTimeString();
-      const log = `[${timestamp}] ${message}`;
-      debugLogs.push({message: log, type: type});
+      // === TELEGRAM ===
+      let telegramAvailable = false;
+      if (window.Telegram?.WebApp) {
+        telegramAvailable = true;
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+      }
+
+      // === DOM ЭЛЕМЕНТЫ ===
+      const rotateScreen = document.getElementById('rotateScreen');
+      const mainInterface = document.getElementById('mainInterface');
+      const tabsPanel = document.getElementById('tabsPanel');
+      const videoContainer = document.getElementById('videoContainer');
+      const fieldContainer = document.getElementById('fieldContainer');
+      const videoFrame = document.getElementById('videoFrame');
+      const startBtn = document.getElementById('startBtn');
+      const stopBtn = document.getElementById('stopBtn');
+      const fieldImage = document.getElementById('fieldImage');
+      const fieldInstruction = document.getElementById('fieldInstruction');
+      const recordingIndicator = document.getElementById('recordingIndicator');
+      const recordingTimer = document.getElementById('recordingTimer');
+      const choiceModal = document.getElementById('choiceModal');
+      const goalBtn = document.getElementById('goalBtn');
+      const saveBtn = document.getElementById('saveBtn');
+      const currentTabTitle = document.getElementById('currentTabTitle');
+      const shotInfo = document.getElementById('shotInfo');
+      const tabs = document.querySelectorAll('.tab');
+      const debugToggle = document.getElementById('debugToggle');
+      const debugPanel = document.getElementById('debugPanel');
+
+      // === СОСТОЯНИЕ ===
+      let isRecording = false;
+      let recordingStartTime = null;
+      let timerInterval = null;
+      let currentTab = 'video';
+      let currentMarker = null;
+      let isDragging = false;
+      let dragStartX = 0, dragStartY = 0;
+      let markerStartX = 0, markerStartY = 0;
+      let videoCurrentTime = 0;
+      let isVideoPaused = false;
+      let isImageLoaded = false;
+      let lastShotData = null;
+      let scaleFactor = 1;
+      let imageOffset = { left: 0, top: 0 };
       
-      // Ограничиваем логи
-      if (debugLogs.length > 20) {
-        debugLogs = debugLogs.slice(-20);
+      // URL параметры
+      const urlParams = new URLSearchParams(window.location.search);
+      const videoUrl = urlParams.get('video');
+      const matchId = urlParams.get('match_id') || '1';
+
+      // === ДЕБАГ ===
+      let debugLogs = [];
+      function addDebugLog(message, type = 'info') {
+        const timestamp = new Date().toLocaleTimeString();
+        const log = `[${timestamp}] ${message}`;
+        debugLogs.push({ message: log, type });
+        if (debugLogs.length > 20) debugLogs = debugLogs.slice(-20);
+        
+        let html = '<strong>Debug Logs:</strong><br><br>';
+        debugLogs.forEach(log => {
+          const cls = log.type === 'error' ? 'debug-error' : 
+                     log.type === 'success' ? 'debug-success' : 'debug-log';
+          html += `<div class="${cls}">${log.message}</div>`;
+        });
+        debugPanel.innerHTML = html;
+        debugPanel.scrollTop = debugPanel.scrollHeight;
+        console.log(`[${type}] ${message}`);
       }
       
-      updateDebugPanel();
-      console.log(`[${type.toUpperCase()}] ${message}`);
-    }
-    
-    function updateDebugPanel() {
-      const panel = document.getElementById('debugPanel');
-      if (!panel) return;
-      
-      let html = '<strong>Debug Logs:</strong><br><br>';
-      debugLogs.forEach(log => {
-        const cls = log.type === 'error' ? 'debug-error' : 
-                   log.type === 'success' ? 'debug-success' : 'debug-log';
-        html += `<div class="${cls}">${log.message}</div>`;
+      debugToggle.addEventListener('click', () => {
+        debugPanel.style.display = debugPanel.style.display === 'block' ? 'none' : 'block';
       });
-      
-      panel.innerHTML = html;
-      panel.scrollTop = panel.scrollHeight;
-    }
-    
-    function toggleDebugPanel() {
-      const panel = document.getElementById('debugPanel');
-      panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-    }
-    
-    // Инициализация дебаг кнопки
-    document.getElementById('debugToggle').addEventListener('click', toggleDebugPanel);
-    addDebugLog('Страница загружена');
 
-    // === ОСНОВНЫЕ ПЕРЕМЕННЫЕ ===
-    const rotateScreen = document.getElementById('rotateScreen');
-    const mainInterface = document.getElementById('mainInterface');
-    const tabsPanel = document.getElementById('tabsPanel');
-    const videoContainer = document.getElementById('videoContainer');
-    const fieldContainer = document.getElementById('fieldContainer');
-    const videoFrame = document.getElementById('videoFrame');
-    const startBtn = document.getElementById('startBtn');
-    const stopBtn = document.getElementById('stopBtn');
-    const fieldImage = document.getElementById('fieldImage');
-    const fieldInstruction = document.getElementById('fieldInstruction');
-    const recordingIndicator = document.getElementById('recordingIndicator');
-    const recordingTimer = document.getElementById('recordingTimer');
-    const choiceModal = document.getElementById('choiceModal');
-    const goalBtn = document.getElementById('goalBtn');
-    const saveBtn = document.getElementById('saveBtn');
-    const currentTabTitle = document.getElementById('currentTabTitle');
-    const tempInfo = document.getElementById('tempInfo');
-    const shotInfo = document.getElementById('shotInfo');
-    const tabs = document.querySelectorAll('.tab');
-
-    // Состояние приложения
-    let isRecording = false;
-    let recordingStartTime = null;
-    let timerInterval = null;
-    let currentTab = 'video';
-    let currentMarker = null;
-    let isDragging = false;
-    let dragStartX = 0;
-    let dragStartY = 0;
-    let markerStartX = 0;
-    let markerStartY = 0;
-    let videoCurrentTime = 0;
-    let isVideoPaused = false;
-    let isImageLoaded = false;
-    let lastShotData = null;
-
-   const HALF_RINK_WIDTH_METERS = 26;     // ширина полной площадки
-const HALF_RINK_LENGTH_METERS = 30;    // ДЛИНА ПОЛОВИНЫ площадки (от центра до ворот)
-
-// Оригинальные размеры изображения (половина площадки)
-const ORIGINAL_IMAGE_WIDTH = 402;
-const ORIGINAL_IMAGE_HEIGHT = 463;
-
-// Координаты ворот в ОРИГИНАЛЬНОМ изображении (пиксели)
-const ORIGINAL_GOAL_COORDS = { x: 201, y: 406 };
-
-// Коэффициенты пересчета пикселей в метры для ОРИГИНАЛЬНОГО изображения
-const METERS_PER_PIXEL_X = HALF_RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;        // 26/402 ≈ 0.0647 м/пикс
-const METERS_PER_PIXEL_Y = HALF_RINK_LENGTH_METERS / ORIGINAL_IMAGE_HEIGHT;      // 30/463 ≈ 0.0648 м/пикс
-    
-       let scaleFactor = 1;
-    let currentGoalCoords = { x: 0, y: 0 };
-    let pixelsPerMeterX = 0;
-    let pixelsPerMeterY = 0;
-    
-    // Получаем параметры из URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const videoUrl = urlParams.get('video');
-    const matchId = urlParams.get('match_id') || 1;
-    const date = urlParams.get('date') || '';
-    const opponent = urlParams.get('opponent') || '';
-
-    addDebugLog(`Match ID из URL: ${matchId}`);
-    addDebugLog(`Telegram доступен: ${telegramAvailable ? 'Да' : 'Нет'}`);
-
-    // === ОСНОВНЫЕ ФУНКЦИИ ===
-    function checkOrientation() {
-      const isLandscape = window.innerWidth > window.innerHeight;
-      rotateScreen.style.display = isLandscape ? 'none' : 'flex';
-      mainInterface.style.display = isLandscape ? 'block' : 'none';
-      
-      if (isLandscape) {
-        setTimeout(updateGoalCoordinates, 100);
+      // === ОРИЕНТАЦИЯ ===
+      function checkOrientation() {
+        const isLandscape = window.innerWidth > window.innerHeight;
+        rotateScreen.style.display = isLandscape ? 'none' : 'flex';
+        mainInterface.style.display = isLandscape ? 'block' : 'none';
+        if (isLandscape && isImageLoaded) updateImageMetrics();
       }
-    }
+      window.addEventListener('resize', checkOrientation);
+      checkOrientation();
 
-    function formatTime(ms) {
-      const totalSeconds = Math.floor(ms / 1000);
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
-
-    function updateTimer() {
-      if (recordingStartTime) {
-        const elapsed = Date.now() - recordingStartTime;
-        recordingTimer.textContent = formatTime(elapsed);
+      // === ОБНОВЛЕНИЕ МЕТРИК ИЗОБРАЖЕНИЯ ===
+      function updateImageMetrics() {
+        if (!isImageLoaded) return;
+        const imageRect = fieldImage.getBoundingClientRect();
+        const containerRect = fieldContainer.getBoundingClientRect();
+        scaleFactor = imageRect.width / ORIGINAL_IMAGE_WIDTH;
+        imageOffset = {
+          left: imageRect.left - containerRect.left,
+          top: imageRect.top - containerRect.top
+        };
+        addDebugLog(`Scale: ${scaleFactor.toFixed(3)}, Offset: ${imageOffset.left.toFixed(1)},${imageOffset.top.toFixed(1)}`);
       }
-    }
 
-    function pauseYouTubeVideo() {
-      try {
-        if (videoFrame.contentWindow) {
-          videoFrame.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+      // === ФОРМАТИРОВАНИЕ ВРЕМЕНИ ===
+      function formatTime(ms) {
+        const totalSeconds = Math.floor(ms / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      }
+
+      function updateTimer() {
+        if (recordingStartTime) {
+          recordingTimer.textContent = formatTime(Date.now() - recordingStartTime);
         }
-      } catch (e) {}
-    }
+      }
 
-    function switchTab(tabName) {
-      currentTab = tabName;
-      
-      tabs.forEach(tab => {
-        if (tab.getAttribute('data-tab') === tabName) {
-          tab.classList.add('active');
+      // === ВИДЕО ===
+      function pauseYouTubeVideo() {
+        try {
+          videoFrame.contentWindow?.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+        } catch (e) {}
+      }
+
+      // === ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ===
+      function switchTab(tabName) {
+        currentTab = tabName;
+        tabs.forEach(tab => {
+          tab.classList.toggle('active', tab.getAttribute('data-tab') === tabName);
+        });
+        
+        if (tabName === 'video') {
+          videoContainer.classList.add('active-tab');
+          fieldContainer.classList.remove('active-tab');
+          currentTabTitle.textContent = '🎥 Видео матча';
+          if (isVideoPaused) pauseYouTubeVideo();
         } else {
-          tab.classList.remove('active');
+          videoContainer.classList.remove('active-tab');
+          fieldContainer.classList.add('active-tab');
+          currentTabTitle.textContent = '🏒 Схема поля';
+          pauseYouTubeVideo();
+          isVideoPaused = true;
+          if (isImageLoaded) updateImageMetrics();
         }
-      });
-      
-      if (tabName === 'video') {
-        videoContainer.classList.add('active-tab');
-        fieldContainer.classList.remove('active-tab');
-        currentTabTitle.textContent = '🎥 Видео матча';
-        if (isVideoPaused) pauseYouTubeVideo();
-      } else {
-        videoContainer.classList.remove('active-tab');
-        fieldContainer.classList.add('active-tab');
-        currentTabTitle.textContent = '🏒 Схема поля';
+      }
+
+      // === РАСЧЕТ РАССТОЯНИЯ И УГЛА (ПО ОРИГИНАЛЬНЫМ КООРДИНАТАМ) ===
+      function calculateDistanceAndAngleFromOriginal(originalX, originalY) {
+        const dxOriginal = originalX - ORIGINAL_GOAL_COORDS.x;
+        const dyOriginal = ORIGINAL_GOAL_COORDS.y - originalY;
+        
+        const dxMeters = dxOriginal * METERS_PER_PIXEL_X;
+        const dyMeters = dyOriginal * METERS_PER_PIXEL_Y;
+        
+        const distance = Math.sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
+        let angle = Math.atan2(dxMeters, dyMeters) * (180 / Math.PI);
+        
+        return {
+          distance: Math.round(distance * 100) / 100,
+          angle: Math.round(angle * 10) / 10
+        };
+      }
+
+      // === ПОЛУЧЕНИЕ КООРДИНАТ КЛИКА В РАЗНЫХ СИСТЕМАХ ===
+      function getClickCoordinates(e, isTouch = false) {
+        let clientX, clientY;
+        if (isTouch) {
+          clientX = e.touches[0].clientX;
+          clientY = e.touches[0].clientY;
+        } else {
+          clientX = e.clientX;
+          clientY = e.clientY;
+        }
+        
+        const containerRect = fieldContainer.getBoundingClientRect();
+        const imageRect = fieldImage.getBoundingClientRect();
+        
+        // Относительно контейнера (для маркера)
+        const containerX = clientX - containerRect.left;
+        const containerY = clientY - containerRect.top;
+        
+        // Относительно изображения на экране (для пересчета в оригинал)
+        const imageX = clientX - imageRect.left;
+        const imageY = clientY - imageRect.top;
+        
+        // Проверка, что клик внутри изображения
+        if (imageX < 0 || imageX > imageRect.width || imageY < 0 || imageY > imageRect.height) {
+          return null;
+        }
+        
+        // Пересчет в оригинальные координаты изображения
+        const originalX = imageX / scaleFactor;
+        const originalY = imageY / scaleFactor;
+        
+        return {
+          container: { x: containerX, y: containerY },
+          image: { x: imageX, y: imageY },
+          original: { x: originalX, y: originalY }
+        };
+      }
+
+      // === СОЗДАНИЕ МАРКЕРА ===
+      function createMarker(coords) {
+        if (!coords) return;
+        
+        if (currentMarker) currentMarker.remove();
+        
+        // Создаем маркер в координатах контейнера
+        currentMarker = document.createElement('div');
+        currentMarker.className = 'marker-point';
+        currentMarker.style.left = coords.container.x + 'px';
+        currentMarker.style.top = coords.container.y + 'px';
+        
+        currentMarker.addEventListener('mousedown', startDrag);
+        currentMarker.addEventListener('touchstart', startDragTouch, { passive: false });
+        
+        fieldContainer.appendChild(currentMarker);
+        
+        // Рассчитываем результат по оригинальным координатам
+        const result = calculateDistanceAndAngleFromOriginal(coords.original.x, coords.original.y);
+        
+        lastShotData = {
+          originalX: coords.original.x,
+          originalY: coords.original.y,
+          distance: result.distance,
+          angle: result.angle
+        };
+        
+        addDebugLog(`Бросок: ориг(${coords.original.x.toFixed(1)},${coords.original.y.toFixed(1)}) → ${result.distance}м, ${result.angle}°`);
+        
+        setTimeout(() => choiceModal.classList.add('visible'), 300);
+      }
+
+      // === ОБРАБОТЧИКИ КЛИКОВ ===
+      function handleFieldClick(e) {
+        if (e.target.classList.contains('marker-point')) return;
+        const coords = getClickCoordinates(e, false);
+        createMarker(coords);
+      }
+
+      function handleFieldTouch(e) {
+        if (e.touches.length !== 1) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (element?.classList.contains('marker-point')) return;
+        
+        const coords = getClickCoordinates(e, true);
+        createMarker(coords);
+      }
+
+      // === DRAG LOGIC ===
+      function startDrag(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        isDragging = true;
+        currentMarker.classList.add('dragging');
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        markerStartX = currentMarker.offsetLeft;
+        markerStartY = currentMarker.offsetTop;
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', stopDrag);
+      }
+
+      function startDragTouch(e) {
+        if (e.touches.length !== 1) return;
+        e.preventDefault();
+        e.stopPropagation();
+        isDragging = true;
+        currentMarker.classList.add('dragging');
+        const touch = e.touches[0];
+        dragStartX = touch.clientX;
+        dragStartY = touch.clientY;
+        markerStartX = currentMarker.offsetLeft;
+        markerStartY = currentMarker.offsetTop;
+        document.addEventListener('touchmove', dragTouch, { passive: false });
+        document.addEventListener('touchend', stopDragTouch);
+      }
+
+      function drag(e) {
+        if (!isDragging) return;
+        const deltaX = e.clientX - dragStartX;
+        const deltaY = e.clientY - dragStartY;
+        const newX = markerStartX + deltaX;
+        const newY = markerStartY + deltaY;
+        
+        currentMarker.style.left = newX + 'px';
+        currentMarker.style.top = newY + 'px';
+        
+        // При перетаскивании обновляем lastShotData
+        const containerRect = fieldContainer.getBoundingClientRect();
+        const imageRect = fieldImage.getBoundingClientRect();
+        
+        const markerWindowX = containerRect.left + newX;
+        const markerWindowY = containerRect.top + newY;
+        
+        const imageX = markerWindowX - imageRect.left;
+        const imageY = markerWindowY - imageRect.top;
+        
+        if (imageX >= 0 && imageX <= imageRect.width && imageY >= 0 && imageY <= imageRect.height) {
+          const originalX = imageX / scaleFactor;
+          const originalY = imageY / scaleFactor;
+          const result = calculateDistanceAndAngleFromOriginal(originalX, originalY);
+          
+          lastShotData = {
+            originalX, originalY,
+            distance: result.distance,
+            angle: result.angle
+          };
+        }
+      }
+
+      function dragTouch(e) {
+        if (!isDragging || e.touches.length !== 1) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - dragStartX;
+        const deltaY = touch.clientY - dragStartY;
+        const newX = markerStartX + deltaX;
+        const newY = markerStartY + deltaY;
+        
+        currentMarker.style.left = newX + 'px';
+        currentMarker.style.top = newY + 'px';
+        
+        const containerRect = fieldContainer.getBoundingClientRect();
+        const imageRect = fieldImage.getBoundingClientRect();
+        
+        const markerWindowX = containerRect.left + newX;
+        const markerWindowY = containerRect.top + newY;
+        
+        const imageX = markerWindowX - imageRect.left;
+        const imageY = markerWindowY - imageRect.top;
+        
+        if (imageX >= 0 && imageX <= imageRect.width && imageY >= 0 && imageY <= imageRect.height) {
+          const originalX = imageX / scaleFactor;
+          const originalY = imageY / scaleFactor;
+          const result = calculateDistanceAndAngleFromOriginal(originalX, originalY);
+          
+          lastShotData = {
+            originalX, originalY,
+            distance: result.distance,
+            angle: result.angle
+          };
+        }
+      }
+
+      function stopDrag() {
+        isDragging = false;
+        currentMarker?.classList.remove('dragging');
+        document.removeEventListener('mousemove', drag);
+        document.removeEventListener('mouseup', stopDrag);
+      }
+
+      function stopDragTouch() {
+        isDragging = false;
+        currentMarker?.classList.remove('dragging');
+        document.removeEventListener('touchmove', dragTouch);
+        document.removeEventListener('touchend', stopDragTouch);
+      }
+
+      // === ЗАПИСЬ ===
+      function startRecording() {
+        if (isRecording) return;
+        isRecording = true;
+        recordingStartTime = Date.now();
+        recordingIndicator.style.display = 'flex';
+        recordingTimer.style.display = 'block';
+        startBtn.style.display = 'none';
+        stopBtn.style.display = 'block';
+        updateTimer();
+        timerInterval = setInterval(updateTimer, 1000);
+      }
+
+      function stopRecording() {
+        if (!isRecording) return;
+        isRecording = false;
+        if (timerInterval) clearInterval(timerInterval);
+        recordingIndicator.style.display = 'none';
+        recordingTimer.style.display = 'none';
         pauseYouTubeVideo();
         isVideoPaused = true;
+        tabsPanel.classList.add('visible');
+        switchTab('field');
+      }
+
+      // === ОТПРАВКА В TELEGRAM ===
+      function sendToTelegramBot(eventType, distance, angle, originalX, originalY) {
+        addDebugLog(`Отправка: ${eventType}, ${distance}м, ${angle}°`);
         
-        setTimeout(() => {
-          if (!isImageLoaded) {
-            waitForImageLoad();
-          } else {
-            updateGoalCoordinates();
-          }
-        }, 100);
-      }
-    }
-
-    function waitForImageLoad() {
-      if (fieldImage.complete && fieldImage.naturalWidth > 0) {
-        handleImageLoaded();
-      } else {
-        fieldImage.addEventListener('load', handleImageLoaded);
-      }
-    }
-
-    function handleImageLoaded() {
-      isImageLoaded = true;
-      updateGoalCoordinates();
-    }
-
-       function updateGoalCoordinates() {
-  if (!isImageLoaded) return;
-  
-  const imageRect = fieldImage.getBoundingClientRect();
-  const containerRect = fieldContainer.getBoundingClientRect();
-  
-  scaleFactor = imageRect.width / ORIGINAL_IMAGE_WIDTH;
-  
-  // Сохраняем смещение изображения внутри контейнера
-  window.imageOffset = {
-    left: imageRect.left - containerRect.left,
-    top: imageRect.top - containerRect.top
-  };
-  
-  currentGoalCoords = {
-    x: ORIGINAL_GOAL_COORDS.x * scaleFactor,
-    y: ORIGINAL_GOAL_COORDS.y * scaleFactor
-  };
-  
-  addDebugLog(`Scale factor: ${scaleFactor.toFixed(3)}`);
-  addDebugLog(`Ворота: x=${currentGoalCoords.x.toFixed(1)}, y=${currentGoalCoords.y.toFixed(1)}`);
-}
-    
-    function showTempMessage(message) {
-      tempInfo.textContent = message;
-      tempInfo.style.display = 'block';
-      
-      setTimeout(() => {
-        tempInfo.style.display = 'none';
-      }, 1500);
-    }
-
-    function showShotResult(eventType, distance, angle) {
-      const eventName = eventType === 'goal' ? 'Гол' : 'Сэйв';
-      const eventColor = eventType === 'goal' ? 'shot-info-goal' : 'shot-info-save';
-      
-      shotInfo.innerHTML = `
-        <div class="shot-info-header">✅ Событие сохранено</div>
-        <div class="shot-info-row">
-          <span class="shot-info-label">Тип:</span>
-          <span class="shot-info-value ${eventColor}">${eventName}</span>
-        </div>
-        <div class="shot-info-row">
-          <span class="shot-info-label">Дистанция:</span>
-          <span class="shot-info-value">${distance.toFixed(2)} м</span>
-        </div>
-        <div class="shot-info-row">
-          <span class="shot-info-label">Угол:</span>
-          <span class="shot-info-value">${angle.toFixed(1)}°</span>
-        </div>
-        <div class="shot-info-footer">Сообщение исчезнет через 6 секунд</div>
-      `;
-      
-      shotInfo.style.display = 'block';
-      
-      setTimeout(() => {
-        shotInfo.style.display = 'none';
-      }, 6000);
-    }
-
-         function calculateDistanceAndAngle(xInsideImage, yInsideImage) {
-  // xInsideImage, yInsideImage - это координаты ВНУТРИ изображения на экране
-  // (относительно левого верхнего угла изображения)
-  
-  // ШАГ 1: Переводим в координаты ОРИГИНАЛЬНОГО изображения
-  const imageRect = fieldImage.getBoundingClientRect();
-  const scaleFactor = imageRect.width / ORIGINAL_IMAGE_WIDTH;
-  
-  const originalX = xInsideImage / scaleFactor;
-  const originalY = yInsideImage / scaleFactor;
-  
-  console.log('Оригинальные координаты:', { originalX, originalY });
-  
-  // ШАГ 2: Считаем разницу в ОРИГИНАЛЬНЫХ пикселях
-  const dxOriginal = originalX - ORIGINAL_GOAL_COORDS.x;
-  const dyOriginal = ORIGINAL_GOAL_COORDS.y - originalY;  // положительное - дальше от ворот
-  
-  console.log('Смещение в пикселях:', { dxOriginal, dyOriginal });
-  
-  // ШАГ 3: Переводим в метры
-  const dxMeters = dxOriginal * METERS_PER_PIXEL_X;
-  const dyMeters = dyOriginal * METERS_PER_PIXEL_Y;
-  
-  console.log('Смещение в метрах:', { dxMeters, dyMeters });
-  
-  // ШАГ 4: Расстояние и угол
-  const distanceMeters = Math.sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
-  const angleDeg = Math.atan2(dxMeters, dyMeters) * (180 / Math.PI);
-  
-  console.log('Результат:', { 
-    distance: Math.round(distanceMeters * 100) / 100,
-    angle: Math.round(angleDeg * 10) / 10
-  });
-  
-  return {
-    distance: Math.round(distanceMeters * 100) / 100,
-    angle: Math.round(angleDeg * 10) / 10
-  };
-}
-
-    
-    function createMarker(clickX, clickY) {
-  if (currentMarker) {
-    currentMarker.remove();
-  }
-  
-  // Получаем позицию изображения относительно контейнера
-  const imageRect = fieldImage.getBoundingClientRect();
-  const containerRect = fieldContainer.getBoundingClientRect();
-  
-  // ВАЖНО: clickX, clickY - это координаты относительно контейнера?
-  // или относительно окна браузера? Давайте проверим:
-  
-  console.log('clickX, clickY:', clickX, clickY);
-  console.log('imageRect:', imageRect);
-  console.log('containerRect:', containerRect);
-  
-  // Если clickX, clickY - относительно контейнера:
-  // Тогда координаты внутри изображения = clickX - offset изображения внутри контейнера
-  const imageOffsetLeft = imageRect.left - containerRect.left;
-  const imageOffsetTop = imageRect.top - containerRect.top;
-  
-  const xInsideImage = clickX - imageOffsetLeft;
-  const yInsideImage = clickY - imageOffsetTop;
-  
-  // Проверка: не вышли ли за пределы изображения
-  if (xInsideImage < 0 || xInsideImage > imageRect.width ||
-      yInsideImage < 0 || yInsideImage > imageRect.height) {
-    console.log('Клик вне изображения');
-    return;
-  }
-  
-  console.log('Координаты внутри изображения:', { xInsideImage, yInsideImage });
-  
-  // Создаем маркер
-  currentMarker = document.createElement('div');
-  currentMarker.className = 'marker-point';
-  currentMarker.style.left = clickX + 'px';  // Маркер позиционируем относительно контейнера
-  currentMarker.style.top = clickY + 'px';
-  
-  // Добавляем обработчики перетаскивания
-  currentMarker.addEventListener('mousedown', startDrag);
-  currentMarker.addEventListener('touchstart', startDragTouch, { passive: false });
-  
-  fieldContainer.appendChild(currentMarker);
-  
-  // ВАЖНО: Для расчета используем координаты ВНУТРИ ИЗОБРАЖЕНИЯ!
-  const result = calculateDistanceAndAngle(xInsideImage, yInsideImage);
-  
-  lastShotData = {
-    x: xInsideImage,      // Сохраняем координаты внутри изображения
-    y: yInsideImage,
-    distance: result.distance,
-    angle: result.angle
-  };
-  
-  // Показываем модальное окно
-  setTimeout(() => {
-    choiceModal.classList.add('visible');
-  }, 300);
-}
-
-    function startDrag(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      isDragging = true;
-      currentMarker.classList.add('dragging');
-      dragStartX = e.clientX;
-      dragStartY = e.clientY;
-      markerStartX = currentMarker.offsetLeft;
-      markerStartY = currentMarker.offsetTop;
-      document.addEventListener('mousemove', drag);
-      document.addEventListener('mouseup', stopDrag);
-    }
-
-    function startDragTouch(e) {
-      if (e.touches.length !== 1) return;
-      e.preventDefault();
-      e.stopPropagation();
-      isDragging = true;
-      currentMarker.classList.add('dragging');
-      const touch = e.touches[0];
-      dragStartX = touch.clientX;
-      dragStartY = touch.clientY;
-      markerStartX = currentMarker.offsetLeft;
-      markerStartY = currentMarker.offsetTop;
-      document.addEventListener('touchmove', dragTouch, { passive: false });
-      document.addEventListener('touchend', stopDragTouch);
-    }
-
-    function drag(e) {
-      if (!isDragging) return;
-      const deltaX = e.clientX - dragStartX;
-      const deltaY = e.clientY - dragStartY;
-      const newX = markerStartX + deltaX;
-      const newY = markerStartY + deltaY;
-      currentMarker.style.left = newX + 'px';
-      currentMarker.style.top = newY + 'px';
-      
-      const result = calculateDistanceAndAngle(newX, newY);
-      lastShotData = {
-        x: newX,
-        y: newY,
-        distance: result.distance,
-        angle: result.angle
-      };
-    }
-
-    function dragTouch(e) {
-      if (!isDragging || e.touches.length !== 1) return;
-      e.preventDefault();
-      const touch = e.touches[0];
-      const deltaX = touch.clientX - dragStartX;
-      const deltaY = touch.clientY - dragStartY;
-      const newX = markerStartX + deltaX;
-      const newY = markerStartY + deltaY;
-      currentMarker.style.left = newX + 'px';
-      currentMarker.style.top = newY + 'px';
-      
-      const result = calculateDistanceAndAngle(newX, newY);
-      lastShotData = {
-        x: newX,
-        y: newY,
-        distance: result.distance,
-        angle: result.angle
-      };
-    }
-
-    function stopDrag() {
-      isDragging = false;
-      if (currentMarker) currentMarker.classList.remove('dragging');
-      document.removeEventListener('mousemove', drag);
-      document.removeEventListener('mouseup', stopDrag);
-    }
-
-    function stopDragTouch() {
-      isDragging = false;
-      if (currentMarker) currentMarker.classList.remove('dragging');
-      document.removeEventListener('touchmove', dragTouch);
-      document.removeEventListener('touchend', stopDragTouch);
-    }
-
-   function handleFieldClick(e) {
-  if (e.target.classList.contains('marker-point')) return;
-  
-  // Передаем в createMarker координаты ОТНОСИТЕЛЬНО КОНТЕЙНЕРА
-  const containerRect = fieldContainer.getBoundingClientRect();
-  const xRelativeToContainer = e.clientX - containerRect.left;
-  const yRelativeToContainer = e.clientY - containerRect.top;
-  
-  createMarker(xRelativeToContainer, yRelativeToContainer);
-}
-
-function handleFieldTouch(e) {
-  if (e.touches.length !== 1) return;
-  e.preventDefault();
-  
-  const touch = e.touches[0];
-  const element = document.elementFromPoint(touch.clientX, touch.clientY);
-  
-  if (element && element.classList.contains('marker-point')) return;
-  
-  const containerRect = fieldContainer.getBoundingClientRect();
-  const xRelativeToContainer = touch.clientX - containerRect.left;
-  const yRelativeToContainer = touch.clientY - containerRect.top;
-  
-  createMarker(xRelativeToContainer, yRelativeToContainer);
-}
-    function handleFieldTouch(e) {
-  if (e.touches.length !== 1) return;
-  e.preventDefault();
-  
-  const touch = e.touches[0];
-  const element = document.elementFromPoint(touch.clientX, touch.clientY);
-  
-  if (element && element.classList.contains('marker-point')) return;
-  
-  const imageRect = fieldImage.getBoundingClientRect();
-  
-  if (touch.clientX < imageRect.left || touch.clientX > imageRect.right ||
-      touch.clientY < imageRect.top || touch.clientY > imageRect.bottom) {
-    return;
-  }
-  
-  const x = touch.clientX - imageRect.left;
-  const y = touch.clientY - imageRect.top;
-  
-  createMarker(x, y);
-}
-    
-    function startRecording() {
-      if (isRecording) return;
-      
-      isRecording = true;
-      recordingStartTime = Date.now();
-      
-      recordingIndicator.style.display = 'flex';
-      recordingTimer.style.display = 'block';
-      startBtn.style.display = 'none';
-      stopBtn.style.display = 'block';
-      
-      updateTimer();
-      timerInterval = setInterval(updateTimer, 1000);
-    }
-
-    function stopRecording() {
-      if (!isRecording) return;
-      
-      isRecording = false;
-      
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-      }
-      
-      recordingIndicator.style.display = 'none';
-      recordingTimer.style.display = 'none';
-      
-      pauseYouTubeVideo();
-      isVideoPaused = true;
-      
-      tabsPanel.classList.add('visible');
-      switchTab('field');
-    }
-
-    // === ОТПРАВКА ДАННЫХ В TELEGRAM БОТ ===
-    function sendToTelegramBot(eventType, distance, angle, originalX, originalY) {
-      addDebugLog(`🔄 Пытаюсь отправить данные в бота...`);
-      addDebugLog(`Тип: ${eventType}, Дистанция: ${distance}, Угол: ${angle}`);
-      
-      if (!telegramAvailable) {
-        addDebugLog('❌ Telegram WebApp не доступен!', 'error');
-        alert('❌ Ошибка: Запустите приложение через Telegram бота!');
-        return false;
-      }
-      
-      const timestamp = Date.now() - recordingStartTime;
-      const videoTime = videoCurrentTime;
-      
-      const eventData = {
-        action: 'save_event',
-        event: {
+        if (!telegramAvailable) {
+          alert('Запустите через Telegram бота');
+          return false;
+        }
+        
+        const timestamp = Date.now() - (recordingStartTime || Date.now());
+        
+        const eventData = {
+          action: 'save_event',
+          event: {
             match_id: parseInt(matchId),
             event_type: eventType,
-            type: eventType,
             timestamp: timestamp,
-            video_time: videoTime,
-            distance: parseFloat(distance.toFixed(2)),
-            angle: parseFloat(angle.toFixed(1)),
-            goal_type: 'half_rink',  // Фиксированное значение
-            original_x: parseFloat(originalX.toFixed(2)),
-            original_y: parseFloat(originalY.toFixed(2))
+            video_time: videoCurrentTime,
+            distance: distance,
+            angle: angle,
+            goal_type: 'half_rink',
+            original_x: Math.round(originalX * 10) / 10,
+            original_y: Math.round(originalY * 10) / 10
+          }
+        };
+        
+        try {
+          Telegram.WebApp.sendData(JSON.stringify(eventData));
+          addDebugLog('✅ Отправлено', 'success');
+          return true;
+        } catch (error) {
+          addDebugLog(`❌ Ошибка: ${error.message}`, 'error');
+          return false;
         }
+      }
+
+      function showShotResult(eventType, distance, angle) {
+        const eventName = eventType === 'goal' ? 'Гол' : 'Сэйв';
+        const eventColor = eventType === 'goal' ? 'shot-info-goal' : 'shot-info-save';
+        
+        shotInfo.innerHTML = `
+          <div class="shot-info-header">✅ Событие сохранено</div>
+          <div class="shot-info-row">
+            <span class="shot-info-label">Тип:</span>
+            <span class="shot-info-value ${eventColor}">${eventName}</span>
+          </div>
+          <div class="shot-info-row">
+            <span class="shot-info-label">Дистанция:</span>
+            <span class="shot-info-value">${distance} м</span>
+          </div>
+          <div class="shot-info-row">
+            <span class="shot-info-label">Угол:</span>
+            <span class="shot-info-value">${angle}°</span>
+          </div>
+          <div class="shot-info-footer">Исчезнет через 6 сек</div>
+        `;
+        shotInfo.style.display = 'block';
+        setTimeout(() => { shotInfo.style.display = 'none'; }, 6000);
+      }
+
+      function handleChoice(type) {
+        choiceModal.classList.remove('visible');
+        
+        if (lastShotData) {
+          showShotResult(type, lastShotData.distance, lastShotData.angle);
+          sendToTelegramBot(type, lastShotData.distance, lastShotData.angle, lastShotData.originalX, lastShotData.originalY);
+        }
+        
+        if (currentMarker) {
+          currentMarker.remove();
+          currentMarker = null;
+        }
+        
+        switchTab('video');
+        tabsPanel.classList.remove('visible');
+        startBtn.style.display = 'block';
+        stopBtn.style.display = 'none';
+        isVideoPaused = false;
+      }
+
+      // === ЗАГРУЗКА ИЗОБРАЖЕНИЯ ===
+      fieldImage.onload = () => {
+        isImageLoaded = true;
+        updateImageMetrics();
+        addDebugLog('✅ Изображение загружено', 'success');
       };
       
-      addDebugLog(`📦 Данные для отправки: ${JSON.stringify(eventData)}`);
-      
-      try {
-        const jsonString = JSON.stringify(eventData);
-        addDebugLog(`📤 Отправляю JSON: ${jsonString}`);
-        
-        Telegram.WebApp.sendData(jsonString);
-        addDebugLog('✅ Данные отправлены через Telegram.WebApp.sendData()', 'success');
-        
-        return true;
-        
-      } catch (error) {
-        addDebugLog(`❌ Ошибка отправки: ${error.message}`, 'error');
-        return false;
-      }
-    }
+      fieldImage.onerror = () => {
+        addDebugLog('❌ Ошибка загрузки изображения', 'error');
+        fieldInstruction.textContent = 'Ошибка загрузки изображения';
+        fieldInstruction.style.backgroundColor = 'rgba(198, 40, 40, 0.9)';
+      };
 
-    // === ОБРАБОТКА ВЫБОРА СОБЫТИЯ ===
-    function handleChoice(type) {
-      addDebugLog(`🎯 Пользователь выбрал: ${type}`);
-      choiceModal.classList.remove('visible');
-      
-      let distance = 0;
-      let angle = 0;
-      let originalX = 0;
-      let originalY = 0;
-      
-      if (lastShotData) {
-        distance = lastShotData.distance;
-        angle = lastShotData.angle;
-        originalX = lastShotData.x;
-        originalY = lastShotData.y;
+      if (fieldImage.complete && fieldImage.naturalWidth > 0) {
+        fieldImage.onload();
       }
-      
-      // Показываем результат пользователю
-      showShotResult(type, distance, angle);
-      
-      // Отправляем данные в бота
-      const success = sendToTelegramBot(type, distance, angle, originalX, originalY);
-      
-      if (success) {
-        addDebugLog('✅ Событие обработано успешно', 'success');
-      } else {
-        addDebugLog('❌ Не удалось отправить событие', 'error');
-      }
-      
-      // Очищаем маркер
-      if (currentMarker) {
-        currentMarker.remove();
-        currentMarker = null;
-      }
-      
-      // Сбрасываем состояние
-      fieldInstruction.textContent = 'Отметьте точку броска на поле';
-      
-      // Переключаемся на видео
-      switchTab('video');
-      tabsPanel.classList.remove('visible');
-      startBtn.style.display = 'block';
-      stopBtn.style.display = 'none';
-      isVideoPaused = false;
-    }
 
-    // === ИНИЦИАЛИЗАЦИЯ ===
-    function init() {
-      addDebugLog('🚀 Инициализация приложения...');
-      
-      // Настройка ориентации
-      checkOrientation();
-      window.addEventListener('resize', checkOrientation);
-      
-      // Загрузка видео
+      // === ВИДЕО ===
       if (videoUrl) {
         let finalUrl = videoUrl;
         if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
@@ -1192,102 +1047,38 @@ function handleFieldTouch(e) {
           }
         }
         videoFrame.src = finalUrl;
-        addDebugLog(`🎬 Видео загружено: ${finalUrl}`);
       }
-      
-      // Обработчики кнопок
+
+      window.addEventListener('message', (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          if (data.event === 'onReady') startBtn.disabled = false;
+          if (data.info?.currentTime !== undefined) videoCurrentTime = data.info.currentTime;
+        } catch {}
+      });
+
+      setTimeout(() => { startBtn.disabled = false; }, 3000);
+
+      // === ПОДПИСКИ ===
       startBtn.addEventListener('click', startRecording);
       stopBtn.addEventListener('click', stopRecording);
       
-      // Обработчики вкладок
       tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          const tabName = tab.getAttribute('data-tab');
-          switchTab(tabName);
-        });
+        tab.addEventListener('click', () => switchTab(tab.getAttribute('data-tab')));
       });
       
-      // Обработчики поля
       fieldContainer.addEventListener('click', handleFieldClick);
       fieldContainer.addEventListener('touchstart', handleFieldTouch, { passive: false });
       
-      // Обработчики модального окна
       goalBtn.addEventListener('click', () => handleChoice('goal'));
       saveBtn.addEventListener('click', () => handleChoice('save'));
       
-      // Обработка видео
-      window.addEventListener('message', (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.event === 'onReady') {
-            startBtn.disabled = false;
-            addDebugLog('✅ Видео готово', 'success');
-          }
-          if (data.info && data.info.currentTime !== undefined) {
-            videoCurrentTime = data.info.currentTime;
-          }
-        } catch (e) {}
+      window.addEventListener('resize', () => {
+        if (isImageLoaded) updateImageMetrics();
       });
-      
-      // Фолбэк для видео
-      setTimeout(() => {
-        startBtn.disabled = false;
-        addDebugLog('✅ Кнопка "Начать запись" активирована', 'success');
-      }, 3000);
-      
-      // Обработка изображения
-      fieldImage.onload = function() {
-        addDebugLog('✅ Изображение поля загружено', 'success');
-        isImageLoaded = true;
-        updateGoalCoordinates();
-      };
-      
-      fieldImage.onerror = function() {
-        addDebugLog('❌ Ошибка загрузки изображения', 'error');
-        fieldInstruction.textContent = 'Ошибка загрузки изображения поля';
-        fieldInstruction.style.backgroundColor = 'rgba(198, 40, 40, 0.9)';
-      };
-      
-      if (fieldImage.complete && fieldImage.naturalWidth > 0) {
-        fieldImage.onload();
-      }
-      
-      // Обновление координат
-      window.addEventListener('resize', updateGoalCoordinates);
-      
-      // Устанавливаем инструкцию для половины поля
-      fieldInstruction.textContent = 'Отметьте точку броска на поле';
-      
-      addDebugLog('✅ Инициализация завершена', 'success');
-    }
 
-    // Запуск приложения
-    init();
+      addDebugLog('✅ Инициализация завершена', 'success');
+    })();
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
