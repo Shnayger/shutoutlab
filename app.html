@@ -223,15 +223,11 @@
     }
 
     #fieldImage {
-      width: auto;           /* Оригинальная ширина */
-      height: auto;          /* Оригинальная высота */
-      max-width: 100%;       /* Не больше wrapper */
-      max-height: 100%;      /* Не больше wrapper */
-      object-fit: contain;   /* Сохраняем пропорции */
-      display: block;
-      pointer-events: auto;
-    }
-
+  width: 100vw;
+  height: 100vh;
+  object-fit: fill;
+  display: block;
+}
     .marker-point {
       position: absolute;
       width: 28px;
@@ -1306,6 +1302,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
