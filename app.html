@@ -222,11 +222,12 @@
     }
 
        #fieldImage {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;  /* Было contain, стало cover - заполняет весь контейнер без полей */
+      width: 102%;      /* Чуть шире */
+      height: 102%;     /* Чуть выше */
+      object-fit: cover;
       display: block;
       pointer-events: auto;
+      margin: -1%;      /* Компенсируем смещение */
     }
 
     .marker-point {
@@ -1303,6 +1304,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
