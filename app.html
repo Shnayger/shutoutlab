@@ -544,21 +544,24 @@
 
   <script>
     (function() {
-      // Координаты ключевых точек
-const ORIGINAL_GOAL_COORDS = { x: 208.5, y: 377 };     // центр ворот
-const ORIGINAL_CENTER_COORDS = { x: 208.5, y: 8 };     // центр площадки
+      // === ОСНОВНЫЕ КОНСТАНТЫ (откалиброваны по твоим тестам) ===
+      const HALF_RINK_WIDTH_METERS = 26;
+      const HALF_RINK_LENGTH_METERS = 30;
 
-// Реальные размеры в метрах
-const DISTANCE_CENTER_TO_GOAL = 26.5;  // от центра до ворот
-const GOAL_WIDTH_METERS = 1.83;        // ширина ворот
+      const ORIGINAL_IMAGE_WIDTH = 402;
+      const ORIGINAL_IMAGE_HEIGHT = 463;
 
-// Вычисляем метры на пиксель
-const PIXELS_CENTER_TO_GOAL = ORIGINAL_GOAL_COORDS.y - ORIGINAL_CENTER_COORDS.y; // 377 - 8 = 369 пикселей
-const METERS_PER_PIXEL_Y = DISTANCE_CENTER_TO_GOAL / PIXELS_CENTER_TO_GOAL;      // 26.5 / 369 = 0.0718 м/пикс
+      // Координаты ворот в оригинальной системе (из твоих логов)
+      const ORIGINAL_GOAL_COORDS = { x: 201, y: 410 };
 
-// По ширине: 417 пикселей = 26 метров (полная ширина площадки)
-const METERS_PER_PIXEL_X = 26 / ORIGINAL_IMAGE_WIDTH;  // 26 / 417 = 0.06235 м/пикс
+      // Вычисляем правильный коэффициент по вертикали
+      const GOAL_Y = ORIGINAL_GOAL_COORDS.y;
+      const CENTER_Y = 1;
+      const CENTER_DISTANCE = 26;
 
+      const PIXELS_TO_CENTER = GOAL_Y - CENTER_Y;
+      const METERS_PER_PIXEL_Y = CENTER_DISTANCE / PIXELS_TO_CENTER;
+      const METERS_PER_PIXEL_X = HALF_RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;
 
       // === ТАЙМЕРЫ ДЛЯ ИСЧЕЗАЮЩИХ ТАБЛИЧЕК ===
       let videoTitleTimer = null;
@@ -661,31 +664,16 @@ const METERS_PER_PIXEL_X = 26 / ORIGINAL_IMAGE_WIDTH;  // 26 / 417 = 0.06235 м/
         }
       }
 
+      // === ОРИЕНТАЦИЯ ===
       function checkOrientation() {
-  // Получаем актуальные размеры
-  const width = window.innerWidth;
-  const height = window.innerHeight;
-  
-  // Более надежная проверка landscape
-  const isLandscape = width > height;
-  
-  console.log('Ориентация:', isLandscape ? 'Горизонт' : 'Вертикаль', width + 'x' + height);
-  
-  // Принудительно меняем display
-  if (isLandscape) {
-    rotateScreen.style.display = 'none';
-    mainInterface.style.display = 'block';
-  } else {
-    rotateScreen.style.display = 'flex';
-    mainInterface.style.display = 'none';
-  }
-  
-  // Дополнительная проверка для Telegram WebApp
-  if (window.Telegram?.WebApp) {
-    Telegram.WebApp.expand(); // Растягиваем на весь экран
-  }
-}
-      
+        const isLandscape = window.innerWidth > window.innerHeight;
+        rotateScreen.style.display = isLandscape ? 'none' : 'flex';
+        mainInterface.style.display = isLandscape ? 'block' : 'none';
+        if (isLandscape && isImageLoaded) updateImageMetrics();
+      }
+      window.addEventListener('resize', checkOrientation);
+      checkOrientation();
+
       // === ОБНОВЛЕНИЕ МЕТРИК ИЗОБРАЖЕНИЯ ===
       function updateImageMetrics() {
         if (!isImageLoaded) return;
@@ -760,20 +748,20 @@ const METERS_PER_PIXEL_X = 26 / ORIGINAL_IMAGE_WIDTH;  // 26 / 417 = 0.06235 м/
       }
 
       function calculateDistanceAndAngleFromOriginal(originalX, originalY) {
-  const dxOriginal = originalX - ORIGINAL_GOAL_COORDS.x;
-  const dyOriginal = ORIGINAL_GOAL_COORDS.y - originalY;
-  
-  const dxMeters = dxOriginal * METERS_PER_PIXEL_X;
-  const dyMeters = dyOriginal * METERS_PER_PIXEL_Y;
-  
-  const distance = Math.sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
-  const angle = Math.atan2(dxMeters, dyMeters) * (180 / Math.PI);
-  
-  return {
-    distance: Math.round(distance * 100) / 100,
-    angle: Math.round(angle * 10) / 10
-  };
-}
+        const dxOriginal = originalX - ORIGINAL_GOAL_COORDS.x;
+        const dyOriginal = ORIGINAL_GOAL_COORDS.y - originalY;
+        
+        const dxMeters = dxOriginal * METERS_PER_PIXEL_X;
+        const dyMeters = dyOriginal * METERS_PER_PIXEL_Y;
+        
+        const distance = Math.sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
+        const angle = Math.atan2(dxMeters, dyMeters) * (180 / Math.PI);
+        
+        return {
+          distance: Math.round(distance * 100) / 100,
+          angle: Math.round(angle * 10) / 10
+        };
+      }
 
       function getClickCoordinates(e, isTouch = false) {
   let clientX, clientY;
@@ -1174,50 +1162,34 @@ function dragTouch(e) {
 
       setTimeout(() => { startBtn.disabled = false; }, 3000);
 
-     // === ПОДПИСКИ ===
-startBtn.addEventListener('click', startRecording);
-stopBtn.addEventListener('click', stopRecording);
+      // === ПОДПИСКИ ===
+      startBtn.addEventListener('click', startRecording);
+      stopBtn.addEventListener('click', stopRecording);
+      
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => switchTab(tab.getAttribute('data-tab')));
+      });
+      
+      fieldContainer.addEventListener('click', handleFieldClick);
+      fieldContainer.addEventListener('touchstart', handleFieldTouch, { passive: false });
+      
+      goalBtn.addEventListener('click', () => handleChoice('goal'));
+      saveBtn.addEventListener('click', () => handleChoice('save'));
+      
+      window.addEventListener('resize', () => {
+        if (isImageLoaded) updateImageMetrics();
+      });
 
-tabs.forEach(tab => {
-  tab.addEventListener('click', () => switchTab(tab.getAttribute('data-tab')));
-});
+      // Показываем табличку видео при загрузке
+      setTimeout(() => {
+        showTemporary(currentTabTitle, 3000);
+      }, 500);
 
-fieldContainer.addEventListener('click', handleFieldClick);
-fieldContainer.addEventListener('touchstart', handleFieldTouch, { passive: false });
-
-goalBtn.addEventListener('click', () => handleChoice('goal'));
-saveBtn.addEventListener('click', () => handleChoice('save'));
-
-window.addEventListener('resize', () => {
-  if (isImageLoaded) updateImageMetrics();
-});
-
-// ✅ ВАЖНО: добавляем проверку ориентации
-window.addEventListener('resize', checkOrientation);
-window.addEventListener('orientationchange', function() {
-  setTimeout(checkOrientation, 100);
-});
-
-// Показываем табличку видео при загрузке
-setTimeout(() => {
-  showTemporary(currentTabTitle, 3000);
-}, 500);
-
-// ✅ Запускаем проверку ориентации сразу
-checkOrientation();
-
-addDebugLog('✅ Инициализация завершена', 'success');
+      addDebugLog('✅ Инициализация завершена', 'success');
     })();
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
 
 
 
