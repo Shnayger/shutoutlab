@@ -301,7 +301,7 @@
       background: linear-gradient(135deg, #1565c0, #2196f3);
     }
 
-        #fieldInstruction {
+    #fieldInstruction {
       position: absolute;
       bottom: 20px;
       left: 50%;
@@ -320,7 +320,7 @@
       white-space: nowrap;
     }
 
-         #currentTabTitle {
+    #currentTabTitle {
       position: absolute;
       top: 10px;
       left: 50%;
@@ -544,28 +544,29 @@
 
   <script>
     (function() {
-     // === ОСНОВНЫЕ КОНСТАНТЫ (откалиброваны по твоим тестам) ===
-const HALF_RINK_WIDTH_METERS = 26;
-const HALF_RINK_LENGTH_METERS = 30;  // может быть не 30, но нам важны пиксели
+      // === ОСНОВНЫЕ КОНСТАНТЫ (откалиброваны по твоим тестам) ===
+      const HALF_RINK_WIDTH_METERS = 26;
+      const HALF_RINK_LENGTH_METERS = 30;
 
-const ORIGINAL_IMAGE_WIDTH = 402;
-const ORIGINAL_IMAGE_HEIGHT = 463;
+      const ORIGINAL_IMAGE_WIDTH = 402;
+      const ORIGINAL_IMAGE_HEIGHT = 463;
 
-// Координаты ворот в оригинальной системе (из твоих логов)
-const ORIGINAL_GOAL_COORDS = { x: 201, y: 410 };
+      // Координаты ворот в оригинальной системе (из твоих логов)
+      const ORIGINAL_GOAL_COORDS = { x: 201, y: 410 };
 
-// Вычисляем правильный коэффициент по вертикали
-// Центр площадки: originalY=4.8, расстояние=26.06 м
-const GOAL_Y = ORIGINAL_GOAL_COORDS.y;  // 135
-const CENTER_Y = 1;  // из твоего лога
-const CENTER_DISTANCE = 26;  // из твоего лога
+      // Вычисляем правильный коэффициент по вертикали
+      const GOAL_Y = ORIGINAL_GOAL_COORDS.y;
+      const CENTER_Y = 1;
+      const CENTER_DISTANCE = 26;
 
-const PIXELS_TO_CENTER = GOAL_Y - CENTER_Y;  // 130.2
-const METERS_PER_PIXEL_Y = CENTER_DISTANCE / PIXELS_TO_CENTER;  // 26.06 / 130.2 = 0.2002
+      const PIXELS_TO_CENTER = GOAL_Y - CENTER_Y;
+      const METERS_PER_PIXEL_Y = CENTER_DISTANCE / PIXELS_TO_CENTER;
+      const METERS_PER_PIXEL_X = HALF_RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;
 
-const METERS_PER_PIXEL_X = HALF_RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;  // 0.0647
-
-
+      // === ТАЙМЕРЫ ДЛЯ ИСЧЕЗАЮЩИХ ТАБЛИЧЕК ===
+      let videoTitleTimer = null;
+      let fieldTitleTimer = null;
+      let fieldInstructionTimer = null;
 
       // === TELEGRAM ===
       let telegramAvailable = false;
@@ -641,6 +642,28 @@ const METERS_PER_PIXEL_X = HALF_RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;  // 0.
         debugPanel.style.display = debugPanel.style.display === 'block' ? 'none' : 'block';
       });
 
+      // === ФУНКЦИЯ ДЛЯ ВРЕМЕННОГО ПОКАЗА ЭЛЕМЕНТОВ ===
+      function showTemporary(element, duration = 3000) {
+        if (!element) return;
+        
+        element.style.display = 'block';
+        
+        if (element.id === 'currentTabTitle') {
+          if (videoTitleTimer) clearTimeout(videoTitleTimer);
+          videoTitleTimer = setTimeout(() => {
+            element.style.display = 'none';
+            videoTitleTimer = null;
+          }, duration);
+        }
+        else if (element.id === 'fieldInstruction') {
+          if (fieldInstructionTimer) clearTimeout(fieldInstructionTimer);
+          fieldInstructionTimer = setTimeout(() => {
+            element.style.display = 'none';
+            fieldInstructionTimer = null;
+          }, duration);
+        }
+      }
+
       // === ОРИЕНТАЦИЯ ===
       function checkOrientation() {
         const isLandscape = window.innerWidth > window.innerHeight;
@@ -697,11 +720,27 @@ const METERS_PER_PIXEL_X = HALF_RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;  // 0.
           videoContainer.classList.add('active-tab');
           fieldContainer.classList.remove('active-tab');
           currentTabTitle.textContent = '🎥 Видео матча';
+          
+          // Показываем табличку и запускаем таймер
+          showTemporary(currentTabTitle, 3000);
+          
           if (isVideoPaused) pauseYouTubeVideo();
+          
+          // Если переходим на видео, скрываем полевые таблички
+          if (fieldInstructionTimer) {
+            clearTimeout(fieldInstructionTimer);
+            fieldInstructionTimer = null;
+          }
+          fieldInstruction.style.display = 'none';
         } else {
           videoContainer.classList.remove('active-tab');
           fieldContainer.classList.add('active-tab');
           currentTabTitle.textContent = '🏒 Схема поля';
+          
+          // Показываем обе таблички и запускаем таймеры
+          showTemporary(currentTabTitle, 3000);
+          showTemporary(fieldInstruction, 3000);
+          
           pauseYouTubeVideo();
           isVideoPaused = true;
           if (isImageLoaded) updateImageMetrics();
@@ -709,69 +748,62 @@ const METERS_PER_PIXEL_X = HALF_RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;  // 0.
       }
 
       function calculateDistanceAndAngleFromOriginal(originalX, originalY) {
-  const dxOriginal = originalX - ORIGINAL_GOAL_COORDS.x;
-  const dyOriginal = ORIGINAL_GOAL_COORDS.y - originalY;
-  
-  const dxMeters = dxOriginal * METERS_PER_PIXEL_X;
-  const dyMeters = dyOriginal * METERS_PER_PIXEL_Y;
-  
-  const distance = Math.sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
-  const angle = Math.atan2(dxMeters, dyMeters) * (180 / Math.PI);
-  
-  return {
-    distance: Math.round(distance * 100) / 100,
-    angle: Math.round(angle * 10) / 10
-  };
-}
+        const dxOriginal = originalX - ORIGINAL_GOAL_COORDS.x;
+        const dyOriginal = ORIGINAL_GOAL_COORDS.y - originalY;
+        
+        const dxMeters = dxOriginal * METERS_PER_PIXEL_X;
+        const dyMeters = dyOriginal * METERS_PER_PIXEL_Y;
+        
+        const distance = Math.sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
+        const angle = Math.atan2(dxMeters, dyMeters) * (180 / Math.PI);
+        
+        return {
+          distance: Math.round(distance * 100) / 100,
+          angle: Math.round(angle * 10) / 10
+        };
+      }
+
       // === ПОЛУЧЕНИЕ КООРДИНАТ КЛИКА В РАЗНЫХ СИСТЕМАХ ===
       function getClickCoordinates(e, isTouch = false) {
-  let clientX, clientY;
-  if (isTouch) {
-    clientX = e.touches[0].clientX;
-    clientY = e.touches[0].clientY;
-  } else {
-    clientX = e.clientX;
-    clientY = e.clientY;
-  }
-  
-  const containerRect = fieldContainer.getBoundingClientRect();
-  const imageRect = fieldImage.getBoundingClientRect();
-  
-  // Координаты относительно контейнера (для маркера)
-  const containerX = clientX - containerRect.left;
-  const containerY = clientY - containerRect.top;
-  
-  // Координаты относительно изображения на экране
-  const imageX = clientX - imageRect.left;
-  const imageY = clientY - imageRect.top;
-  
-  // Проверка внутри изображения
-  if (imageX < 0 || imageX > imageRect.width || 
-      imageY < 0 || imageY > imageRect.height) {
-    return null;
-  }
-  
-  // ВАЖНО: Правильный пересчет в оригинальные координаты!
-  // Масштаб может быть разным по X и Y из-за object-fit: contain
-  const scaleX = imageRect.width / ORIGINAL_IMAGE_WIDTH;
-  const scaleY = imageRect.height / ORIGINAL_IMAGE_HEIGHT;
-  
-  const originalX = imageX / scaleX;
-  const originalY = imageY / scaleY;
-  
-  // Диагностика
-  console.log('Координаты:', {
-    экран: { x: imageX.toFixed(1), y: imageY.toFixed(1) },
-    масштаб: { x: scaleX.toFixed(3), y: scaleY.toFixed(3) },
-    оригинал: { x: originalX.toFixed(1), y: originalY.toFixed(1) }
-  });
-  
-  return {
-    container: { x: containerX, y: containerY },
-    image: { x: imageX, y: imageY },
-    original: { x: originalX, y: originalY }
-  };
-}
+        let clientX, clientY;
+        if (isTouch) {
+          clientX = e.touches[0].clientX;
+          clientY = e.touches[0].clientY;
+        } else {
+          clientX = e.clientX;
+          clientY = e.clientY;
+        }
+        
+        const containerRect = fieldContainer.getBoundingClientRect();
+        const imageRect = fieldImage.getBoundingClientRect();
+        
+        // Координаты относительно контейнера (для маркера)
+        const containerX = clientX - containerRect.left;
+        const containerY = clientY - containerRect.top;
+        
+        // Координаты относительно изображения на экране
+        const imageX = clientX - imageRect.left;
+        const imageY = clientY - imageRect.top;
+        
+        // Проверка внутри изображения
+        if (imageX < 0 || imageX > imageRect.width || 
+            imageY < 0 || imageY > imageRect.height) {
+          return null;
+        }
+        
+        // Правильный пересчет в оригинальные координаты
+        const scaleX = imageRect.width / ORIGINAL_IMAGE_WIDTH;
+        const scaleY = imageRect.height / ORIGINAL_IMAGE_HEIGHT;
+        
+        const originalX = imageX / scaleX;
+        const originalY = imageY / scaleY;
+        
+        return {
+          container: { x: containerX, y: containerY },
+          image: { x: imageX, y: imageY },
+          original: { x: originalX, y: originalY }
+        };
+      }
 
       // === СОЗДАНИЕ МАРКЕРА ===
       function createMarker(coords) {
@@ -873,8 +905,10 @@ const METERS_PER_PIXEL_X = HALF_RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;  // 0.
         const imageY = markerWindowY - imageRect.top;
         
         if (imageX >= 0 && imageX <= imageRect.width && imageY >= 0 && imageY <= imageRect.height) {
-          const originalX = imageX / scaleFactor;
-          const originalY = imageY / scaleFactor;
+          const scaleX = imageRect.width / ORIGINAL_IMAGE_WIDTH;
+          const scaleY = imageRect.height / ORIGINAL_IMAGE_HEIGHT;
+          const originalX = imageX / scaleX;
+          const originalY = imageY / scaleY;
           const result = calculateDistanceAndAngleFromOriginal(originalX, originalY);
           
           lastShotData = {
@@ -907,8 +941,10 @@ const METERS_PER_PIXEL_X = HALF_RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;  // 0.
         const imageY = markerWindowY - imageRect.top;
         
         if (imageX >= 0 && imageX <= imageRect.width && imageY >= 0 && imageY <= imageRect.height) {
-          const originalX = imageX / scaleFactor;
-          const originalY = imageY / scaleFactor;
+          const scaleX = imageRect.width / ORIGINAL_IMAGE_WIDTH;
+          const scaleY = imageRect.height / ORIGINAL_IMAGE_HEIGHT;
+          const originalX = imageX / scaleX;
+          const originalY = imageY / scaleY;
           const result = calculateDistanceAndAngleFromOriginal(originalX, originalY);
           
           lastShotData = {
@@ -956,6 +992,10 @@ const METERS_PER_PIXEL_X = HALF_RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;  // 0.
         isVideoPaused = true;
         tabsPanel.classList.add('visible');
         switchTab('field');
+        
+        // Показываем полевые таблички при переходе
+        showTemporary(currentTabTitle, 3000);
+        showTemporary(fieldInstruction, 3000);
       }
 
       // === ОТПРАВКА В TELEGRAM ===
@@ -1036,6 +1076,9 @@ const METERS_PER_PIXEL_X = HALF_RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;  // 0.
         startBtn.style.display = 'block';
         stopBtn.style.display = 'none';
         isVideoPaused = false;
+        
+        // Показываем табличку видео и запускаем таймер
+        showTemporary(currentTabTitle, 3000);
       }
 
       // === ЗАГРУЗКА ИЗОБРАЖЕНИЯ ===
@@ -1100,15 +1143,13 @@ const METERS_PER_PIXEL_X = HALF_RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;  // 0.
         if (isImageLoaded) updateImageMetrics();
       });
 
+      // Показываем табличку видео при загрузке
+      setTimeout(() => {
+        showTemporary(currentTabTitle, 3000);
+      }, 500);
+
       addDebugLog('✅ Инициализация завершена', 'success');
     })();
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
