@@ -815,36 +815,38 @@
 
       // === СОЗДАНИЕ МАРКЕРА ===
       function createMarker(coords) {
-        if (!coords) return;
-        
-        if (currentMarker) currentMarker.remove();
-        
-        // Создаем маркер в координатах контейнера
-        currentMarker = document.createElement('div');
-        currentMarker.className = 'marker-point';
-        currentMarker.style.left = coords.container.x + 'px';
-        currentMarker.style.top = coords.container.y + 'px';
-        
-        currentMarker.addEventListener('mousedown', startDrag);
-        currentMarker.addEventListener('touchstart', startDragTouch, { passive: false });
-        
-        fieldContainer.appendChild(currentMarker);
-        
-        // Рассчитываем результат по оригинальным координатам
-        const result = calculateDistanceAndAngleFromOriginal(coords.original.x, coords.original.y);
-        
-        lastShotData = {
-          originalX: coords.original.x,
-          originalY: coords.original.y,
-          distance: result.distance,
-          angle: result.angle
-        };
-        
-        addDebugLog(`Бросок: ориг(${coords.original.x.toFixed(1)},${coords.original.y.toFixed(1)}) → ${result.distance}м, ${result.angle}°`);
-        
-        setTimeout(() => choiceModal.classList.add('visible'), 300);
-      }
-
+  if (!coords) {
+    addDebugLog('❌ Нет координат для маркера', 'error');
+    return;
+  }
+  
+  if (currentMarker) currentMarker.remove();
+  
+  // Создаем маркер
+  currentMarker = document.createElement('div');
+  currentMarker.className = 'marker-point';
+  currentMarker.style.left = coords.container.x + 'px';
+  currentMarker.style.top = coords.container.y + 'px';
+  
+  currentMarker.addEventListener('mousedown', startDrag);
+  currentMarker.addEventListener('touchstart', startDragTouch, { passive: false });
+  
+  fieldContainer.appendChild(currentMarker);
+  
+  // Рассчитываем результат
+  const result = calculateDistanceAndAngleFromOriginal(coords.original.x, coords.original.y);
+  
+  lastShotData = {
+    originalX: coords.original.x,
+    originalY: coords.original.y,
+    distance: result.distance,
+    angle: result.angle
+  };
+  
+  addDebugLog(`✅ Бросок: ориг(${coords.original.x.toFixed(1)},${coords.original.y.toFixed(1)}) → ${result.distance}м, ${result.angle}°`);
+  
+  setTimeout(() => choiceModal.classList.add('visible'), 300);
+}
       // === ОБРАБОТЧИКИ КЛИКОВ ===
       function handleFieldClick(e) {
         if (e.target.classList.contains('marker-point')) return;
@@ -1183,5 +1185,6 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
