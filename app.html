@@ -787,8 +787,15 @@ function calculateDistanceAndAngleFromOriginal(originalX, originalY) {
     clientY = e.clientY;
   }
   
-  const containerRect = fieldContainer.getBoundingClientRect();
   const imageRect = fieldImage.getBoundingClientRect();
+  
+  // ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА (на всякий случай)
+  if (clientX < imageRect.left || clientX > imageRect.right ||
+      clientY < imageRect.top || clientY > imageRect.bottom) {
+    return null;
+  }
+  
+  const containerRect = fieldContainer.getBoundingClientRect();
   
   // Координаты относительно контейнера (для маркера)
   const containerX = clientX - containerRect.left;
@@ -812,10 +819,9 @@ function calculateDistanceAndAngleFromOriginal(originalX, originalY) {
   };
 }
 
-      // === СОЗДАНИЕ МАРКЕРА ===
       function createMarker(coords) {
   if (!coords) {
-    addDebugLog('❌ Нет координат для маркера', 'error');
+    addDebugLog('❌ Нет координат для маркера (клик вне изображения)', 'error');
     return;
   }
   
@@ -849,18 +855,20 @@ function calculateDistanceAndAngleFromOriginal(originalX, originalY) {
       function handleFieldClick(e) {
   if (e.target.classList.contains('marker-point')) return;
   
-  // ✅ Проверяем, что кликнули именно по изображению или внутри него
-  const imageRect = fieldImage.getBoundingClientRect();
+  // ПОЛУЧАЕМ КООРДИНАТЫ КЛИКА
+  const rect = fieldImage.getBoundingClientRect();
   
-  // Проверка: клик внутри прямоугольника изображения?
-  if (e.clientX < imageRect.left || e.clientX > imageRect.right ||
-      e.clientY < imageRect.top || e.clientY > imageRect.bottom) {
-    addDebugLog('❌ Клик вне изображения (по черной области)', 'error');
-    return; // Игнорируем клики вне изображения
+  // ПРОВЕРКА: клик строго внутри изображения
+  if (e.clientX >= rect.left && 
+      e.clientX <= rect.right && 
+      e.clientY >= rect.top && 
+      e.clientY <= rect.bottom) {
+    
+    const coords = getClickCoordinates(e, false);
+    createMarker(coords);
+  } else {
+    addDebugLog('❌ Клик вне изображения', 'error');
   }
-  
-  const coords = getClickCoordinates(e, false);
-  createMarker(coords);
 }
 
 function handleFieldTouch(e) {
@@ -871,19 +879,20 @@ function handleFieldTouch(e) {
   const element = document.elementFromPoint(touch.clientX, touch.clientY);
   if (element?.classList.contains('marker-point')) return;
   
-  // ✅ Та же проверка для тача
-  const imageRect = fieldImage.getBoundingClientRect();
+  // ТА ЖЕ ПРОВЕРКА ДЛЯ ТАЧА
+  const rect = fieldImage.getBoundingClientRect();
   
-  if (touch.clientX < imageRect.left || touch.clientX > imageRect.right ||
-      touch.clientY < imageRect.top || touch.clientY > imageRect.bottom) {
-    addDebugLog('❌ Тач вне изображения (по черной области)', 'error');
-    return;
+  if (touch.clientX >= rect.left && 
+      touch.clientX <= rect.right && 
+      touch.clientY >= rect.top && 
+      touch.clientY <= rect.bottom) {
+    
+    const coords = getClickCoordinates(e, true);
+    createMarker(coords);
+  } else {
+    addDebugLog('❌ Тач вне изображения', 'error');
   }
-  
-  const coords = getClickCoordinates(e, true);
-  createMarker(coords);
 }
-
       // === DRAG LOGIC ===
       function startDrag(e) {
         e.preventDefault();
@@ -1204,6 +1213,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
