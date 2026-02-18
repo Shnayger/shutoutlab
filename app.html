@@ -241,7 +241,8 @@
       box-shadow: 0 0 30px rgba(255, 0, 0, 1);
     }
 
-    #choiceModal {
+        /* Общие стили для всех модальных окон */
+    .modal {
       position: fixed;
       top: 0;
       left: 0;
@@ -255,8 +256,12 @@
       backdrop-filter: blur(5px);
     }
 
-    #choiceModal.visible {
+    .modal.visible {
       display: flex;
+    }
+
+    #choiceModal, #saveTypeModal {
+      /* Наследуют стили от .modal */
     }
 
     .modal-content {
@@ -564,7 +569,7 @@
     </div>
 
     <!-- Модальное окно для первого выбора (Гол/Сэйв/Мимо) -->
-    <div id="choiceModal">
+    <div id="choiceModal" class="modal">
       <div class="modal-content">
         <div class="modal-title">Выберите тип события</div>
         <div class="choice-buttons">
@@ -576,7 +581,7 @@
     </div>
 
     <!-- Модальное окно для типа сэйва -->
-    <div id="saveTypeModal">
+      <div id="saveTypeModal" class="modal">
       <div class="modal-content">
         <div class="modal-title">Тип сэйва</div>
         <div class="choice-buttons">
@@ -1271,14 +1276,14 @@ function dragTouch(e) {
         setTimeout(() => { shotInfo.style.display = 'none'; }, 6000);
       }
 
-            function handleChoice(type) {
+                  function handleChoice(type) {
         choiceModal.classList.remove('visible');
         
         if (type === 'save') {
           // Показываем выбор типа сэйва
+          console.log('Показываем saveTypeModal'); // Для отладки
           saveTypeModal.classList.add('visible');
         } else if (type === 'miss') {
-          // Сразу отправляем "мимо"
           if (lastShotData) {
             showShotResult('miss', lastShotData.distance, lastShotData.angle);
             sendToTelegramBot('miss', lastShotData.distance, lastShotData.angle, lastShotData.originalX, lastShotData.originalY);
@@ -1380,6 +1385,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
