@@ -544,24 +544,31 @@
 
   <script>
     (function() {
-      // === ОСНОВНЫЕ КОНСТАНТЫ (откалиброваны по твоим тестам) ===
-      const HALF_RINK_WIDTH_METERS = 26;
-      const HALF_RINK_LENGTH_METERS = 30;
+      // === БЛОК КОНСТАНТ ===
+const ORIGINAL_IMAGE_WIDTH = 417;
+const ORIGINAL_IMAGE_HEIGHT = 436;
 
-      const ORIGINAL_IMAGE_WIDTH = 402;
-      const ORIGINAL_IMAGE_HEIGHT = 463;
+// Координаты ключевых точек (в пикселях оригинального изображения)
+const ORIGINAL_GOAL_COORDS = { x: 208.5, y: 377 };     // центр ворот
+const ORIGINAL_CENTER_COORDS = { x: 208.5, y: 8 };     // центр площадки
 
-      // Координаты ворот в оригинальной системе (из твоих логов)
-      const ORIGINAL_GOAL_COORDS = { x: 201, y: 410 };
+// Реальные размеры в метрах
+const DISTANCE_CENTER_TO_GOAL = 26.5;  // расстояние от центра площадки до ворот
+const RINK_WIDTH_METERS = 26;          // ширина всей площадки
+const GOAL_WIDTH_METERS = 1.83;        // ширина ворот
 
-      // Вычисляем правильный коэффициент по вертикали
-      const GOAL_Y = ORIGINAL_GOAL_COORDS.y;
-      const CENTER_Y = 1;
-      const CENTER_DISTANCE = 26;
+// Вычисляем метры на пиксель для вертикали (Y)
+// От центра площадки (y=8) до ворот (y=377) = 369 пикселей = 26.5 метров
+const PIXELS_CENTER_TO_GOAL = ORIGINAL_GOAL_COORDS.y - ORIGINAL_CENTER_COORDS.y; // 369
+const METERS_PER_PIXEL_Y = DISTANCE_CENTER_TO_GOAL / PIXELS_CENTER_TO_GOAL;      // 26.5 / 369 = 0.0718 м/пикс
 
-      const PIXELS_TO_CENTER = GOAL_Y - CENTER_Y;
-      const METERS_PER_PIXEL_Y = CENTER_DISTANCE / PIXELS_TO_CENTER;
-      const METERS_PER_PIXEL_X = HALF_RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;
+// Вычисляем метры на пиксель для горизонтали (X)
+// Вся ширина изображения 417 пикселей = 26 метров
+const METERS_PER_PIXEL_X = RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;             // 26 / 417 = 0.06235 м/пикс
+
+// Для справки: координаты штанг (можно использовать для проверки)
+const LEFT_POST_X = ORIGINAL_GOAL_COORDS.x - (GOAL_WIDTH_METERS / 2) / METERS_PER_PIXEL_X;  // 208.5 - 14.68 = 193.82
+const RIGHT_POST_X = ORIGINAL_GOAL_COORDS.x + (GOAL_WIDTH_METERS / 2) / METERS_PER_PIXEL_X; // 208.5 + 14.68 = 223.18
 
       // === ТАЙМЕРЫ ДЛЯ ИСЧЕЗАЮЩИХ ТАБЛИЧЕК ===
       let videoTitleTimer = null;
@@ -747,21 +754,28 @@
         }
       }
 
-      function calculateDistanceAndAngleFromOriginal(originalX, originalY) {
-        const dxOriginal = originalX - ORIGINAL_GOAL_COORDS.x;
-        const dyOriginal = ORIGINAL_GOAL_COORDS.y - originalY;
-        
-        const dxMeters = dxOriginal * METERS_PER_PIXEL_X;
-        const dyMeters = dyOriginal * METERS_PER_PIXEL_Y;
-        
-        const distance = Math.sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
-        const angle = Math.atan2(dxMeters, dyMeters) * (180 / Math.PI);
-        
-        return {
-          distance: Math.round(distance * 100) / 100,
-          angle: Math.round(angle * 10) / 10
-        };
-      }
+      // === ФУНКЦИЯ РАСЧЕТА РАССТОЯНИЯ И УГЛА ===
+function calculateDistanceAndAngleFromOriginal(originalX, originalY) {
+  // Разница в пикселях относительно центра ворот
+  const dxOriginal = originalX - ORIGINAL_GOAL_COORDS.x;  // положительное = правее ворот
+  const dyOriginal = ORIGINAL_GOAL_COORDS.y - originalY;  // положительное = дальше от ворот
+  
+  // Переводим в метры
+  const dxMeters = dxOriginal * METERS_PER_PIXEL_X;
+  const dyMeters = dyOriginal * METERS_PER_PIXEL_Y;
+  
+  // Расстояние по теореме Пифагора
+  const distanceMeters = Math.sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
+  
+  // Угол: 0° = прямо на центр ворот, положительный = направо, отрицательный = налево
+  let angleDeg = Math.atan2(dxMeters, dyMeters) * (180 / Math.PI);
+  
+  // Округляем до 2 знаков для расстояния и 1 знака для угла
+  return {
+    distance: Math.round(distanceMeters * 100) / 100,
+    angle: Math.round(angleDeg * 10) / 10
+  };
+}
 
       function getClickCoordinates(e, isTouch = false) {
   let clientX, clientY;
@@ -1190,6 +1204,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
