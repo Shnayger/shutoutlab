@@ -714,41 +714,53 @@
 
       // === ПОЛУЧЕНИЕ КООРДИНАТ КЛИКА В РАЗНЫХ СИСТЕМАХ ===
       function getClickCoordinates(e, isTouch = false) {
-        let clientX, clientY;
-        if (isTouch) {
-          clientX = e.touches[0].clientX;
-          clientY = e.touches[0].clientY;
-        } else {
-          clientX = e.clientX;
-          clientY = e.clientY;
-        }
-        
-        const containerRect = fieldContainer.getBoundingClientRect();
-        const imageRect = fieldImage.getBoundingClientRect();
-        
-        // Относительно контейнера (для маркера)
-        const containerX = clientX - containerRect.left;
-        const containerY = clientY - containerRect.top;
-        
-        // Относительно изображения на экране (для пересчета в оригинал)
-        const imageX = clientX - imageRect.left;
-        const imageY = clientY - imageRect.top;
-        
-        // Проверка, что клик внутри изображения
-        if (imageX < 0 || imageX > imageRect.width || imageY < 0 || imageY > imageRect.height) {
-          return null;
-        }
-        
-        // Пересчет в оригинальные координаты изображения
-        const originalX = imageX / scaleFactor;
-        const originalY = imageY / scaleFactor;
-        
-        return {
-          container: { x: containerX, y: containerY },
-          image: { x: imageX, y: imageY },
-          original: { x: originalX, y: originalY }
-        };
-      }
+  let clientX, clientY;
+  if (isTouch) {
+    clientX = e.touches[0].clientX;
+    clientY = e.touches[0].clientY;
+  } else {
+    clientX = e.clientX;
+    clientY = e.clientY;
+  }
+  
+  const containerRect = fieldContainer.getBoundingClientRect();
+  const imageRect = fieldImage.getBoundingClientRect();
+  
+  // Координаты относительно контейнера (для маркера)
+  const containerX = clientX - containerRect.left;
+  const containerY = clientY - containerRect.top;
+  
+  // Координаты относительно изображения на экране
+  const imageX = clientX - imageRect.left;
+  const imageY = clientY - imageRect.top;
+  
+  // Проверка внутри изображения
+  if (imageX < 0 || imageX > imageRect.width || 
+      imageY < 0 || imageY > imageRect.height) {
+    return null;
+  }
+  
+  // ВАЖНО: Правильный пересчет в оригинальные координаты!
+  // Масштаб может быть разным по X и Y из-за object-fit: contain
+  const scaleX = imageRect.width / ORIGINAL_IMAGE_WIDTH;
+  const scaleY = imageRect.height / ORIGINAL_IMAGE_HEIGHT;
+  
+  const originalX = imageX / scaleX;
+  const originalY = imageY / scaleY;
+  
+  // Диагностика
+  console.log('Координаты:', {
+    экран: { x: imageX.toFixed(1), y: imageY.toFixed(1) },
+    масштаб: { x: scaleX.toFixed(3), y: scaleY.toFixed(3) },
+    оригинал: { x: originalX.toFixed(1), y: originalY.toFixed(1) }
+  });
+  
+  return {
+    container: { x: containerX, y: containerY },
+    image: { x: imageX, y: imageY },
+    original: { x: originalX, y: originalY }
+  };
+}
 
       // === СОЗДАНИЕ МАРКЕРА ===
       function createMarker(coords) {
@@ -1082,3 +1094,4 @@
   </script>
 </body>
 </html>
+
