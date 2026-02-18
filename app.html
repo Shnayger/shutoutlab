@@ -526,6 +526,32 @@
       background: rgba(76, 175, 80, 0.1);
       color: #a5d6a7;
     }
+
+        .situation-select {
+      width: 100%;
+      padding: 12px 15px;
+      margin: 10px 0 15px 0;
+      background: rgba(20, 20, 20, 0.9);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      font-size: 15px;
+      cursor: pointer;
+      backdrop-filter: blur(5px);
+    }
+    
+    .situation-select option {
+      background: #222;
+      color: white;
+    }
+    
+    .select-label {
+      text-align: left;
+      color: #aaa;
+      font-size: 13px;
+      margin-top: 5px;
+    }
+    
   </style>
 </head>
 <body>
@@ -597,6 +623,39 @@
         </div>
       </div>
     </div>
+
+        <!-- Модальное окно для игровой ситуации -->
+    <div id="situationModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-title">Игровая ситуация</div>
+        
+        <!-- Общая ситуация на поле -->
+        <div class="select-label">Составы на льду</div>
+        <select id="generalSituation" class="situation-select">
+          <option value="5x5">5×5 (равные)</option>
+          <option value="5x4">5×4 (большинство)</option>
+          <option value="5x3">5×3 (большинство 2)</option>
+          <option value="4x5">4×5 (меньшинство)</option>
+          <option value="3x5">3×5 (меньшинство 2)</option>
+          <option value="3x3">3×3 (овертайм)</option>
+          <option value="empty_net">Пустые ворота</option>
+        </select>
+        
+        <!-- Ситуация у ворот -->
+        <div class="select-label">Ситуация у ворот</div>
+        <select id="goalAreaSituation" class="situation-select">
+          <option value="1x0">1×0 (выход 1 на 1)</option>
+          <option value="2x0">2×0</option>
+          <option value="2x1">2×1</option>
+          <option value="3x2">3×2</option>
+          <option value="normal">Позиционная атака</option>
+        </select>
+        
+        <div class="choice-buttons" style="margin-top: 20px;">
+          <button id="situationConfirmBtn" class="choice-btn" style="background: linear-gradient(135deg, #2e7d32, #4caf50);">Подтвердить</button>
+        </div>
+      </div>
+    </div>
     
   <button id="debugToggle">🐛</button>
   <div id="debugPanel"></div>
@@ -664,6 +723,14 @@ const RIGHT_POST_X = ORIGINAL_GOAL_COORDS.x + (GOAL_WIDTH_METERS / 2) / METERS_P
       const cornerBtn = document.getElementById('cornerBtn');
       const reboundBtn = document.getElementById('reboundBtn');
       const controlBtn = document.getElementById('controlBtn');
+            const situationModal = document.getElementById('situationModal');
+      const generalSituation = document.getElementById('generalSituation');
+      const goalAreaSituation = document.getElementById('goalAreaSituation');
+      const situationConfirmBtn = document.getElementById('situationConfirmBtn');
+      
+      // Переменные для хранения временных данных
+      let pendingEventType = null;
+      let pendingSaveType = null;
       const currentTabTitle = document.getElementById('currentTabTitle');
       const shotInfo = document.getElementById('shotInfo');
       const tabs = document.querySelectorAll('.tab');
@@ -1197,8 +1264,8 @@ function dragTouch(e) {
       }
 
       // === ОТПРАВКА В TELEGRAM ===
-      function sendToTelegramBot(eventType, distance, angle, originalX, originalY) {
-        addDebugLog(`Отправка: ${eventType}, ${distance}м, ${angle}°`);
+            function sendToTelegramBot(eventType, distance, angle, originalX, originalY, generalSit = '5x5', goalSit = 'normal') {
+        addDebugLog(`Отправка: ${eventType}, ${distance}м, ${angle}°, ситуация: ${generalSit}/${goalSit}`);
         
         if (!telegramAvailable) {
           alert('Запустите через Telegram бота');
@@ -1217,6 +1284,8 @@ function dragTouch(e) {
             distance: distance,
             angle: angle,
             goal_type: 'half_rink',
+            general_situation: generalSit,
+            goal_area_situation: goalSit,
             original_x: Math.round(originalX * 10) / 10,
             original_y: Math.round(originalY * 10) / 10
           }
@@ -1231,30 +1300,39 @@ function dragTouch(e) {
           return false;
         }
       }
-
-            function showShotResult(eventType, distance, angle) {
+                  function showShotResult(eventType, distance, angle) {
         let eventName = '';
         let eventColor = '';
         
-        switch(eventType) {
+        // Проверяем, есть ли в строке ситуация (формат: тип|general|goalArea)
+        let baseType = eventType;
+        let situationText = '';
+        
+        if (eventType.includes('|')) {
+          const parts = eventType.split('|');
+          baseType = parts[0];
+          situationText = ` (${parts[1]}, ${parts[2]})`;
+        }
+        
+        switch(baseType) {
           case 'goal':
-            eventName = 'Гол';
+            eventName = 'Гол' + situationText;
             eventColor = 'shot-info-goal';
             break;
           case 'miss':
-            eventName = 'Мимо';
+            eventName = 'Мимо' + situationText;
             eventColor = 'shot-info-miss';
             break;
           case 'save_corner':
-            eventName = 'Сэйв (в угол)';
+            eventName = 'Сэйв (в угол)' + situationText;
             eventColor = 'shot-info-save';
             break;
           case 'save_rebound':
-            eventName = 'Сэйв (на пятак)';
+            eventName = 'Сэйв (на пятак)' + situationText;
             eventColor = 'shot-info-danger';
             break;
           case 'save_control':
-            eventName = 'Сэйв (фиксация)';
+            eventName = 'Сэйв (фиксация)' + situationText;
             eventColor = 'shot-info-control';
             break;
           default:
@@ -1282,36 +1360,67 @@ function dragTouch(e) {
         setTimeout(() => { shotInfo.style.display = 'none'; }, 6000);
       }
 
-                  function handleChoice(type) {
+                        function handleChoice(type) {
         choiceModal.classList.remove('visible');
+        
+        // Сохраняем тип события
+        pendingEventType = type;
+        pendingSaveType = null;
         
         if (type === 'save') {
           // Показываем выбор типа сэйва
-          console.log('Показываем saveTypeModal'); // Для отладки
           saveTypeModal.classList.add('visible');
-        } else if (type === 'miss') {
-          if (lastShotData) {
-            showShotResult('miss', lastShotData.distance, lastShotData.angle);
-            sendToTelegramBot('miss', lastShotData.distance, lastShotData.angle, lastShotData.originalX, lastShotData.originalY);
-          }
-          clearMarkerAndReturn();
         } else {
-          // Гол
-          if (lastShotData) {
-            showShotResult('goal', lastShotData.distance, lastShotData.angle);
-            sendToTelegramBot('goal', lastShotData.distance, lastShotData.angle, lastShotData.originalX, lastShotData.originalY);
-          }
-          clearMarkerAndReturn();
+          // Для гола или мимо сразу показываем выбор ситуации
+          situationModal.classList.add('visible');
         }
       }
 
-            function handleSaveType(saveType) {
+                 function handleSaveType(saveType) {
         saveTypeModal.classList.remove('visible');
         
-        if (lastShotData) {
-          showShotResult('save_' + saveType, lastShotData.distance, lastShotData.angle);
-          sendToTelegramBot('save_' + saveType, lastShotData.distance, lastShotData.angle, lastShotData.originalX, lastShotData.originalY);
+        // Сохраняем тип сэйва
+        pendingSaveType = saveType;
+        
+        // Показываем выбор ситуации
+        situationModal.classList.add('visible');
+      }
+
+            function handleSituationConfirm() {
+        situationModal.classList.remove('visible');
+        
+        const general = generalSituation.value;
+        const goalArea = goalAreaSituation.value;
+        
+        let eventType = pendingEventType;
+        if (pendingEventType === 'save' && pendingSaveType) {
+          eventType = `save_${pendingSaveType}`;
         }
+        
+        if (lastShotData) {
+          // Формируем расширенное событие с ситуацией
+          const fullEventType = `${eventType}|${general}|${goalArea}`;
+          showShotResult(fullEventType, lastShotData.distance, lastShotData.angle);
+          
+          // Отправляем в Telegram
+          sendToTelegramBot(
+            eventType, 
+            lastShotData.distance, 
+            lastShotData.angle, 
+            lastShotData.originalX, 
+            lastShotData.originalY,
+            general,
+            goalArea
+          );
+        }
+        
+        // Очищаем временные данные
+        pendingEventType = null;
+        pendingSaveType = null;
+        
+        // Сбрасываем select-ы на значения по умолчанию
+        generalSituation.value = '5x5';
+        goalAreaSituation.value = 'normal';
         
         clearMarkerAndReturn();
       }
@@ -1359,6 +1468,7 @@ function dragTouch(e) {
       setTimeout(() => { startBtn.disabled = false; }, 3000);
 
       // === ПОДПИСКИ ===
+            situationConfirmBtn.addEventListener('click', handleSituationConfirm);
       startBtn.addEventListener('click', startRecording);
       stopBtn.addEventListener('click', stopRecording);
       
@@ -1391,6 +1501,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
