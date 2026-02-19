@@ -1424,44 +1424,52 @@ function dragTouch(e) {
       }
 
             function handleSituationConfirm() {
-        situationModal.classList.remove('visible');
-        
-        const general = generalSituation.value;
-        const goalArea = goalAreaSituation.value;
-        
-        let eventType = pendingEventType;
-        if (pendingEventType === 'save' && pendingSaveType) {
-          eventType = `save_${pendingSaveType}`;
-        }
-        
-        if (lastShotData) {
-          // Формируем расширенное событие с ситуацией
-          const fullEventType = `${eventType}|${general}|${goalArea}`;
-          showShotResult(fullEventType, lastShotData.distance, lastShotData.angle);
-          
-          // Отправляем в Telegram
-          sendToTelegramBot(
-            eventType, 
-            lastShotData.distance, 
-            lastShotData.angle, 
-            lastShotData.originalX, 
-            lastShotData.originalY,
-            general,
-            goalArea
-          );
-        }
-        
-        // Очищаем временные данные
-        pendingEventType = null;
-        pendingSaveType = null;
-        
-        // Сбрасываем select-ы на значения по умолчанию
-        generalSituation.value = '5x5';
-        goalAreaSituation.value = 'normal';
-        
-        clearMarkerAndReturn();
-      }
-
+  console.log('🔥 handleSituationConfirm ВЫЗВАНА');
+  
+  situationModal.classList.remove('visible');
+  
+  const general = generalSituation.value;
+  const goalArea = goalAreaSituation.value;
+  
+  let eventType = pendingEventType;
+  if (pendingEventType === 'save' && pendingSaveType) {
+    eventType = `save_${pendingSaveType}`;
+  }
+  
+  if (lastShotData) {
+    console.log('📊 lastShotData:', lastShotData);
+    
+    // ПОЛНОСТЬЮ ОТКЛЮЧАЕМ ВСЕ ДЕЙСТВИЯ ДЛЯ ТЕСТА
+    // Формируем расширенное событие с ситуацией
+    // const fullEventType = `${eventType}|${general}|${goalArea}`;
+    // showShotResult(fullEventType, lastShotData.distance, lastShotData.angle);
+    
+    // Отправляем в Telegram (ЗАКОММЕНТИРОВАНО)
+    // sendToTelegramBot(
+    //   eventType, 
+    //   lastShotData.distance, 
+    //   lastShotData.angle, 
+    //   lastShotData.originalX, 
+    //   lastShotData.originalY,
+    //   general,
+    //   goalArea
+    // );
+    
+    console.log('🔥 ТЕСТ: данные готовы, но НЕ отправляем');
+  }
+  
+  // Очищаем временные данные
+  pendingEventType = null;
+  pendingSaveType = null;
+  
+  // Сбрасываем select-ы на значения по умолчанию
+  generalSituation.value = '5x5';
+  goalAreaSituation.value = 'normal';
+  
+  // clearMarkerAndReturn(); // ТОЖЕ ЗАКОММЕНТИРОВАНО
+  
+  console.log('✅ handleSituationConfirm ЗАВЕРШЕНА (без действий)');
+}
      function clearMarkerAndReturn() {
   if (currentMarker) {
     currentMarker.remove();
@@ -1538,6 +1546,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
