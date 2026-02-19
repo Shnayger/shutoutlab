@@ -1332,7 +1332,11 @@ function dragTouch(e) {
     Telegram.WebApp.sendData(jsonString);
     addDebugLog('✅ Отправлено');
     return true;
-  } catch (error) {
+  } 
+  if (Telegram.WebApp.isExpanded) {
+    Telegram.WebApp.expand();  // Принудительно держит открытым
+}
+  catch (error) {
     addDebugLog(`❌ Ошибка: ${error.message}`);
     return false;
   }
@@ -1538,6 +1542,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
