@@ -1293,13 +1293,7 @@ function dragTouch(e) {
       }
 
     function sendToTelegramBot(eventType, distance, angle, originalX, originalY, generalSit = '5x5', goalSit = 'normal') {
-    // 🔥 ЛОГИРОВАНИЕ
-    console.log('🔥🔥🔥 sendToTelegramBot ВЫЗВАН!');
-    console.log('📌 Параметры:', {
-        eventType, distance, angle, originalX, originalY, generalSit, goalSit
-    });
-    console.log('🎯 matchId (глобальный):', matchId);
-    console.log('📦 lastShotData:', lastShotData);
+  // 🔥 ВАЖНО: парсим match_id как число
   const safeMatchId = parseInt(matchId, 10);
   
   if (isNaN(safeMatchId) || safeMatchId <= 0) {
@@ -1468,17 +1462,19 @@ function dragTouch(e) {
       }
 
       function clearMarkerAndReturn() {
-  if (currentMarker) {
-    currentMarker.remove();
-    currentMarker = null;
-  }
-  
-  // Остаемся на текущей вкладке (видео)
-  // Ничего не переключаем
-  
-  // Показываем табличку видео
-  showTemporary(currentTabTitle, 3000);
-}
+        if (currentMarker) {
+          currentMarker.remove();
+          currentMarker = null;
+        }
+        
+        switchTab('video');
+        tabsPanel.classList.remove('visible');
+        startBtn.style.display = 'block';
+        stopBtn.style.display = 'none';
+        isVideoPaused = false;
+        
+        showTemporary(currentTabTitle, 3000);
+      }
 
       // === ВИДЕО ===
       if (videoUrl) {
@@ -1544,35 +1540,3 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
