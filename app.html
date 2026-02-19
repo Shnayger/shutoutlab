@@ -752,6 +752,8 @@ const RIGHT_POST_X = ORIGINAL_GOAL_COORDS.x + (GOAL_WIDTH_METERS / 2) / METERS_P
       let lastShotData = null;
       let scaleFactor = 1;
       let imageOffset = { left: 0, top: 0 };
+      window.recordingStartTime = null;
+      window.videoCurrentTime = 0;
       
                   // URL параметры
       const urlParams = new URLSearchParams(window.location.search);
@@ -1265,6 +1267,7 @@ function dragTouch(e) {
         if (isRecording) return;
         isRecording = true;
         recordingStartTime = Date.now();
+        window.recordingStartTime = recordingStartTime;
         recordingIndicator.style.display = 'flex';
         recordingTimer.style.display = 'block';
         startBtn.style.display = 'none';
@@ -1300,13 +1303,20 @@ function dragTouch(e) {
   
   addDebugLog(`🔵 НАЧАЛО ОТПРАВКИ: ${eventType}, ${distance}м, ${angle}°, match_id: ${safeMatchId}`);
   
+  // ✅ Добавляем timestamp и video_time
+  const timestamp = Date.now() - (window.recordingStartTime || Date.now());
+  const videoTime = window.videoCurrentTime || 0;
+  
   const eventData = {
     action: 'save_event',
     event: {
       match_id: safeMatchId,
       event_type: eventType,
+      timestamp: timestamp,           // ← ДОБАВЛЕНО
+      video_time: videoTime,          // ← ДОБАВЛЕНО
       distance: distance,
       angle: angle,
+      goal_type: 'half_rink',
       general_situation: generalSit,
       goal_area_situation: goalSit,
       original_x: Math.round(originalX * 10) / 10,
@@ -1315,7 +1325,7 @@ function dragTouch(e) {
   };
   
   const jsonString = JSON.stringify(eventData);
-  addDebugLog(`📦 JSON: ${jsonString}`);
+  addDebugLog(`📦 ИТОГОВЫЙ JSON: ${jsonString}`);
   
   try {
     Telegram.WebApp.sendData(jsonString);
@@ -1527,6 +1537,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
