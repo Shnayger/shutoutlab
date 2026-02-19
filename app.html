@@ -1290,33 +1290,23 @@ function dragTouch(e) {
       }
 
     function sendToTelegramBot(eventType, distance, angle, originalX, originalY, generalSit = '5x5', goalSit = 'normal') {
-  addDebugLog(`🔵 НАЧАЛО ОТПРАВКИ: ${eventType}, ${distance}м, ${angle}°, ситуация: ${generalSit}/${goalSit}`);
+  // 🔥 ВАЖНО: парсим match_id как число
+  const safeMatchId = parseInt(matchId, 10);
   
-  if (!telegramAvailable) {
-    addDebugLog('❌ Telegram WebApp НЕ доступен!', 'error');
-    alert('Запустите через Telegram бота');
+  if (isNaN(safeMatchId) || safeMatchId <= 0) {
+    addDebugLog(`❌ match_id НЕКОРРЕКТЕН в sendToTelegramBot: ${matchId}`, 'error');
     return false;
   }
   
-  // 🔥 ВАЖНО: проверяем match_id
-  let safeMatchId = parseInt(matchId);
-  if (isNaN(safeMatchId) || safeMatchId <= 0) {
-    addDebugLog(`❌ match_id НЕКОРРЕКТЕН: ${matchId}, использую 1`, 'error');
-    safeMatchId = 1; // значение по умолчанию
-  }
-  
-  const timestamp = Date.now() - (recordingStartTime || Date.now());
+  addDebugLog(`🔵 НАЧАЛО ОТПРАВКИ: ${eventType}, ${distance}м, ${angle}°, match_id: ${safeMatchId}`);
   
   const eventData = {
     action: 'save_event',
     event: {
-      match_id: safeMatchId,  // ← используем безопасное значение
+      match_id: safeMatchId,
       event_type: eventType,
-      timestamp: timestamp,
-      video_time: videoCurrentTime,
       distance: distance,
       angle: angle,
-      goal_type: 'half_rink',
       general_situation: generalSit,
       goal_area_situation: goalSit,
       original_x: Math.round(originalX * 10) / 10,
@@ -1324,25 +1314,15 @@ function dragTouch(e) {
     }
   };
   
-  // Логируем итоговый JSON
   const jsonString = JSON.stringify(eventData);
-  addDebugLog(`📦 ИТОГОВЫЙ JSON: ${jsonString}`, 'info');
-  addDebugLog(`📦 Размер JSON: ${jsonString.length} байт`, 'info');
-  
-  // Проверка на NaN в JSON
-  if (jsonString.includes('NaN')) {
-    addDebugLog('❌ JSON содержит NaN!', 'error');
-    console.error('Проблемный JSON:', eventData);
-    return false;
-  }
+  addDebugLog(`📦 JSON: ${jsonString}`);
   
   try {
     Telegram.WebApp.sendData(jsonString);
-    addDebugLog('✅ sendData() выполнен без ошибок', 'success');
+    addDebugLog('✅ Отправлено');
     return true;
   } catch (error) {
-    addDebugLog(`❌ Ошибка sendData(): ${error.message}`, 'error');
-    console.error('Telegram sendData error:', error);
+    addDebugLog(`❌ Ошибка: ${error.message}`);
     return false;
   }
 }
@@ -1547,6 +1527,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
