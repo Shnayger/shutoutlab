@@ -1293,7 +1293,13 @@ function dragTouch(e) {
       }
 
     function sendToTelegramBot(eventType, distance, angle, originalX, originalY, generalSit = '5x5', goalSit = 'normal') {
-  // 🔥 ВАЖНО: парсим match_id как число
+    // 🔥 ЛОГИРОВАНИЕ
+    console.log('🔥🔥🔥 sendToTelegramBot ВЫЗВАН!');
+    console.log('📌 Параметры:', {
+        eventType, distance, angle, originalX, originalY, generalSit, goalSit
+    });
+    console.log('🎯 matchId (глобальный):', matchId);
+    console.log('📦 lastShotData:', lastShotData);
   const safeMatchId = parseInt(matchId, 10);
   
   if (isNaN(safeMatchId) || safeMatchId <= 0) {
@@ -1540,6 +1546,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
