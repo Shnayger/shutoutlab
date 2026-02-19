@@ -757,7 +757,7 @@ const RIGHT_POST_X = ORIGINAL_GOAL_COORDS.x + (GOAL_WIDTH_METERS / 2) / METERS_P
       const urlParams = new URLSearchParams(window.location.search);
       
       // Видео URL
-      const videoUrl = urlParams.get('video'),  // ← ЗАПЯТАЯ ЗДЕСЬ!
+      const videoUrl = urlParams.get('video');  // ← ЗАПЯТАЯ ЗДЕСЬ!
       
       // 🔥 Безопасное получение match_id с валидацией
       const rawMatchId = urlParams.get('match_id');
@@ -1547,6 +1547,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
