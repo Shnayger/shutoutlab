@@ -1263,43 +1263,57 @@ function dragTouch(e) {
         showTemporary(fieldInstruction, 3000);
       }
 
-      // === ОТПРАВКА В TELEGRAM ===
-            function sendToTelegramBot(eventType, distance, angle, originalX, originalY, generalSit = '5x5', goalSit = 'normal') {
-        addDebugLog(`Отправка: ${eventType}, ${distance}м, ${angle}°, ситуация: ${generalSit}/${goalSit}`);
-        
-        if (!telegramAvailable) {
-          alert('Запустите через Telegram бота');
-          return false;
-        }
-        
-        const timestamp = Date.now() - (recordingStartTime || Date.now());
-        
-        const eventData = {
-          action: 'save_event',
-          event: {
-            match_id: parseInt(matchId),
-            event_type: eventType,
-            timestamp: timestamp,
-            video_time: videoCurrentTime,
-            distance: distance,
-            angle: angle,
-            goal_type: 'half_rink',
-            general_situation: generalSit,
-            goal_area_situation: goalSit,
-            original_x: Math.round(originalX * 10) / 10,
-            original_y: Math.round(originalY * 10) / 10
-          }
-        };
-        
-        try {
-          Telegram.WebApp.sendData(JSON.stringify(eventData));
-          addDebugLog('✅ Отправлено', 'success');
-          return true;
-        } catch (error) {
-          addDebugLog(`❌ Ошибка: ${error.message}`, 'error');
-          return false;
-        }
-      }
+     function sendToTelegramBot(eventType, distance, angle, originalX, originalY, generalSit = '5x5', goalSit = 'normal') {
+  addDebugLog(`🔵 НАЧАЛО ОТПРАВКИ: ${eventType}, ${distance}м, ${angle}°, ситуация: ${generalSit}/${goalSit}`);
+  
+  if (!telegramAvailable) {
+    addDebugLog('❌ Telegram WebApp НЕ доступен!', 'error');
+    alert('Запустите через Telegram бота');
+    return false;
+  }
+  
+  const timestamp = Date.now() - (recordingStartTime || Date.now());
+  
+  // ФОРМИРУЕМ ДАННЫЕ
+  const eventData = {
+    action: 'save_event',
+    event: {
+      match_id: parseInt(matchId),
+      event_type: eventType,
+      timestamp: timestamp,
+      video_time: videoCurrentTime,
+      distance: distance,
+      angle: angle,
+      goal_type: 'half_rink',
+      general_situation: generalSit,
+      goal_area_situation: goalSit,
+      original_x: Math.round(originalX * 10) / 10,
+      original_y: Math.round(originalY * 10) / 10
+    }
+  };
+  
+  // ЛОГИРУЕМ ЧТО ОТПРАВЛЯЕМ
+  const jsonString = JSON.stringify(eventData);
+  addDebugLog(`📦 JSON для отправки: ${jsonString}`, 'info');
+  addDebugLog(`📦 Размер JSON: ${jsonString.length} байт`, 'info');
+  
+  try {
+    // ОТПРАВЛЯЕМ
+    Telegram.WebApp.sendData(jsonString);
+    addDebugLog('✅ sendData() выполнен без ошибок', 'success');
+    
+    // Проверяем, не слишком ли большой JSON
+    if (jsonString.length > 4096) {
+      addDebugLog('⚠️ ВНИМАНИЕ: JSON больше 4KB!', 'error');
+    }
+    
+    return true;
+  } catch (error) {
+    addDebugLog(`❌ Ошибка sendData(): ${error.message}`, 'error');
+    console.error('Telegram sendData error:', error);
+    return false;
+  }
+}
                   function showShotResult(eventType, distance, angle) {
         let eventName = '';
         let eventColor = '';
@@ -1501,6 +1515,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
