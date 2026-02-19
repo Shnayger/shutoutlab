@@ -698,6 +698,7 @@ const RIGHT_POST_X = ORIGINAL_GOAL_COORDS.x + (GOAL_WIDTH_METERS / 2) / METERS_P
       if (window.Telegram?.WebApp) {
         telegramAvailable = true;
         Telegram.WebApp.ready();
+        Telegram.WebApp.disableClosingConfirmation();
         Telegram.WebApp.expand();
       }
 
@@ -1537,5 +1538,6 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
