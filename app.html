@@ -1394,7 +1394,7 @@ function dragTouch(e) {
           <div class="shot-info-footer">Исчезнет через 6 сек</div>
         `;
         shotInfo.style.display = 'block';
-        ssetTimeout(() => { shotInfo.style.display = 'none'; }, 6000);
+        setTimeout(() => { shotInfo.style.display = 'none'; }, 6000);
       }
 
                         function handleChoice(type) {
@@ -1538,6 +1538,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
