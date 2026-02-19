@@ -1294,46 +1294,81 @@ function dragTouch(e) {
       }
 
     function sendToTelegramBot(eventType, distance, angle, originalX, originalY, generalSit = '5x5', goalSit = 'normal') {
-  // 🔥 ВАЖНО: парсим match_id как число
-  const safeMatchId = parseInt(matchId, 10);
-  
-  if (isNaN(safeMatchId) || safeMatchId <= 0) {
-    addDebugLog(`❌ match_id НЕКОРРЕКТЕН в sendToTelegramBot: ${matchId}`, 'error');
-    return false;
-  }
-  
-  addDebugLog(`🔵 НАЧАЛО ОТПРАВКИ: ${eventType}, ${distance}м, ${angle}°, match_id: ${safeMatchId}`);
-  
-  // ✅ Добавляем timestamp и video_time
-  const timestamp = Date.now() - (window.recordingStartTime || Date.now());
-  const videoTime = window.videoCurrentTime || 0;
-  
-  const eventData = {
-    action: 'save_event',
-    event: {
-      match_id: safeMatchId,
-      event_type: eventType,
-      timestamp: timestamp,           // ← ДОБАВЛЕНО
-      video_time: videoTime,          // ← ДОБАВЛЕНО
-      distance: distance,
-      angle: angle,
-      goal_type: 'half_rink',
-      general_situation: generalSit,
-      goal_area_situation: goalSit,
-      original_x: Math.round(originalX * 10) / 10,
-      original_y: Math.round(originalY * 10) / 10
-    }
-  };
-  
-  const jsonString = JSON.stringify(eventData);
-  addDebugLog(`📦 ИТОГОВЫЙ JSON: ${jsonString}`);
-  
+  // 🔥 ЗАЩИТНЫЙ БЛОК TRY-CATCH
   try {
+    console.log('🔥 sendToTelegramBot: НАЧАЛО');
+    console.log('📊 Параметры:', { eventType, distance, angle, originalX, originalY, generalSit, goalSit });
+    
+    // Проверяем match_id
+    const safeMatchId = parseInt(matchId, 10);
+    
+    if (isNaN(safeMatchId) || safeMatchId <= 0) {
+      console.error('❌ match_id НЕКОРРЕКТЕН:', matchId);
+      addDebugLog(`❌ match_id НЕКОРРЕКТЕН: ${matchId}`, 'error');
+      return false;
+    }
+    
+    // Формируем timestamp
+    const timestamp = Date.now() - (window.recordingStartTime || Date.now());
+    const videoTime = window.videoCurrentTime || 0;
+    
+    // СОЗДАЕМ ОБЪЕКТ ДАННЫХ
+    const eventData = {
+      action: 'save_event',
+      event: {
+        match_id: safeMatchId,
+        event_type: eventType,
+        timestamp: timestamp,
+        video_time: videoTime,
+        distance: distance,
+        angle: angle,
+        goal_type: 'half_rink',
+        general_situation: generalSit,
+        goal_area_situation: goalSit,
+        original_x: Math.round(originalX * 10) / 10,
+        original_y: Math.round(originalY * 10) / 10
+      }
+    };
+    
+    // ПРОВЕРЯЕМ JSON НА ВАЛИДНОСТЬ
+    const jsonString = JSON.stringify(eventData);
+    console.log('📦 JSON для отправки:', jsonString);
+    addDebugLog(`📦 JSON: ${jsonString}`);
+    
+    // ПРОВЕРКА НА НАЛИЧИЕ NaN В JSON
+    if (jsonString.includes('NaN')) {
+      console.error('❌ JSON содержит NaN!');
+      addDebugLog('❌ JSON содержит NaN!', 'error');
+      return false;
+    }
+    
+    // ОТПРАВЛЯЕМ
     Telegram.WebApp.sendData(jsonString);
-    addDebugLog('✅ Отправлено');
+    console.log('✅ sendData() выполнен успешно');
+    addDebugLog('✅ Отправлено в Telegram');
+    
+    // ПРИНУДИТЕЛЬНО ДЕРЖИМ WEBAPP ОТКРЫТЫМ
+    setTimeout(() => {
+      if (Telegram.WebApp.isExpanded) {
+        Telegram.WebApp.expand();
+        console.log('🔄 Принудительное расширение WebApp');
+      }
+    }, 200);
+    
     return true;
-  }  catch (error) {
-    addDebugLog(`❌ Ошибка: ${error.message}`);
+    
+  } catch (error) {
+    // ЛЮБАЯ ОШИБКА НЕ ДОЛЖНА ЗАКРЫВАТЬ WEBAPP
+    console.error('❌ Ошибка в sendToTelegramBot:', error);
+    addDebugLog(`❌ Ошибка: ${error.message}`, 'error');
+    
+    // ДАЖЕ ПРИ ОШИБКЕ ДЕРЖИМ ОТКРЫТЫМ
+    setTimeout(() => {
+      if (Telegram.WebApp.isExpanded) {
+        Telegram.WebApp.expand();
+      }
+    }, 200);
+    
     return false;
   }
 }
@@ -1546,6 +1581,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
