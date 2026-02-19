@@ -753,36 +753,10 @@ const RIGHT_POST_X = ORIGINAL_GOAL_COORDS.x + (GOAL_WIDTH_METERS / 2) / METERS_P
       let scaleFactor = 1;
       let imageOffset = { left: 0, top: 0 };
       
-            // === БЕЗОПАСНОЕ ПОЛУЧЕНИЕ URL ПАРАМЕТРОВ ===
+            // URL параметры
       const urlParams = new URLSearchParams(window.location.search);
-      
-      // Видео URL
       const videoUrl = urlParams.get('video');
-      
-      // 🔥 Безопасное получение match_id с валидацией
-      const rawMatchId = urlParams.get('match_id');
-      let matchId = '1'; // значение по умолчанию
-      
-      // Добавляем отладочный вывод
-      console.log('🔍 Raw match_id из URL:', rawMatchId);
-      
-      if (rawMatchId && rawMatchId !== 'undefined' && rawMatchId !== 'null') {
-        // Убираем пробелы и лишние символы
-        const cleaned = rawMatchId.toString().trim().replace(/\s+/g, '');
-        const parsed = parseInt(cleaned, 10);
-        
-        if (!isNaN(parsed) && parsed > 0) {
-          matchId = parsed.toString();
-          console.log('✅ match_id валидный:', matchId);
-        } else {
-          console.error('❌ match_id некорректен:', rawMatchId, '→ используем 1');
-        }
-      } else {
-        console.log('ℹ️ match_id отсутствует, используем 1');
-      }
-      
-      // Финальная проверка
-      console.log('📌 Итоговый matchId:', matchId, 'тип:', typeof matchId);
+      const matchId = urlParams.get('match_id') || '1';
 
       // === ДЕБАГ ===
       let debugLogs = [];
@@ -1547,6 +1521,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
