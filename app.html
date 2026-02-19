@@ -1497,7 +1497,10 @@ function dragTouch(e) {
         try {
           const data = JSON.parse(e.data);
           if (data.event === 'onReady') startBtn.disabled = false;
-          if (data.info?.currentTime !== undefined) videoCurrentTime = data.info.currentTime;
+          if (data.info?.currentTime !== undefined) {
+            videoCurrentTime = data.info.currentTime;
+            window.videoCurrentTime = videoCurrentTime;  // ← ДОБАВИТЬ ЭТУ СТРОКУ
+          }
         } catch {}
       });
 
@@ -1537,6 +1540,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
