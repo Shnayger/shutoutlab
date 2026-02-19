@@ -756,7 +756,23 @@ const RIGHT_POST_X = ORIGINAL_GOAL_COORDS.x + (GOAL_WIDTH_METERS / 2) / METERS_P
       // URL параметры
       const urlParams = new URLSearchParams(window.location.search);
       const videoUrl = urlParams.get('video');
-      const matchId = urlParams.get('match_id') || '1';
+      // 🔥 Безопасное получение match_id из URL
+const rawMatchId = urlParams.get('match_id');
+let matchId = '1'; // значение по умолчанию
+
+if (rawMatchId && rawMatchId !== 'undefined' && rawMatchId !== 'null') {
+  // Убираем пробелы и лишние символы
+  const cleaned = rawMatchId.trim().replace(/\s+/g, '');
+  const parsed = parseInt(cleaned);
+  if (!isNaN(parsed) && parsed > 0) {
+    matchId = parsed.toString();
+    addDebugLog(`✅ match_id из URL: ${matchId}`, 'success');
+  } else {
+    addDebugLog(`❌ match_id некорректен: "${rawMatchId}", использую 1`, 'error');
+  }
+} else {
+  addDebugLog(`ℹ️ match_id отсутствует, использую 1`, 'info');
+}
 
       // === ДЕБАГ ===
       let debugLogs = [];
@@ -1263,7 +1279,7 @@ function dragTouch(e) {
         showTemporary(fieldInstruction, 3000);
       }
 
-     function sendToTelegramBot(eventType, distance, angle, originalX, originalY, generalSit = '5x5', goalSit = 'normal') {
+    function sendToTelegramBot(eventType, distance, angle, originalX, originalY, generalSit = '5x5', goalSit = 'normal') {
   addDebugLog(`🔵 НАЧАЛО ОТПРАВКИ: ${eventType}, ${distance}м, ${angle}°, ситуация: ${generalSit}/${goalSit}`);
   
   if (!telegramAvailable) {
@@ -1272,13 +1288,19 @@ function dragTouch(e) {
     return false;
   }
   
+  // 🔥 ВАЖНО: проверяем match_id
+  let safeMatchId = parseInt(matchId);
+  if (isNaN(safeMatchId) || safeMatchId <= 0) {
+    addDebugLog(`❌ match_id НЕКОРРЕКТЕН: ${matchId}, использую 1`, 'error');
+    safeMatchId = 1; // значение по умолчанию
+  }
+  
   const timestamp = Date.now() - (recordingStartTime || Date.now());
   
-  // ФОРМИРУЕМ ДАННЫЕ
   const eventData = {
     action: 'save_event',
     event: {
-      match_id: parseInt(matchId),
+      match_id: safeMatchId,  // ← используем безопасное значение
       event_type: eventType,
       timestamp: timestamp,
       video_time: videoCurrentTime,
@@ -1292,21 +1314,21 @@ function dragTouch(e) {
     }
   };
   
-  // ЛОГИРУЕМ ЧТО ОТПРАВЛЯЕМ
+  // Логируем итоговый JSON
   const jsonString = JSON.stringify(eventData);
-  addDebugLog(`📦 JSON для отправки: ${jsonString}`, 'info');
+  addDebugLog(`📦 ИТОГОВЫЙ JSON: ${jsonString}`, 'info');
   addDebugLog(`📦 Размер JSON: ${jsonString.length} байт`, 'info');
   
+  // Проверка на NaN в JSON
+  if (jsonString.includes('NaN')) {
+    addDebugLog('❌ JSON содержит NaN!', 'error');
+    console.error('Проблемный JSON:', eventData);
+    return false;
+  }
+  
   try {
-    // ОТПРАВЛЯЕМ
     Telegram.WebApp.sendData(jsonString);
     addDebugLog('✅ sendData() выполнен без ошибок', 'success');
-    
-    // Проверяем, не слишком ли большой JSON
-    if (jsonString.length > 4096) {
-      addDebugLog('⚠️ ВНИМАНИЕ: JSON больше 4KB!', 'error');
-    }
-    
     return true;
   } catch (error) {
     addDebugLog(`❌ Ошибка sendData(): ${error.message}`, 'error');
@@ -1515,6 +1537,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
