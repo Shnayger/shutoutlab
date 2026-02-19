@@ -1445,15 +1445,15 @@ function dragTouch(e) {
     // showShotResult(fullEventType, lastShotData.distance, lastShotData.angle);
     
     // Отправляем в Telegram (ЗАКОММЕНТИРОВАНО)
-    // sendToTelegramBot(
-    //   eventType, 
-    //   lastShotData.distance, 
-    //   lastShotData.angle, 
-    //   lastShotData.originalX, 
-    //   lastShotData.originalY,
-    //   general,
-    //   goalArea
-    // );
+    sendToTelegramBot(
+      eventType, 
+       lastShotData.distance, 
+       lastShotData.angle, 
+       lastShotData.originalX, 
+       lastShotData.originalY,
+       general,
+       goalArea
+     );
     
     console.log('🔥 ТЕСТ: данные готовы, но НЕ отправляем');
   }
@@ -1546,6 +1546,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
