@@ -1459,7 +1459,7 @@ function dragTouch(e) {
       }
 
             function handleSituationConfirm() {
-  console.log('🔥 handleSituationConfirm ВЫЗВАНА');
+  console.log('🔥 SOS-РЕЖИМ: handleSituationConfirm');
   
   situationModal.classList.remove('visible');
   
@@ -1472,38 +1472,57 @@ function dragTouch(e) {
   }
   
   if (lastShotData) {
-    console.log('📊 lastShotData:', lastShotData);
+    // 1. СНАЧАЛА ПОКАЗЫВАЕМ РЕЗУЛЬТАТ (НО БЕЗ ТАЙМЕРА!)
+    const fullEventType = `${eventType}|${general}|${goalArea}`;
+    showShotResult(fullEventType, lastShotData.distance, lastShotData.angle);
     
-    // ПОЛНОСТЬЮ ОТКЛЮЧАЕМ ВСЕ ДЕЙСТВИЯ ДЛЯ ТЕСТА
-    // Формируем расширенное событие с ситуацией
-    // const fullEventType = `${eventType}|${general}|${goalArea}`;
-    // showShotResult(fullEventType, lastShotData.distance, lastShotData.angle);
+    // 2. ОТПРАВЛЯЕМ ДАННЫЕ (НО НЕ ЖДЕМ РЕЗУЛЬТАТА)
+    try {
+      const safeMatchId = parseInt(matchId, 10);
+      const timestamp = Date.now() - (window.recordingStartTime || Date.now());
+      const videoTime = window.videoCurrentTime || 0;
+      
+      const eventData = {
+        action: 'save_event',
+        event: {
+          match_id: safeMatchId,
+          event_type: eventType,
+          timestamp: timestamp,
+          video_time: videoTime,
+          distance: lastShotData.distance,
+          angle: lastShotData.angle,
+          goal_type: 'half_rink',
+          general_situation: general,
+          goal_area_situation: goalArea,
+          original_x: Math.round(lastShotData.originalX * 10) / 10,
+          original_y: Math.round(lastShotData.originalY * 10) / 10
+        }
+      };
+      
+      Telegram.WebApp.sendData(JSON.stringify(eventData));
+      console.log('✅ Отправлено (SOS-режим)');
+    } catch (e) {
+      console.error('❌ Ошибка отправки:', e);
+    }
     
-    // Отправляем в Telegram (ЗАКОММЕНТИРОВАНО)
-    sendToTelegramBot(
-      eventType, 
-       lastShotData.distance, 
-       lastShotData.angle, 
-       lastShotData.originalX, 
-       lastShotData.originalY,
-       general,
-       goalArea
-     );
-    
-    console.log('🔥 ТЕСТ: данные готовы, но НЕ отправляем');
+    // 3. ПРИНУДИТЕЛЬНО ВОЗВРАЩАЕМСЯ НА ВИДЕО ЧЕРЕЗ 1 СЕКУНДУ
+    setTimeout(() => {
+      console.log('🔄 SOS: принудительный возврат на видео');
+      switchTab('video');
+      showTemporary(currentTabTitle, 3000);
+    }, 1000);
   }
   
-  // Очищаем временные данные
+  // 4. ОЧИЩАЕМ ДАННЫЕ
   pendingEventType = null;
   pendingSaveType = null;
-  
-  // Сбрасываем select-ы на значения по умолчанию
   generalSituation.value = '5x5';
   goalAreaSituation.value = 'normal';
   
-  // clearMarkerAndReturn(); // ТОЖЕ ЗАКОММЕНТИРОВАНО
-  
-  console.log('✅ handleSituationConfirm ЗАВЕРШЕНА (без действий)');
+  if (currentMarker) {
+    currentMarker.remove();
+    currentMarker = null;
+  }
 }
      function clearMarkerAndReturn() {
   if (currentMarker) {
@@ -1581,6 +1600,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
