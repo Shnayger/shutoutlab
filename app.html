@@ -1461,16 +1461,17 @@ function dragTouch(e) {
         clearMarkerAndReturn();
       }
 
-      function clearMarkerAndReturn() {
-        if (currentMarker) {
-          currentMarker.remove();
-          currentMarker = null;
-        }
-        
-        
-        
-        showTemporary(currentTabTitle, 3000);
-      }
+     function clearMarkerAndReturn() {
+  if (currentMarker) {
+    currentMarker.remove();
+    currentMarker = null;
+  }
+  
+  // ✅ ВОЗВРАЩАЕМСЯ НА ВИДЕО!
+  switchTab('video');
+  
+  showTemporary(currentTabTitle, 3000);
+}
 
       // === ВИДЕО ===
       if (videoUrl) {
@@ -1536,4 +1537,5 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
