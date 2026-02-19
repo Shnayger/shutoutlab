@@ -1468,19 +1468,17 @@ function dragTouch(e) {
       }
 
       function clearMarkerAndReturn() {
-        if (currentMarker) {
-          currentMarker.remove();
-          currentMarker = null;
-        }
-        
-        switchTab('video');
-        tabsPanel.classList.remove('visible');
-        startBtn.style.display = 'block';
-        stopBtn.style.display = 'none';
-        isVideoPaused = false;
-        
-        showTemporary(currentTabTitle, 3000);
-      }
+  if (currentMarker) {
+    currentMarker.remove();
+    currentMarker = null;
+  }
+  
+  // Остаемся на текущей вкладке (видео)
+  // Ничего не переключаем
+  
+  // Показываем табличку видео
+  showTemporary(currentTabTitle, 3000);
+}
 
       // === ВИДЕО ===
       if (videoUrl) {
@@ -1546,6 +1544,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
