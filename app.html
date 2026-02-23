@@ -810,6 +810,41 @@ const RIGHT_POST_X = ORIGINAL_GOAL_COORDS.x + (GOAL_WIDTH_METERS / 2) / METERS_P
         debugPanel.style.display = debugPanel.style.display === 'block' ? 'none' : 'block';
       });
 
+      // === ОТПРАВКА НА СЕРВЕРНУЮ БД ===
+async function sendToServer(eventData) {
+  const serverUrl = 'http://178.172.244.12:5000/api/save_event';
+  
+  // Создаем подпись (простая версия, можно усложнить)
+  const dataString = JSON.stringify(eventData);
+  const signature = btoa(dataString).slice(0, 32); // временно, потом заменим на нормальную
+  
+  addDebugLog(`🔵 ОТПРАВКА НА СЕРВЕР: ${serverUrl}`);
+  
+  try {
+    const response = await fetch(serverUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Signature': signature
+      },
+      body: dataString
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      addDebugLog(`✅ Данные сохранены на сервере! ID: ${result.event_id}`, 'success');
+      return true;
+    } else {
+      addDebugLog(`❌ Ошибка сервера: ${result.error}`, 'error');
+      return false;
+    }
+  } catch (error) {
+    addDebugLog(`❌ Ошибка отправки на сервер: ${error.message}`, 'error');
+    return false;
+  }
+}
+      
       // === ФУНКЦИЯ ДЛЯ ВРЕМЕННОГО ПОКАЗА ЭЛЕМЕНТОВ ===
       function showTemporary(element, duration = 3000) {
         if (!element) return;
@@ -1293,85 +1328,12 @@ function dragTouch(e) {
         showTemporary(fieldInstruction, 3000);
       }
 
-    function sendToTelegramBot(eventType, distance, angle, originalX, originalY, generalSit = '5x5', goalSit = 'normal') {
-  // 🔥 ЗАЩИТНЫЙ БЛОК TRY-CATCH
-  try {
-    console.log('🔥 sendToTelegramBot: НАЧАЛО');
-    console.log('📊 Параметры:', { eventType, distance, angle, originalX, originalY, generalSit, goalSit });
-    
-    // Проверяем match_id
-    const safeMatchId = parseInt(matchId, 10);
-    
-    if (isNaN(safeMatchId) || safeMatchId <= 0) {
-      console.error('❌ match_id НЕКОРРЕКТЕН:', matchId);
-      addDebugLog(`❌ match_id НЕКОРРЕКТЕН: ${matchId}`, 'error');
-      return false;
-    }
-    
-    // Формируем timestamp
-    const timestamp = Date.now() - (window.recordingStartTime || Date.now());
-    const videoTime = window.videoCurrentTime || 0;
-    
-    // СОЗДАЕМ ОБЪЕКТ ДАННЫХ
-    const eventData = {
-      action: 'save_event',
-      event: {
-        match_id: safeMatchId,
-        event_type: eventType,
-        timestamp: timestamp,
-        video_time: videoTime,
-        distance: distance,
-        angle: angle,
-        goal_type: 'half_rink',
-        general_situation: generalSit,
-        goal_area_situation: goalSit,
-        original_x: Math.round(originalX * 10) / 10,
-        original_y: Math.round(originalY * 10) / 10
-      }
-    };
-    
-    // ПРОВЕРЯЕМ JSON НА ВАЛИДНОСТЬ
-    const jsonString = JSON.stringify(eventData);
-    console.log('📦 JSON для отправки:', jsonString);
-    addDebugLog(`📦 JSON: ${jsonString}`);
-    
-    // ПРОВЕРКА НА НАЛИЧИЕ NaN В JSON
-    if (jsonString.includes('NaN')) {
-      console.error('❌ JSON содержит NaN!');
-      addDebugLog('❌ JSON содержит NaN!', 'error');
-      return false;
-    }
-    
-    // ОТПРАВЛЯЕМ
-    Telegram.WebApp.sendData(jsonString);
-    console.log('✅ sendData() выполнен успешно');
-    addDebugLog('✅ Отправлено в Telegram');
-    
-    // ПРИНУДИТЕЛЬНО ДЕРЖИМ WEBAPP ОТКРЫТЫМ
-    setTimeout(() => {
-      if (Telegram.WebApp.isExpanded) {
-        Telegram.WebApp.expand();
-        console.log('🔄 Принудительное расширение WebApp');
-      }
-    }, 200);
-    
-    return true;
-    
-  } catch (error) {
-    // ЛЮБАЯ ОШИБКА НЕ ДОЛЖНА ЗАКРЫВАТЬ WEBAPP
-    console.error('❌ Ошибка в sendToTelegramBot:', error);
-    addDebugLog(`❌ Ошибка: ${error.message}`, 'error');
-    
-    // ДАЖЕ ПРИ ОШИБКЕ ДЕРЖИМ ОТКРЫТЫМ
-    setTimeout(() => {
-      if (Telegram.WebApp.isExpanded) {
-        Telegram.WebApp.expand();
-      }
-    }, 200);
-    
-    return false;
-  }
+    // === СТАРАЯ ФУНКЦИЯ (ОСТАВЛЯЕМ ДЛЯ СОВМЕСТИМОСТИ) ===
+function sendToTelegramBot(eventType, distance, angle, originalX, originalY, generalSit = '5x5', goalSit = 'normal') {
+  addDebugLog(`⚠️ Используется устаревший метод отправки в Telegram`);
+  return false;
 }
+      
                   function showShotResult(eventType, distance, angle) {
         let eventName = '';
         let eventColor = '';
@@ -1472,32 +1434,31 @@ function dragTouch(e) {
   }
   
   if (lastShotData) {
-    // 1. СНАЧАЛА ПОКАЗЫВАЕМ РЕЗУЛЬТАТ (НО БЕЗ ТАЙМЕРА!)
-    const fullEventType = `${eventType}|${general}|${goalArea}`;
-    showShotResult(fullEventType, lastShotData.distance, lastShotData.angle);
-    
-    // 2. ОТПРАВЛЯЕМ ДАННЫЕ (НО НЕ ЖДЕМ РЕЗУЛЬТАТА)
-    try {
-      const safeMatchId = parseInt(matchId, 10);
-      const timestamp = Date.now() - (window.recordingStartTime || Date.now());
-      const videoTime = window.videoCurrentTime || 0;
-      
-      const eventData = {
-        action: 'save_event',
-        event: {
-          match_id: safeMatchId,
-          event_type: eventType,
-          timestamp: timestamp,
-          video_time: videoTime,
-          distance: lastShotData.distance,
-          angle: lastShotData.angle,
-          goal_type: 'half_rink',
-          general_situation: general,
-          goal_area_situation: goalArea,
-          original_x: Math.round(lastShotData.originalX * 10) / 10,
-          original_y: Math.round(lastShotData.originalY * 10) / 10
-        }
-      };
+  const fullEventType = `${eventType}|${general}|${goalArea}`;
+  showShotResult(fullEventType, lastShotData.distance, lastShotData.angle);
+  
+  // Формируем данные для сервера
+  const eventData = {
+    match_id: parseInt(matchId, 10),
+    event_type: eventType,
+    timestamp: Date.now() - (window.recordingStartTime || Date.now()),
+    video_time: window.videoCurrentTime || 0,
+    distance: lastShotData.distance,
+    angle: lastShotData.angle,
+    goal_type: 'half_rink',
+    general_situation: general,
+    goal_area_situation: goalArea,
+    original_x: Math.round(lastShotData.originalX * 10) / 10,
+    original_y: Math.round(lastShotData.originalY * 10) / 10
+  };
+  
+  // Отправляем на сервер (async, но не ждем)
+  sendToServer(eventData).then(success => {
+    if (success) {
+      addDebugLog('✅ Данные успешно отправлены на сервер');
+    }
+  });
+}
       
       Telegram.WebApp.sendData(JSON.stringify(eventData));
       console.log('✅ Отправлено (SOS-режим)');
@@ -1600,6 +1561,7 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
 
 
 
