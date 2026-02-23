@@ -868,14 +868,19 @@ async function sendToServer(eventData) {
       }
 
       // === ОРИЕНТАЦИЯ ===
-      function checkOrientation() {
-        const isLandscape = window.innerWidth > window.innerHeight;
-        rotateScreen.style.display = isLandscape ? 'none' : 'flex';
-        mainInterface.style.display = isLandscape ? 'block' : 'none';
-        if (isLandscape && isImageLoaded) updateImageMetrics();
-      }
-      window.addEventListener('resize', checkOrientation);
-      checkOrientation();
+function checkOrientation() {
+  const isLandscape = window.innerWidth > window.innerHeight;
+  rotateScreen.style.display = isLandscape ? 'none' : 'flex';
+  mainInterface.style.display = isLandscape ? 'block' : 'none';
+  if (isLandscape && isImageLoaded) updateImageMetrics();
+}
+window.addEventListener('resize', checkOrientation);
+checkOrientation();
+
+// Добавляем дополнительные вызовы для надежности
+setTimeout(checkOrientation, 100);
+setTimeout(checkOrientation, 500);
+setTimeout(checkOrientation, 1000);
 
       // === ОБНОВЛЕНИЕ МЕТРИК ИЗОБРАЖЕНИЯ ===
       function updateImageMetrics() {
@@ -1561,6 +1566,7 @@ function sendToTelegramBot(eventType, distance, angle, originalX, originalY, gen
   </script>
 </body>
 </html>
+
 
 
 
