@@ -1410,7 +1410,7 @@ async function sendToServer(eventData) {
       }
 
             function handleSituationConfirm() {
-  console.log('🔥 SOS-РЕЖИМ: handleSituationConfirm');
+  console.log('🔥 handleSituationConfirm');
   
   situationModal.classList.remove('visible');
   
@@ -1423,47 +1423,44 @@ async function sendToServer(eventData) {
   }
   
   if (lastShotData) {
-    // 1. СНАЧАЛА ПОКАЗЫВАЕМ РЕЗУЛЬТАТ (НО БЕЗ ТАЙМЕРА!)
     const fullEventType = `${eventType}|${general}|${goalArea}`;
     showShotResult(fullEventType, lastShotData.distance, lastShotData.angle);
     
-    // 2. ОТПРАВЛЯЕМ ДАННЫЕ (НО НЕ ЖДЕМ РЕЗУЛЬТАТА)
-    // 2. ОТПРАВЛЯЕМ ДАННЫЕ НА СЕРВЕР
-try {
-  const eventData = {
-    match_id: parseInt(matchId, 10),
-    event_type: eventType,
-    timestamp: Date.now() - (window.recordingStartTime || Date.now()),
-    video_time: window.videoCurrentTime || 0,
-    distance: lastShotData.distance,
-    angle: lastShotData.angle,
-    goal_type: 'half_rink',
-    general_situation: general,
-    goal_area_situation: goalArea,
-    original_x: Math.round(lastShotData.originalX * 10) / 10,
-    original_y: Math.round(lastShotData.originalY * 10) / 10
-  };
-  
-  // Отправляем на сервер
-  sendToServer(eventData).then(success => {
-    if (success) {
-      console.log('✅ Данные отправлены на сервер');
-    }
-  });
-  
-} catch (e) {
-  console.error('❌ Ошибка подготовки данных:', e);
-}
+    // ОТПРАВЛЯЕМ НА СЕРВЕР (а не в Telegram)
+    const eventData = {
+      match_id: parseInt(matchId, 10),
+      event_type: eventType,
+      timestamp: Date.now() - (window.recordingStartTime || Date.now()),
+      video_time: window.videoCurrentTime || 0,
+      distance: lastShotData.distance,
+      angle: lastShotData.angle,
+      goal_type: 'half_rink',
+      general_situation: general,
+      goal_area_situation: goalArea,
+      original_x: Math.round(lastShotData.originalX * 10) / 10,
+      original_y: Math.round(lastShotData.originalY * 10) / 10
+    };
     
-    // 3. ПРИНУДИТЕЛЬНО ВОЗВРАЩАЕМСЯ НА ВИДЕО ЧЕРЕЗ 1 СЕКУНДУ
-    setTimeout(() => {
-      console.log('🔄 SOS: принудительный возврат на видео');
-      switchTab('video');
-      showTemporary(currentTabTitle, 3000);
-    }, 1000);
+    // ОТПРАВЛЯЕМ fetch НА СЕРВЕР
+    fetch('http://178.172.244.12:5000/api/save_event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(eventData)
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        console.log('✅ Данные сохранены на сервере');
+        addDebugLog('✅ Данные сохранены на сервере');
+      }
+    })
+    .catch(err => {
+      console.error('❌ Ошибка отправки:', err);
+      addDebugLog('❌ Ошибка отправки на сервер');
+    });
   }
   
-  // 4. ОЧИЩАЕМ ДАННЫЕ
+  // ОЧИЩАЕМ ВСЁ
   pendingEventType = null;
   pendingSaveType = null;
   generalSituation.value = '5x5';
@@ -1473,6 +1470,18 @@ try {
     currentMarker.remove();
     currentMarker = null;
   }
+  
+  // ПРИНУДИТЕЛЬНО ВОЗВРАЩАЕМСЯ НА ВИДЕО И СБРАСЫВАЕМ КНОПКИ
+  switchTab('video');
+  
+  // СБРАСЫВАЕМ СОСТОЯНИЕ ЗАПИСИ
+  isRecording = false;
+  recordingStartTime = null;
+  if (timerInterval) clearInterval(timerInterval);
+  recordingIndicator.style.display = 'none';
+  recordingTimer.style.display = 'none';
+  startBtn.style.display = 'block';
+  stopBtn.style.display = 'none';
 }
      function clearMarkerAndReturn() {
   if (currentMarker) {
@@ -1551,6 +1560,7 @@ if (videoUrl) {
   </script>
 </body>
 </html>
+
 
 
 
