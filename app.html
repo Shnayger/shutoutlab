@@ -1537,21 +1537,22 @@ function dragTouch(e) {
 }
 
       // === ВИДЕО ===
-      if (videoUrl) {
-        let finalUrl = videoUrl;
-        if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
-          let videoId;
-          if (videoUrl.includes('youtu.be/')) {
-            videoId = videoUrl.split('youtu.be/')[1].split('?')[0];
-          } else {
-            videoId = videoUrl.split('v=')[1]?.split('&')[0];
-          }
-          if (videoId) {
-            finalUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&controls=1&enablejsapi=1`;
-          }
-        }
-        videoFrame.src = finalUrl;
-      }
+if (videoUrl) {
+  let finalUrl = videoUrl;
+  if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
+    let videoId;
+    if (videoUrl.includes('youtu.be/')) {
+      videoId = videoUrl.split('youtu.be/')[1].split('?')[0];
+    } else {
+      videoId = videoUrl.split('v=')[1]?.split('&')[0];
+    }
+    if (videoId) {
+      finalUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&controls=1&enablejsapi=1`;
+    }
+  }
+  videoFrame.src = finalUrl;
+  console.log('🎬 Установлен URL видео:', finalUrl);  // ← ДОБАВЬ ЭТО
+}
 
       window.addEventListener('message', (e) => {
         try {
@@ -1600,3 +1601,4 @@ function dragTouch(e) {
   </script>
 </body>
 </html>
+
