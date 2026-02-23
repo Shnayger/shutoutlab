@@ -1457,12 +1457,13 @@ function sendToTelegramBot(eventType, distance, angle, originalX, originalY, gen
     original_y: Math.round(lastShotData.originalY * 10) / 10
   };
   
-  // Отправляем на сервер (async, но не ждем)
-  sendToServer(eventData).then(success => {
-    if (success) {
-      addDebugLog('✅ Данные успешно отправлены на сервер');
-    }
-  });
+  // ВРЕМЕННО ОТКЛЮЧЕНО
+// sendToServer(eventData).then(success => {
+//   if (success) {
+//     addDebugLog('✅ Данные успешно отправлены на сервер');
+//   }
+// });
+addDebugLog('⚠️ Отправка на сервер отключена для теста');
 }
       
       Telegram.WebApp.sendData(JSON.stringify(eventData));
@@ -1566,6 +1567,7 @@ function sendToTelegramBot(eventType, distance, angle, originalX, originalY, gen
   </script>
 </body>
 </html>
+
 
 
 
