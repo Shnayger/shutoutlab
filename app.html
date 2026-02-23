@@ -1441,24 +1441,24 @@ async function sendToServer(eventData) {
       original_y: Math.round(lastShotData.originalY * 10) / 10
     };
     
-    // ОТПРАВЛЯЕМ fetch НА СЕРВЕР
     fetch('http://178.172.244.12:5000/api/save_event', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(eventData)
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        console.log('✅ Данные сохранены на сервере');
-        addDebugLog('✅ Данные сохранены на сервере');
-      }
-    })
-    .catch(err => {
-      console.error('❌ Ошибка отправки:', err);
-      addDebugLog('❌ Ошибка отправки на сервер');
-    });
-  }
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify(eventData)
+})
+.then(res => {
+  console.log('📦 Статус ответа:', res.status);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+})
+.then(data => {
+  console.log('✅ Успех:', data);
+  addDebugLog(`✅ Данные сохранены на сервере! ID: ${data.event_id}`);
+})
+.catch(err => {
+  console.error('❌ Детали ошибки:', err);
+  addDebugLog(`❌ Ошибка: ${err.message}`);
+});
   
   // ОЧИЩАЕМ ВСЁ
   pendingEventType = null;
@@ -1562,6 +1562,7 @@ if (videoUrl) {
   </script>
 </body>
 </html>
+
 
 
 
