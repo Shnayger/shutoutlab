@@ -1442,7 +1442,7 @@ async function sendToServer(eventData) {
     };
     
     // ОТПРАВЛЯЕМ fetch НА СЕРВЕР
-    fetch('https://178.172.244.12/api/save_event', {
+    fetch('http://178.172.244.12:5000/api/save_event', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(eventData)
@@ -1562,6 +1562,7 @@ if (videoUrl) {
   </script>
 </body>
 </html>
+
 
 
 
