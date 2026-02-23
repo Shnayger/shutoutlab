@@ -1473,6 +1473,8 @@ async function sendToServer(eventData) {
   
   // ПРИНУДИТЕЛЬНО ВОЗВРАЩАЕМСЯ НА ВИДЕО И СБРАСЫВАЕМ КНОПКИ
   switchTab('video');
+              fieldContainer.classList.remove('active-tab');
+videoContainer.classList.add('active-tab');
   
   // СБРАСЫВАЕМ СОСТОЯНИЕ ЗАПИСИ
   isRecording = false;
@@ -1560,6 +1562,7 @@ if (videoUrl) {
   </script>
 </body>
 </html>
+
 
 
 
