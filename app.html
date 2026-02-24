@@ -1436,7 +1436,7 @@ async function uploadVideoToGoogleDrive(videoBlob, matchId, eventId, startTime, 
   
   try {
     // Отправляем на свой сервер, который проксирует в Google Drive
-    const response = await fetch('http://http://178.172.244.12:5000/api/upload_to_drive', {
+    const response = await fetch('https://178.172.244.12/api/upload_to_drive', {
       method: 'POST',
       body: formData
     });
@@ -1708,6 +1708,7 @@ if (videoUrl) {
   </script>
 </body>
 </html>
+
 
 
 
