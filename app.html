@@ -693,6 +693,13 @@ const RIGHT_POST_X = ORIGINAL_GOAL_COORDS.x + (GOAL_WIDTH_METERS / 2) / METERS_P
       let videoTitleTimer = null;
       let fieldTitleTimer = null;
       let fieldInstructionTimer = null;
+      let mediaRecorder = null;
+let recordedChunks = [];
+let recordingStartVideoTime = 0;
+let videoStream = null;
+let lastVideoBlob = null;
+let lastVideoStartTime = 0;
+let lastVideoEndTime = 0;
 
       // === TELEGRAM ===
       let telegramAvailable = false;
@@ -1264,35 +1271,86 @@ function dragTouch(e) {
         document.removeEventListener('touchend', stopDragTouch);
       }
 
-      // === ЗАПИСЬ ===
       function startRecording() {
-        if (isRecording) return;
-        isRecording = true;
-        recordingStartTime = Date.now();
-        window.recordingStartTime = recordingStartTime;
-        recordingIndicator.style.display = 'flex';
-        recordingTimer.style.display = 'block';
-        startBtn.style.display = 'none';
-        stopBtn.style.display = 'block';
-        updateTimer();
-        timerInterval = setInterval(updateTimer, 1000);
+  if (isRecording) return;
+  
+  recordingStartVideoTime = videoCurrentTime;
+  
+  navigator.mediaDevices.getDisplayMedia({
+    video: {
+      cursor: "always",
+      displaySurface: "browser"
+    },
+    audio: true
+  })
+  .then(stream => {
+    videoStream = stream;
+    recordedChunks = [];
+    
+    mediaRecorder = new MediaRecorder(stream, {
+      mimeType: 'video/webm; codecs=vp9',
+      videoBitsPerSecond: 2500000
+    });
+    
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        recordedChunks.push(event.data);
       }
+    };
+    
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(recordedChunks, { type: 'video/webm' });
+      console.log(`🎥 Видео готово, размер: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
+      
+      lastVideoBlob = blob;
+      lastVideoStartTime = recordingStartVideoTime;
+      lastVideoEndTime = videoCurrentTime;
+    };
+    
+    mediaRecorder.start(1000);
+    console.log('🎥 Запись видео начата');
+    addDebugLog('🎥 Запись видео начата', 'success');
+  })
+  .catch(error => {
+    console.error('❌ Ошибка захвата экрана:', error);
+    addDebugLog('❌ Не удалось захватить экран', 'error');
+  });
+  
+  isRecording = true;
+  recordingStartTime = Date.now();
+  window.recordingStartTime = recordingStartTime;
+  recordingIndicator.style.display = 'flex';
+  recordingTimer.style.display = 'block';
+  startBtn.style.display = 'none';
+  stopBtn.style.display = 'block';
+  updateTimer();
+  timerInterval = setInterval(updateTimer, 1000);
+}
 
       function stopRecording() {
-        if (!isRecording) return;
-        isRecording = false;
-        if (timerInterval) clearInterval(timerInterval);
-        recordingIndicator.style.display = 'none';
-        recordingTimer.style.display = 'none';
-        pauseYouTubeVideo();
-        isVideoPaused = true;
-        tabsPanel.classList.add('visible');
-        switchTab('field');
-        
-        // Показываем полевые таблички при переходе
-        showTemporary(currentTabTitle, 3000);
-        showTemporary(fieldInstruction, 3000);
-      }
+  if (!isRecording) return;
+  
+  // Останавливаем запись видео
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+    if (videoStream) {
+      videoStream.getTracks().forEach(track => track.stop());
+    }
+    console.log('🎥 Запись видео остановлена');
+  }
+  
+  isRecording = false;
+  if (timerInterval) clearInterval(timerInterval);
+  recordingIndicator.style.display = 'none';
+  recordingTimer.style.display = 'none';
+  pauseYouTubeVideo();
+  isVideoPaused = true;
+  tabsPanel.classList.add('visible');
+  switchTab('field');
+  
+  showTemporary(currentTabTitle, 3000);
+  showTemporary(fieldInstruction, 3000);
+}
 
     // === ОТПРАВКА НА СЕРВЕРНУЮ БД ===
 async function sendToServer(eventData) {
@@ -1322,6 +1380,40 @@ async function sendToServer(eventData) {
     addDebugLog(`❌ Ошибка отправки на сервер: ${error.message}`, 'error');
     return false;
   }
+}
+      // === ЗАГРУЗКА В YOUTUBE ===
+async function uploadToYouTube(videoBlob, matchId, eventId, userId, eventType) {
+  addDebugLog(`📤 Загружаю видео на YouTube...`, 'info');
+  
+  const formData = new FormData();
+  const filename = `match_${matchId}_event_${eventId}.webm`;
+  
+  formData.append('video', videoBlob, filename);
+  formData.append('match_id', matchId);
+  formData.append('event_id', eventId);
+  formData.append('user_id', userId);
+  formData.append('event_type', eventType);
+  
+  try {
+    const response = await fetch('https://178.172.244.12/api/upload_to_youtube', {
+      method: 'POST',
+      body: formData
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      addDebugLog(`✅ Видео загружено на YouTube: ${result.video_url}`, 'success');
+      console.log('🔗 YouTube URL:', result.video_url);
+    } else {
+      addDebugLog(`❌ Ошибка загрузки видео: ${result.error}`, 'error');
+    }
+  } catch (error) {
+    addDebugLog(`❌ Ошибка: ${error.message}`, 'error');
+  }
+  
+  // Очищаем blob
+  lastVideoBlob = null;
 }
       
                   function showShotResult(eventType, distance, angle) {
@@ -1427,7 +1519,7 @@ async function sendToServer(eventData) {
     const fullEventType = `${eventType}|${general}|${goalArea}`;
     showShotResult(fullEventType, lastShotData.distance, lastShotData.angle);
     
-    // ОТПРАВЛЯЕМ НА СЕРВЕР (а не в Telegram)
+    // ОТПРАВЛЯЕМ ДАННЫЕ НА СЕРВЕР
     const eventData = {
       match_id: parseInt(matchId, 10),
       event_type: eventType,
@@ -1451,8 +1543,22 @@ async function sendToServer(eventData) {
     .then(res => res.json())
     .then(data => {
       if (data.success) {
-        console.log('✅ Данные сохранены на сервере');
-        addDebugLog('✅ Данные сохранены на сервере');
+        console.log('✅ Данные сохранены на сервере, ID:', data.event_id);
+        addDebugLog(`✅ Данные сохранены на сервере (ID: ${data.event_id})`);
+        
+        // ✅ ЕСЛИ ЕСТЬ ВИДЕО, ОТПРАВЛЯЕМ В YOUTUBE
+        if (lastVideoBlob) {
+          // Получаем user_id из Telegram
+          const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'unknown';
+          
+          uploadToYouTube(
+            lastVideoBlob, 
+            matchId, 
+            data.event_id,
+            userId,
+            eventType
+          );
+        }
       }
     })
     .catch(err => {
@@ -1472,10 +1578,10 @@ async function sendToServer(eventData) {
     currentMarker = null;
   }
   
-  // ПРИНУДИТЕЛЬНО ВОЗВРАЩАЕМСЯ НА ВИДЕО И СБРАСЫВАЕМ КНОПКИ
+  // ВОЗВРАЩАЕМСЯ НА ВИДЕО
   switchTab('video');
-              fieldContainer.classList.remove('active-tab');
-videoContainer.classList.add('active-tab');
+  fieldContainer.classList.remove('active-tab');
+  videoContainer.classList.add('active-tab');
   
   // СБРАСЫВАЕМ СОСТОЯНИЕ ЗАПИСИ
   isRecording = false;
@@ -1486,6 +1592,7 @@ videoContainer.classList.add('active-tab');
   startBtn.style.display = 'block';
   stopBtn.style.display = 'none';
 }
+      
      function clearMarkerAndReturn() {
   if (currentMarker) {
     currentMarker.remove();
@@ -1563,3 +1670,4 @@ if (videoUrl) {
   </script>
 </body>
 </html>
+
