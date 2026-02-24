@@ -885,25 +885,34 @@ const RIGHT_POST_X = ORIGINAL_GOAL_COORDS.x + (GOAL_WIDTH_METERS / 2) / METERS_P
         } catch (e) {}
       }
 
-// === ЗАПИСЬ ЭКРАНА ===
-async function startScreenCapture() {
+// === ЗАХВАТ ВИДЕО ИЗ IFRAME ===
+async function captureVideoFromIframe() {
   try {
-    // Запрашиваем разрешение на запись экрана
-    const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: {
-        cursor: "always",
-        displaySurface: "browser"
-      },
-      audio: true
-    });
+    // Пытаемся захватить видео с iframe
+    const iframe = videoFrame;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
     
-    return stream;
-  } catch (error) {
-    console.error('❌ Ошибка захвата экрана:', error);
-    addDebugLog('❌ Не удалось захватить экран', 'error');
-    return null;
-  }
-}
+    // Устанавливаем размеры canvas как у видео
+    canvas.width = videoFrame.clientWidth;
+    canvas.height = videoFrame.clientHeight;
+    
+    // Рисуем iframe на canvas (работает не во всех браузерах из-за CORS)
+    ctx.drawImage(iframe, 0, 0, canvas.width, canvas.height);
+    
+    // Получаем поток из canvas
+    const stream = canvas.captureStream(30); // 30 fps
+    
+    // Добавляем звук (если доступен)
+    if (iframe.contentWindow && iframe.contentWindow.document.querySelector('video')) {
+      const videoElement = iframe.contentWindow.document.querySelector('video');
+      if (videoElement) {
+        const audioStream = videoElement.captureStream().getAudioTracks();
+        if (audioStream.length > 0) {
+          stream.addTrack(audioStream[0]);
+        }
+      }
+    }
     
     return stream;
   } catch (error) {
@@ -1305,8 +1314,8 @@ function dragTouch(e) {
   // Запоминаем время начала записи
   recordingStartVideoTime = videoCurrentTime;
   
-  // Запрашиваем запись экрана
-  startScreenCapture().then(stream => {
+  // Начинаем захват видео
+  captureVideoFromIframe().then(stream => {
     if (!stream) {
       addDebugLog('❌ Не удалось начать запись видео', 'error');
       return;
@@ -1318,25 +1327,29 @@ function dragTouch(e) {
     // Создаем MediaRecorder
     mediaRecorder = new MediaRecorder(stream, {
       mimeType: 'video/webm; codecs=vp9',
-      videoBitsPerSecond: 2500000
+      videoBitsPerSecond: 2500000 // 2.5 Mbps для хорошего качества
     });
     
+    // Собираем куски видео
     mediaRecorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
         recordedChunks.push(event.data);
       }
     };
     
+    // Когда запись остановлена
     mediaRecorder.onstop = () => {
       const blob = new Blob(recordedChunks, { type: 'video/webm' });
       console.log(`🎥 Видео готово, размер: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
       
+      // Сохраняем blob для последующей отправки
       lastVideoBlob = blob;
       lastVideoStartTime = recordingStartVideoTime;
       lastVideoEndTime = videoCurrentTime;
     };
     
-    mediaRecorder.start(1000);
+    // Начинаем запись
+    mediaRecorder.start(1000); // Сохраняем каждую секунду
     console.log('🎥 Запись видео начата');
     addDebugLog('🎥 Запись видео начата', 'success');
   });
@@ -1695,8 +1708,6 @@ if (videoUrl) {
   </script>
 </body>
 </html>
-
-
 
 
 
