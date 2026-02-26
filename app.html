@@ -586,13 +586,12 @@
     <div id="recordingTimer">00:00:00</div>
 
     <div id="videoContainer" class="active-tab">
-      <iframe id="videoFrame" allowfullscreen></iframe>
-      
-      <div id="controls">
-        <button id="startBtn" class="control-btn" disabled>Начать запись</button>
-        <button id="stopBtn" class="control-btn">Стоп</button>
-      </div>
-    </div>
+  <div id="youtube-player" style="width:100%; height:100%;"></div>
+  <div id="controls">
+    <button id="startBtn" class="control-btn" disabled>Начать запись</button>
+    <button id="stopBtn" class="control-btn">Стоп</button>
+  </div>
+</div>
 
      <div id="fieldContainer">
       <div id="imageWrapper">
@@ -703,6 +702,69 @@ const RIGHT_POST_X = ORIGINAL_GOAL_COORDS.x + (GOAL_WIDTH_METERS / 2) / METERS_P
         Telegram.WebApp.expand();
       }
 
+      // Загружаем YouTube IFrame API
+let tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+let firstScriptTag = document.getElementsByTagName('script')[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+let player; // Глобальная переменная для плеера
+
+      // Эта функция вызывается автоматически после загрузки API
+function onYouTubeIframeAPIReady() {
+  console.log('🎬 YouTube API готов');
+  if (videoUrl) {
+    initYouTubePlayer(videoUrl);
+  }
+}
+
+function initYouTubePlayer(url) {
+  let videoId = extractVideoId(url);
+  if (!videoId) return;
+  
+  player = new YT.Player('youtube-player', {
+    height: '100%',
+    width: '100%',
+    videoId: videoId,
+    playerVars: {
+      'autoplay': 0,
+      'controls': 1,
+      'rel': 0,
+      'modestbranding': 1,
+      'playsinline': 1,
+      'enablejsapi': 1
+    },
+    events: {
+      'onReady': onPlayerReady,
+      'onStateChange': onPlayerStateChange
+    }
+  });
+}
+
+function extractVideoId(url) {
+  if (url.includes('youtu.be/')) {
+    return url.split('youtu.be/')[1].split('?')[0];
+  } else if (url.includes('v=')) {
+    return url.split('v=')[1].split('&')[0];
+  } else if (url.includes('live/')) {
+    return url.split('live/')[1].split('?')[0];
+  }
+  return null;
+}
+
+function onPlayerReady(event) {
+  console.log('✅ Плеер готов');
+  startBtn.disabled = false;
+}
+
+function onPlayerStateChange(event) {
+  // Обновляем текущее время
+  if (player && player.getCurrentTime) {
+    videoCurrentTime = player.getCurrentTime();
+    window.videoCurrentTime = videoCurrentTime;
+  }
+}
+      
       // === DOM ЭЛЕМЕНТЫ ===
       const rotateScreen = document.getElementById('rotateScreen');
       const mainInterface = document.getElementById('mainInterface');
@@ -873,11 +935,10 @@ const RIGHT_POST_X = ORIGINAL_GOAL_COORDS.x + (GOAL_WIDTH_METERS / 2) / METERS_P
 
       // === ВИДЕО ===
       function pauseYouTubeVideo() {
-        try {
-          videoFrame.contentWindow?.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
-        } catch (e) {}
-      }
-
+  if (player && player.pauseVideo) {
+    player.pauseVideo();
+  }
+}
       // === ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ===
       function switchTab(tabName) {
         currentTab = tabName;
@@ -1520,35 +1581,9 @@ tabsPanel.classList.remove('visible');
   
   showTemporary(currentTabTitle, 3000);
 }
-console.log('🎬 videoUrl из URL параметров:', videoUrl);
-      // === ВИДЕО ===
-if (videoUrl) {
-  let finalUrl = videoUrl;
-  if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
-    let videoId;
-    if (videoUrl.includes('youtu.be/')) {
-      videoId = videoUrl.split('youtu.be/')[1].split('?')[0];
-    } else {
-      videoId = videoUrl.split('v=')[1]?.split('&')[0];
-    }
-    if (videoId) {
-      finalUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&controls=1&enablejsapi=1`;
-    }
-  }
-  videoFrame.src = finalUrl;
-  console.log('🎬 Установлен URL видео:', finalUrl);  // ← ДОБАВЬ ЭТО
-}
 
-      window.addEventListener('message', (e) => {
-        try {
-          const data = JSON.parse(e.data);
-          if (data.event === 'onReady') startBtn.disabled = false;
-          if (data.info?.currentTime !== undefined) {
-            videoCurrentTime = data.info.currentTime;
-            window.videoCurrentTime = videoCurrentTime;  // ← ДОБАВИТЬ ЭТУ СТРОКУ
-          }
-        } catch {}
-      });
+
+     
 
       setTimeout(() => { startBtn.disabled = false; }, 3000);
 
@@ -1586,6 +1621,7 @@ stopBtn.addEventListener('click', stopRecording);
   </script>
 </body>
 </html>
+
 
 
 
