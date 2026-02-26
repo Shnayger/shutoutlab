@@ -1508,8 +1508,8 @@ if (videoUrl) {
 
       // === ПОДПИСКИ ===
             situationConfirmBtn.addEventListener('click', handleSituationConfirm);
-      startBtn.addEventListener('click', startRecording);
-      stopBtn.addEventListener('click', stopRecording);
+startBtn.disabled = true;
+stopBtn.disabled = true;
       
       tabs.forEach(tab => {
         tab.addEventListener('click', () => switchTab(tab.getAttribute('data-tab')));
@@ -1540,6 +1540,7 @@ if (videoUrl) {
   </script>
 </body>
 </html>
+
 
 
 
