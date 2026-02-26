@@ -693,13 +693,6 @@ const RIGHT_POST_X = ORIGINAL_GOAL_COORDS.x + (GOAL_WIDTH_METERS / 2) / METERS_P
       let videoTitleTimer = null;
       let fieldTitleTimer = null;
       let fieldInstructionTimer = null;
-      let mediaRecorder = null;
-let recordedChunks = [];
-let recordingStartVideoTime = 0;
-let videoStream = null;
-let lastVideoBlob = null;
-let lastVideoStartTime = 0;
-let lastVideoEndTime = 0;
 
       // === TELEGRAM ===
       let telegramAvailable = false;
@@ -1271,61 +1264,7 @@ function dragTouch(e) {
         document.removeEventListener('touchend', stopDragTouch);
       }
 
-      function startRecording() {
-  if (isRecording) return;
-  
-  recordingStartVideoTime = videoCurrentTime;
-  
-  navigator.mediaDevices.getDisplayMedia({
-    video: {
-      cursor: "always",
-      displaySurface: "browser"
-    },
-    audio: true
-  })
-  .then(stream => {
-    videoStream = stream;
-    recordedChunks = [];
-    
-    mediaRecorder = new MediaRecorder(stream, {
-      mimeType: 'video/webm; codecs=vp9',
-      videoBitsPerSecond: 2500000
-    });
-    
-    mediaRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        recordedChunks.push(event.data);
-      }
-    };
-    
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(recordedChunks, { type: 'video/webm' });
-      console.log(`🎥 Видео готово, размер: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
       
-      lastVideoBlob = blob;
-      lastVideoStartTime = recordingStartVideoTime;
-      lastVideoEndTime = videoCurrentTime;
-    };
-    
-    mediaRecorder.start(1000);
-    console.log('🎥 Запись видео начата');
-    addDebugLog('🎥 Запись видео начата', 'success');
-  })
-  .catch(error => {
-    console.error('❌ Ошибка захвата экрана:', error);
-    addDebugLog('❌ Не удалось захватить экран', 'error');
-  });
-  
-  isRecording = true;
-  recordingStartTime = Date.now();
-  window.recordingStartTime = recordingStartTime;
-  recordingIndicator.style.display = 'flex';
-  recordingTimer.style.display = 'block';
-  startBtn.style.display = 'none';
-  stopBtn.style.display = 'block';
-  updateTimer();
-  timerInterval = setInterval(updateTimer, 1000);
-}
 
       function stopRecording() {
   if (!isRecording) return;
@@ -1381,40 +1320,7 @@ async function sendToServer(eventData) {
     return false;
   }
 }
-      // === ЗАГРУЗКА В YOUTUBE ===
-async function uploadToYouTube(videoBlob, matchId, eventId, userId, eventType) {
-  addDebugLog(`📤 Загружаю видео на YouTube...`, 'info');
-  
-  const formData = new FormData();
-  const filename = `match_${matchId}_event_${eventId}.webm`;
-  
-  formData.append('video', videoBlob, filename);
-  formData.append('match_id', matchId);
-  formData.append('event_id', eventId);
-  formData.append('user_id', userId);
-  formData.append('event_type', eventType);
-  
-  try {
-    const response = await fetch('https://178.172.244.12/api/upload_to_youtube', {
-      method: 'POST',
-      body: formData
-    });
-    
-    const result = await response.json();
-    
-    if (result.success) {
-      addDebugLog(`✅ Видео загружено на YouTube: ${result.video_url}`, 'success');
-      console.log('🔗 YouTube URL:', result.video_url);
-    } else {
-      addDebugLog(`❌ Ошибка загрузки видео: ${result.error}`, 'error');
-    }
-  } catch (error) {
-    addDebugLog(`❌ Ошибка: ${error.message}`, 'error');
-  }
-  
-  // Очищаем blob
-  lastVideoBlob = null;
-}
+      
       
                   function showShotResult(eventType, distance, angle) {
         let eventName = '';
@@ -1546,19 +1452,7 @@ async function uploadToYouTube(videoBlob, matchId, eventId, userId, eventType) {
         console.log('✅ Данные сохранены на сервере, ID:', data.event_id);
         addDebugLog(`✅ Данные сохранены на сервере (ID: ${data.event_id})`);
         
-        // ✅ ЕСЛИ ЕСТЬ ВИДЕО, ОТПРАВЛЯЕМ В YOUTUBE
-        if (lastVideoBlob) {
-          // Получаем user_id из Telegram
-          const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'unknown';
-          
-          uploadToYouTube(
-            lastVideoBlob, 
-            matchId, 
-            data.event_id,
-            userId,
-            eventType
-          );
-        }
+    
       }
     })
     .catch(err => {
@@ -1670,4 +1564,5 @@ if (videoUrl) {
   </script>
 </body>
 </html>
+
 
