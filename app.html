@@ -1493,8 +1493,11 @@ async function sendToServer(eventData) {
   
   // ВОЗВРАЩАЕМСЯ НА ВИДЕО
   switchTab('video');
-  fieldContainer.classList.remove('active-tab');
-  videoContainer.classList.add('active-tab');
+fieldContainer.classList.remove('active-tab');
+videoContainer.classList.add('active-tab');
+
+// Убираем панель вкладок
+tabsPanel.classList.remove('visible');
   
   // СБРАСЫВАЕМ СОСТОЯНИЕ ЗАПИСИ
   isRecording = false;
@@ -1583,6 +1586,7 @@ stopBtn.addEventListener('click', stopRecording);
   </script>
 </body>
 </html>
+
 
 
 
