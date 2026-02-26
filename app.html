@@ -694,35 +694,42 @@ const RIGHT_POST_X = ORIGINAL_GOAL_COORDS.x + (GOAL_WIDTH_METERS / 2) / METERS_P
       let fieldInstructionTimer = null;
 
       // === TELEGRAM ===
-      let telegramAvailable = false;
-      if (window.Telegram?.WebApp) {
-        telegramAvailable = true;
-        Telegram.WebApp.ready();
-        Telegram.WebApp.disableClosingConfirmation();
-        Telegram.WebApp.expand();
-      }
+let telegramAvailable = false;
+if (window.Telegram?.WebApp) {
+  telegramAvailable = true;
+  Telegram.WebApp.ready();
+  Telegram.WebApp.disableClosingConfirmation();
+  Telegram.WebApp.expand();
+}
 
-      // Загружаем YouTube IFrame API
+// Глобальные переменные для YouTube API (объявляем вне IIFE)
+window.player = null;
+window.videoUrl = null;
+
+// Загружаем YouTube IFrame API
 let tag = document.createElement('script');
 tag.src = "https://www.youtube.com/iframe_api";
 let firstScriptTag = document.getElementsByTagName('script')[0];
 firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
-let player; // Глобальная переменная для плеера
-
-      // Эта функция вызывается автоматически после загрузки API
-function onYouTubeIframeAPIReady() {
+// Глобальная функция, вызываемая API
+window.onYouTubeIframeAPIReady = function() {
   console.log('🎬 YouTube API готов');
-  if (videoUrl) {
-    initYouTubePlayer(videoUrl);
+  if (window.videoUrl) {
+    initYouTubePlayer(window.videoUrl);
   }
-}
+};
 
 function initYouTubePlayer(url) {
   let videoId = extractVideoId(url);
-  if (!videoId) return;
+  if (!videoId) {
+    console.error('❌ Не удалось извлечь ID видео');
+    return;
+  }
   
-  player = new YT.Player('youtube-player', {
+  console.log('🎬 Загружаю видео ID:', videoId);
+  
+  window.player = new YT.Player('youtube-player', {
     height: '100%',
     width: '100%',
     videoId: videoId,
@@ -736,33 +743,53 @@ function initYouTubePlayer(url) {
     },
     events: {
       'onReady': onPlayerReady,
-      'onStateChange': onPlayerStateChange
+      'onStateChange': onPlayerStateChange,
+      'onError': onPlayerError
     }
   });
 }
 
 function extractVideoId(url) {
-  if (url.includes('youtu.be/')) {
-    return url.split('youtu.be/')[1].split('?')[0];
-  } else if (url.includes('v=')) {
-    return url.split('v=')[1].split('&')[0];
-  } else if (url.includes('live/')) {
-    return url.split('live/')[1].split('?')[0];
+  if (!url) return null;
+  
+  // Для youtube.com/live/...
+  if (url.includes('youtube.com/live/')) {
+    return url.split('youtube.com/live/')[1].split('?')[0].split('/')[0];
   }
+  // Для youtu.be/...
+  else if (url.includes('youtu.be/')) {
+    return url.split('youtu.be/')[1].split('?')[0];
+  }
+  // Для youtube.com/watch?v=...
+  else if (url.includes('v=')) {
+    return url.split('v=')[1].split('&')[0];
+  }
+  // Если просто ID
+  else if (url.length === 11) {
+    return url;
+  }
+  
+  console.error('❌ Неизвестный формат URL:', url);
   return null;
 }
 
 function onPlayerReady(event) {
   console.log('✅ Плеер готов');
   startBtn.disabled = false;
+  addDebugLog('✅ Видео загружено', 'success');
 }
 
 function onPlayerStateChange(event) {
   // Обновляем текущее время
-  if (player && player.getCurrentTime) {
-    videoCurrentTime = player.getCurrentTime();
+  if (window.player && window.player.getCurrentTime) {
+    videoCurrentTime = window.player.getCurrentTime();
     window.videoCurrentTime = videoCurrentTime;
   }
+}
+
+function onPlayerError(event) {
+  console.error('❌ Ошибка плеера:', event.data);
+  addDebugLog(`❌ Ошибка видео: ${event.data}`, 'error');
 }
       
       // === DOM ЭЛЕМЕНТЫ ===
@@ -824,6 +851,7 @@ function onPlayerStateChange(event) {
       
       // Видео URL
       const videoUrl = urlParams.get('video');  // ← ЗАПЯТАЯ ЗДЕСЬ!
+      window.videoUrl = videoUrl;  // Сохраняем для YouTube API
       
       // 🔥 Безопасное получение match_id с валидацией
       const rawMatchId = urlParams.get('match_id');
@@ -1621,6 +1649,7 @@ stopBtn.addEventListener('click', stopRecording);
   </script>
 </body>
 </html>
+
 
 
 
