@@ -704,6 +704,60 @@ if (window.Telegram?.WebApp) {
   setTimeout(() => Telegram.WebApp.expand(), 1000);
 }
 
+// Определяем тип устройства
+function detectDevice() {
+  const ua = navigator.userAgent;
+  const width = window.innerWidth;
+  const isInTelegram = window.Telegram?.WebApp !== undefined;
+  
+  // Определяем мобильные устройства
+  const isMobile = /Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+  const isTablet = /iPad|Android(?!.*Mobile)|Tablet|PlayBook|Silk/i.test(ua) || (width >= 768 && width <= 1024);
+  
+  if (isMobile && !isTablet) {
+    return 'phone';
+  } else if (isTablet) {
+    return 'tablet';
+  } else {
+    return 'desktop';
+  }
+}
+
+const deviceType = detectDevice();
+console.log('📱 Тип устройства:', deviceType);
+
+// Логика открытия
+if (telegramAvailable) {
+  if (deviceType === 'phone') {
+    // Телефон - оставляем в Telegram
+    console.log('📱 Режим телефона: работаем в Telegram');
+  } else {
+    // ПК или планшет - показываем сообщение и закрываем
+    document.body.innerHTML = `
+      <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #000; color: #fff; text-align: center; padding: 20px;">
+        <div>
+          <h2>💻 Для ПК и планшетов</h2>
+          <p>Этот анализатор лучше работает на телефонах в Telegram.</p>
+          <p>Нажмите кнопку "Открыть анализатор" в чате ещё раз —</p>
+          <p>она откроется в браузере автоматически.</p>
+          <button onclick="window.close()" style="padding: 10px 20px; margin-top: 20px; background: #4caf50; color: white; border: none; border-radius: 5px; cursor: pointer;">Закрыть</button>
+        </div>
+      </div>
+    `;
+    return; // Останавливаем выполнение
+  }
+}
+      
+let telegramAvailable = false;
+if (window.Telegram?.WebApp) {
+  telegramAvailable = true;
+  Telegram.WebApp.ready();
+  Telegram.WebApp.disableClosingConfirmation();
+  Telegram.WebApp.expand();
+  setTimeout(() => Telegram.WebApp.expand(), 300);
+  setTimeout(() => Telegram.WebApp.expand(), 1000);
+}
+
 // Глобальные переменные для YouTube API (объявляем вне IIFE)
 window.player = null;
 window.videoUrl = null;
@@ -793,6 +847,8 @@ function onPlayerError(event) {
   console.error('❌ Ошибка плеера:', event.data);
   addDebugLog(`❌ Ошибка видео: ${event.data}`, 'error');
 }
+
+
       
       // === DOM ЭЛЕМЕНТЫ ===
       const rotateScreen = document.getElementById('rotateScreen');
@@ -926,14 +982,21 @@ function onPlayerError(event) {
       }
 
       // === ОРИЕНТАЦИЯ ===
-      function checkOrientation() {
-        const isLandscape = window.innerWidth > window.innerHeight;
-        rotateScreen.style.display = isLandscape ? 'none' : 'flex';
-        mainInterface.style.display = isLandscape ? 'block' : 'none';
-        if (isLandscape && isImageLoaded) updateImageMetrics();
-      }
-      window.addEventListener('resize', checkOrientation);
-      checkOrientation();
+function checkOrientation() {
+  // Для планшетов и ПК всегда показываем интерфейс
+  if (deviceType === 'desktop' || deviceType === 'tablet') {
+    rotateScreen.style.display = 'none';
+    mainInterface.style.display = 'block';
+    if (isImageLoaded) updateImageMetrics();
+    return;
+  }
+  
+  // Для телефонов проверяем ориентацию
+  const isLandscape = window.innerWidth > window.innerHeight;
+  rotateScreen.style.display = isLandscape ? 'none' : 'flex';
+  mainInterface.style.display = isLandscape ? 'block' : 'none';
+  if (isLandscape && isImageLoaded) updateImageMetrics();
+}
 
       // === ОБНОВЛЕНИЕ МЕТРИК ИЗОБРАЖЕНИЯ ===
       function updateImageMetrics() {
@@ -1651,6 +1714,7 @@ stopBtn.addEventListener('click', stopRecording);
   </script>
 </body>
 </html>
+
 
 
 
