@@ -1266,34 +1266,10 @@ function dragTouch(e) {
 
       
 
-      function stopRecording() {
-  if (!isRecording) return;
-  
-  // Останавливаем запись видео
-  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-    mediaRecorder.stop();
-    if (videoStream) {
-      videoStream.getTracks().forEach(track => track.stop());
-    }
-    console.log('🎥 Запись видео остановлена');
-  }
-  
-  isRecording = false;
-  if (timerInterval) clearInterval(timerInterval);
-  recordingIndicator.style.display = 'none';
-  recordingTimer.style.display = 'none';
-  pauseYouTubeVideo();
-  isVideoPaused = true;
-  tabsPanel.classList.add('visible');
-  switchTab('field');
-  
-  showTemporary(currentTabTitle, 3000);
-  showTemporary(fieldInstruction, 3000);
-}
-
+      
     // === ОТПРАВКА НА СЕРВЕРНУЮ БД ===
 async function sendToServer(eventData) {
-  const serverUrl = 'http://178.172.244.12:5000/api/save_event';
+  const serverUrl = 'https://shutoutlab.boats/api/save_event';
   
   addDebugLog(`🔵 ОТПРАВКА НА СЕРВЕР: ${serverUrl}`);
   
@@ -1441,7 +1417,7 @@ async function sendToServer(eventData) {
     };
     
     // ОТПРАВЛЯЕМ fetch НА СЕРВЕР
-    fetch('https://178.172.244.12/api/save_event', {
+    fetch('https://shutoutlab.boats/api/save_event', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(eventData)
@@ -1564,5 +1540,6 @@ if (videoUrl) {
   </script>
 </body>
 </html>
+
 
 
