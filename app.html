@@ -695,6 +695,8 @@ const RIGHT_POST_X = ORIGINAL_GOAL_COORDS.x + (GOAL_WIDTH_METERS / 2) / METERS_P
 
       // === TELEGRAM ===
 let telegramAvailable = false;
+let deviceType = 'unknown';
+
 if (window.Telegram?.WebApp) {
   telegramAvailable = true;
   Telegram.WebApp.ready();
@@ -704,58 +706,51 @@ if (window.Telegram?.WebApp) {
   setTimeout(() => Telegram.WebApp.expand(), 1000);
 }
 
-// Определяем тип устройства
+// Функция определения устройства
 function detectDevice() {
   const ua = navigator.userAgent;
   const width = window.innerWidth;
-  const isInTelegram = window.Telegram?.WebApp !== undefined;
   
-  // Определяем мобильные устройства
   const isMobile = /Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
   const isTablet = /iPad|Android(?!.*Mobile)|Tablet|PlayBook|Silk/i.test(ua) || (width >= 768 && width <= 1024);
   
-  if (isMobile && !isTablet) {
-    return 'phone';
-  } else if (isTablet) {
-    return 'tablet';
-  } else {
-    return 'desktop';
-  }
+  if (isMobile && !isTablet) return 'phone';
+  if (isTablet) return 'tablet';
+  return 'desktop';
 }
 
-const deviceType = detectDevice();
+deviceType = detectDevice();
 console.log('📱 Тип устройства:', deviceType);
 
-// Логика открытия
-if (telegramAvailable) {
-  if (deviceType === 'phone') {
-    // Телефон - оставляем в Telegram
-    console.log('📱 Режим телефона: работаем в Telegram');
-  } else {
-    // ПК или планшет - показываем сообщение и закрываем
-    document.body.innerHTML = `
-      <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #000; color: #fff; text-align: center; padding: 20px;">
-        <div>
-          <h2>💻 Для ПК и планшетов</h2>
-          <p>Этот анализатор лучше работает на телефонах в Telegram.</p>
-          <p>Нажмите кнопку "Открыть анализатор" в чате ещё раз —</p>
-          <p>она откроется в браузере автоматически.</p>
-          <button onclick="window.close()" style="padding: 10px 20px; margin-top: 20px; background: #4caf50; color: white; border: none; border-radius: 5px; cursor: pointer;">Закрыть</button>
-        </div>
-      </div>
-    `;
-    return; // Останавливаем выполнение
-  }
-}
-      
-let telegramAvailable = false;
-if (window.Telegram?.WebApp) {
-  telegramAvailable = true;
-  Telegram.WebApp.ready();
-  Telegram.WebApp.disableClosingConfirmation();
-  Telegram.WebApp.expand();
-  setTimeout(() => Telegram.WebApp.expand(), 300);
-  setTimeout(() => Telegram.WebApp.expand(), 1000);
+// НЕ закрываем страницу сразу, только если это НЕ телефон И мы в Telegram
+if (telegramAvailable && deviceType !== 'phone') {
+  // Показываем предупреждение, но не ломаем страницу
+  const warningDiv = document.createElement('div');
+  warningDiv.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.95);
+    z-index: 10000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    text-align: center;
+    padding: 20px;
+  `;
+  warningDiv.innerHTML = `
+    <div>
+      <h2>💻 Для ПК и планшетов</h2>
+      <p>Этот анализатор лучше работает на телефонах.</p>
+      <p>Нажмите кнопку "Открыть анализатор" в чате —</p>
+      <p>она откроется в браузере автоматически.</p>
+      <button onclick="this.parentElement.parentElement.remove()" style="padding: 10px 20px; margin-top: 20px; background: #4caf50; color: white; border: none; border-radius: 5px; cursor: pointer;">Продолжить всё равно</button>
+    </div>
+  `;
+  document.body.appendChild(warningDiv);
 }
 
 // Глобальные переменные для YouTube API (объявляем вне IIFE)
@@ -1714,6 +1709,7 @@ stopBtn.addEventListener('click', stopRecording);
   </script>
 </body>
 </html>
+
 
 
 
