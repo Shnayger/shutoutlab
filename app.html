@@ -573,6 +573,9 @@
   </style>
 </head>
 <body>
+  <video id="bg-video" autoplay loop muted playsinline style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; opacity: 0.3;">
+  <source src="https://shutoutlab.boats/videos/5.mp4" type="video/mp4">
+</video>
   <div id="rotateScreen">
     <svg viewBox="0 0 24 24" fill="white" width="60" height="60">
       <path d="M19 12h-1.5c-.82 0-1.5-.68-1.5-1.5V5.5C16 4.67 16.67 4 17.5 4H19c.83 0 1.5.67 1.5 1.5v3.5c0 .83-.67 1.5-1.5 1.5H1L1.01 21c0 1.1.89 2 2 2H21c1.1 0 2-.9 2-2L22.99 14H19zm-5.5-9H8.5V8h4V4zm6 14H2v2h18v-2z"/>
@@ -1668,6 +1671,7 @@ stopBtn.addEventListener('click', stopRecording);
   </script>
 </body>
 </html>
+
 
 
 
