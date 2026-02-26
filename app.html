@@ -700,6 +700,8 @@ if (window.Telegram?.WebApp) {
   Telegram.WebApp.ready();
   Telegram.WebApp.disableClosingConfirmation();
   Telegram.WebApp.expand();
+  setTimeout(() => Telegram.WebApp.expand(), 300);
+  setTimeout(() => Telegram.WebApp.expand(), 1000);
 }
 
 // Глобальные переменные для YouTube API (объявляем вне IIFE)
@@ -1649,6 +1651,7 @@ stopBtn.addEventListener('click', stopRecording);
   </script>
 </body>
 </html>
+
 
 
 
