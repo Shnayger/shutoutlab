@@ -1264,7 +1264,50 @@ function dragTouch(e) {
         document.removeEventListener('touchend', stopDragTouch);
       }
 
-      
+      // === ЗАПИСЬ МОМЕНТОВ (БЕЗ ВИДЕО) ===
+function startRecording() {
+  if (isRecording) return;
+  
+  isRecording = true;
+  recordingStartTime = Date.now();
+  window.recordingStartTime = recordingStartTime;
+  
+  // Меняем кнопки
+  startBtn.style.display = 'none';
+  stopBtn.style.display = 'block';
+  
+  updateTimer();
+  timerInterval = setInterval(updateTimer, 1000);
+  
+  console.log('⏺ Запись начата');
+  addDebugLog('⏺ Запись начата', 'success');
+}
+
+function stopRecording() {
+  if (!isRecording) return;
+  
+  isRecording = false;
+  if (timerInterval) clearInterval(timerInterval);
+  
+  // Меняем кнопки обратно
+  startBtn.style.display = 'block';
+  stopBtn.style.display = 'none';
+  
+  // Сбрасываем таймер
+  recordingTimer.textContent = '00:00:00';
+  
+  // Переключаем на схему поля
+  pauseYouTubeVideo();
+  isVideoPaused = true;
+  tabsPanel.classList.add('visible');
+  switchTab('field');
+  
+  showTemporary(currentTabTitle, 3000);
+  showTemporary(fieldInstruction, 3000);
+  
+  console.log('⏹ Запись остановлена');
+  addDebugLog('⏹ Запись остановлена', 'info');
+}
 
       
     // === ОТПРАВКА НА СЕРВЕРНУЮ БД ===
@@ -1508,7 +1551,8 @@ if (videoUrl) {
 
       // === ПОДПИСКИ ===
             situationConfirmBtn.addEventListener('click', handleSituationConfirm);
-
+startBtn.addEventListener('click', startRecording);
+stopBtn.addEventListener('click', stopRecording);
       
       tabs.forEach(tab => {
         tab.addEventListener('click', () => switchTab(tab.getAttribute('data-tab')));
@@ -1539,6 +1583,7 @@ if (videoUrl) {
   </script>
 </body>
 </html>
+
 
 
 
