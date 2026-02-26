@@ -199,28 +199,45 @@
       font-size: 20px;
     }
 
-        #fieldContainer {
-      width: 100%;
-      height: 100%;
-      background: #000;
-      position: relative;
-      overflow: hidden;
-      display: none;
-    }
+        /* Общие стили для всех устройств */
+#fieldContainer {
+  width: 100%;
+  height: 100%;
+  background: #000;
+  position: relative;
+  overflow: hidden;
+  display: none;
+}
 
-    #fieldImage {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: auto;
-      height: auto;
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-      display: block;
-      pointer-events: auto;
-    }
+#fieldImage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  pointer-events: auto;
+}
+
+/* Для ПК и планшетов (широкие экраны) */
+@media (min-width: 768px) {
+  #fieldImage {
+    max-width: 100vw;
+    max-height: 100vh;
+  }
+}
+
+/* Для телефонов (узкие экраны) */
+@media (max-width: 767px) {
+  #fieldImage {
+    max-width: 100%;
+    max-height: 100%;
+  }
+}
     
     .marker-point {
       position: absolute;
@@ -1651,6 +1668,7 @@ stopBtn.addEventListener('click', stopRecording);
   </script>
 </body>
 </html>
+
 
 
 
