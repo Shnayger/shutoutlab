@@ -199,45 +199,43 @@
       font-size: 20px;
     }
 
-        /* Общие стили для всех устройств */
-#fieldContainer {
-  width: 100%;
-  height: 100%;
-  background: #000;
-  position: relative;
-  overflow: hidden;
-  display: none;
-}
+    /* Общие стили для всех устройств */
+    #fieldContainer {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      position: relative;
+      overflow: hidden;
+      display: none;
+    }
 
-#fieldImage {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  display: block;
-  pointer-events: auto;
-}
+    #fieldImage {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+      pointer-events: auto;
+    }
 
-/* Для ПК и планшетов (широкие экраны) */
-@media (min-width: 768px) {
-  #fieldImage {
-    max-width: 100vw;
-    max-height: 100vh;
-  }
-}
+    @media (min-width: 768px) {
+      #fieldImage {
+        max-width: 100vw;
+        max-height: 100vh;
+      }
+    }
 
-/* Для телефонов (узкие экраны) */
-@media (max-width: 767px) {
-  #fieldImage {
-    max-width: 100%;
-    max-height: 150%;
-  }
-}
+    @media (max-width: 767px) {
+      #fieldImage {
+        max-width: 100%;
+        max-height: 150%;
+      }
+    }
     
     .marker-point {
       position: absolute;
@@ -259,7 +257,6 @@
       box-shadow: 0 0 30px rgba(255, 0, 0, 1);
     }
 
-        /* Общие стили для всех модальных окон */
     .modal {
       position: fixed;
       top: 0;
@@ -278,11 +275,7 @@
       display: flex;
     }
 
-    #choiceModal, #saveTypeModal {
-      /* Наследуют стили от .modal */
-    }
-
-           .modal-content {
+    .modal-content {
       background: rgba(30, 30, 30, 0.95);
       padding: 30px 20px;
       border-radius: 20px;
@@ -300,7 +293,7 @@
       color: white;
     }
 
-          .choice-buttons {
+    .choice-buttons {
       display: flex;
       gap: 10px;
       justify-content: center;
@@ -308,7 +301,7 @@
       width: 100%;
     }
 
-            .choice-btn {
+    .choice-btn {
       padding: 15px 10px;
       font-size: 16px;
       font-weight: bold;
@@ -328,40 +321,16 @@
       transform: scale(0.95);
     }
 
-    #goalBtn {
-      background: linear-gradient(135deg, #2e7d32, #4caf50);
-    }
-
-    #saveBtn {
-      background: linear-gradient(135deg, #1565c0, #2196f3);
-    }
-
-        #missBtn {
-      background: linear-gradient(135deg, #b0bec5, #90a4ae);
-      color: #333;
-    }
-    #cornerBtn {
-      background: linear-gradient(135deg, #ff8f00, #ffb300);
-    }
-    #reboundBtn {
-      background: linear-gradient(135deg, #c62828, #ef5350);
-    }
-    #controlBtn {
-      background: linear-gradient(135deg, #6a1b9a, #8e24aa);
-    }
+    #goalBtn { background: linear-gradient(135deg, #2e7d32, #4caf50); }
+    #saveBtn { background: linear-gradient(135deg, #1565c0, #2196f3); }
+    #missBtn { background: linear-gradient(135deg, #b0bec5, #90a4ae); color: #333; }
+    #cornerBtn { background: linear-gradient(135deg, #ff8f00, #ffb300); }
+    #reboundBtn { background: linear-gradient(135deg, #c62828, #ef5350); }
+    #controlBtn { background: linear-gradient(135deg, #6a1b9a, #8e24aa); }
     
-    .shot-info-miss {
-      color: #b0bec5;
-      font-weight: bold;
-    }
-    .shot-info-danger {
-      color: #ef5350;
-      font-weight: bold;
-    }
-    .shot-info-control {
-      color: #ba68c8;
-      font-weight: bold;
-    }
+    .shot-info-miss { color: #b0bec5; font-weight: bold; }
+    .shot-info-danger { color: #ef5350; font-weight: bold; }
+    .shot-info-control { color: #ba68c8; font-weight: bold; }
 
     #fieldInstruction {
       position: absolute;
@@ -462,74 +431,52 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    .shot-info-label {
-      color: #aaa;
-    }
+    .shot-info-label { color: #aaa; }
+    .shot-info-value { color: white; font-weight: bold; }
+    .shot-info-goal { color: #4caf50; font-weight: bold; }
+    .shot-info-save { color: #2196f3; font-weight: bold; }
+    .shot-info-footer { margin-top: 15px; font-size: 12px; color: #888; text-align: center; }
 
-    .shot-info-value {
-      color: white;
-      font-weight: bold;
-    }
-
-    .shot-info-goal {
-      color: #4caf50;
-      font-weight: bold;
-    }
-
-    .shot-info-save {
-      color: #2196f3;
-      font-weight: bold;
-    }
-
-    .shot-info-footer {
-      margin-top: 15px;
-      font-size: 12px;
-      color: #888;
-      text-align: center;
-    }
-
-    .active-tab {
-      display: block !important;
-    }
+    .active-tab { display: block !important; }
 
     #debugToggle {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    background: #4fc3f7;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
-    cursor: pointer;
-    z-index: 9999;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    /* Добавить эти строки для видимости в любом режиме */
-    display: block !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-}
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #4fc3f7;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 9999;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      display: block !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
 
     #debugPanel {
-    position: fixed;
-    top: 60px;
-    right: 10px;
-    background: rgba(0,0,0,0.95);
-    color: white;
-    padding: 15px;
-    border-radius: 10px;
-    z-index: 9998;
-    width: 300px;
-    max-height: 200px;  /* Ограничиваем высоту примерно на 5 строк */
-    overflow-y: auto;   /* Добавляем скролл */
-    display: none;
-    border: 2px solid #4fc3f7;
-    font-size: 12px;
-    font-family: monospace;
-    backdrop-filter: blur(10px);
-}
+      position: fixed;
+      top: 60px;
+      right: 10px;
+      background: rgba(0,0,0,0.95);
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      z-index: 9998;
+      width: 300px;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+      border: 2px solid #4fc3f7;
+      font-size: 12px;
+      font-family: monospace;
+      backdrop-filter: blur(10px);
+    }
+
     .debug-log {
       margin: 5px 0;
       padding: 3px;
@@ -549,7 +496,7 @@
       color: #a5d6a7;
     }
 
-        .situation-select {
+    .situation-select {
       width: 100%;
       padding: 12px 15px;
       margin: 10px 0 15px 0;
@@ -573,13 +520,30 @@
       font-size: 13px;
       margin-top: 5px;
     }
-    
+
+    #finishAnalysisBtn {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #4caf50;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 12px 24px;
+      font-size: 16px;
+      cursor: pointer;
+      z-index: 9999;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
   <video id="bg-video" autoplay loop muted playsinline style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; opacity: 0.3;">
-  <source src="https://shutoutlab.boats/videos/5.mp4" type="video/mp4">
-</video>
+    <source src="https://shutoutlab.boats/videos/5.mp4" type="video/mp4">
+  </video>
+  
   <div id="rotateScreen">
     <svg viewBox="0 0 24 24" fill="white" width="60" height="60">
       <path d="M19 12h-1.5c-.82 0-1.5-.68-1.5-1.5V5.5C16 4.67 16.67 4 17.5 4H19c.83 0 1.5.67 1.5 1.5v3.5c0 .83-.67 1.5-1.5 1.5H1L1.01 21c0 1.1.89 2 2 2H21c1.1 0 2-.9 2-2L22.99 14H19zm-5.5-9H8.5V8h4V4zm6 14H2v2h18v-2z"/>
@@ -598,7 +562,6 @@
     </div>
 
     <div id="currentTabTitle">🎥 Видео матча</div>
-
     <div id="tempInfo"></div>
     <div id="shotInfo"></div>
 
@@ -606,25 +569,24 @@
       <div class="recordingDot"></div>
       <span>Идет запись</span>
     </div>
-
     <div id="recordingTimer">00:00:00</div>
 
     <div id="videoContainer" class="active-tab">
-  <div id="youtube-player" style="width:100%; height:100%;"></div>
-  <div id="controls">
-    <button id="startBtn" class="control-btn" disabled>Начать запись</button>
-    <button id="stopBtn" class="control-btn">Стоп</button>
-  </div>
-</div>
+      <div id="youtube-player" style="width:100%; height:100%;"></div>
+      <div id="controls">
+        <button id="startBtn" class="control-btn" disabled>Начать запись</button>
+        <button id="stopBtn" class="control-btn">Стоп</button>
+      </div>
+    </div>
 
-     <div id="fieldContainer">
+    <div id="fieldContainer">
       <div id="imageWrapper">
         <img id="fieldImage" src="ice.png" alt="Хоккейная площадка">
       </div>
       <div id="fieldInstruction">Отметьте точку броска на поле</div>
     </div>
 
-    <!-- Модальное окно для первого выбора (Гол/Сэйв/Мимо) -->
+    <!-- Модальные окна -->
     <div id="choiceModal" class="modal">
       <div class="modal-content">
         <div class="modal-title">Выберите тип события</div>
@@ -636,8 +598,7 @@
       </div>
     </div>
 
-    <!-- Модальное окно для типа сэйва -->
-      <div id="saveTypeModal" class="modal">
+    <div id="saveTypeModal" class="modal">
       <div class="modal-content">
         <div class="modal-title">Тип сэйва</div>
         <div class="choice-buttons">
@@ -648,12 +609,9 @@
       </div>
     </div>
 
-        <!-- Модальное окно для игровой ситуации -->
     <div id="situationModal" class="modal">
       <div class="modal-content">
         <div class="modal-title">Игровая ситуация</div>
-        
-        <!-- Общая ситуация на поле -->
         <div class="select-label">Составы на льду</div>
         <select id="generalSituation" class="situation-select">
           <option value="5x5">5×5 (равные)</option>
@@ -664,8 +622,6 @@
           <option value="3x3">3×3 (овертайм)</option>
           <option value="empty_net">Пустые ворота</option>
         </select>
-        
-        <!-- Ситуация у ворот -->
         <div class="select-label">Ситуация у ворот</div>
         <select id="goalAreaSituation" class="situation-select">
           <option value="1x0">1×0 (выход 1 на 1)</option>
@@ -674,209 +630,52 @@
           <option value="3x2">3×2</option>
           <option value="normal">Позиционная атака</option>
         </select>
-        
         <div class="choice-buttons" style="margin-top: 20px;">
           <button id="situationConfirmBtn" class="choice-btn" style="background: linear-gradient(135deg, #2e7d32, #4caf50);">Подтвердить</button>
         </div>
       </div>
     </div>
     
-  <button id="debugToggle">🐛</button>
-  <div id="debugPanel"></div>
-  <button id="finishAnalysisBtn" style="position: fixed; bottom: 20px; right: 10px; background: #4caf50; color: white; border: none; border-radius: 20px; padding: 12px 20px; font-size: 14px; cursor: pointer; z-index: 9999; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
-    ✅ Завершить анализ
-</button>
+    <button id="debugToggle">🐛</button>
+    <div id="debugPanel"></div>
+    <button id="finishAnalysisBtn">✅ Завершить анализ</button>
+  </div>
 
-    // Кнопка завершения анализа
-const finishAnalysisBtn = document.getElementById('finishAnalysisBtn');
-
-finishAnalysisBtn.addEventListener('click', async () => {
-    console.log('🔘 Кнопка нажата, matchId:', matchId);
-    
-    if (!matchId || matchId === '1') {
-        alert('Ошибка: ID матча не определен');
-        return;
-    }
-    
-    if (confirm('Завершить анализ матча? Полное видео будет удалено с сервера.')) {
-        finishAnalysisBtn.disabled = true;
-        finishAnalysisBtn.textContent = '⏳ Обработка...';
-        
-        try {
-            const response = await fetch('https://shutoutlab.boats/api/finish_analysis', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ match_id: parseInt(matchId) })
-            });
-            
-            const result = await response.json();
-            console.log('Ответ сервера:', result);
-            
-            if (result.success) {
-                alert('✅ Анализ завершен! Полное видео удалено. Фрагменты сохранены.');
-                finishAnalysisBtn.textContent = '✅ Завершено';
-                finishAnalysisBtn.style.background = '#999';
-                
-                setTimeout(() => {
-                    if (window.Telegram?.WebApp) {
-                        window.Telegram.WebApp.close();
-                    }
-                }, 2000);
-            } else {
-                alert('❌ Ошибка: ' + result.error);
-                finishAnalysisBtn.disabled = false;
-                finishAnalysisBtn.textContent = '✅ Завершить анализ';
-            }
-        } catch (error) {
-            console.error('Ошибка:', error);
-            alert('❌ Ошибка: ' + error.message);
-            finishAnalysisBtn.disabled = false;
-            finishAnalysisBtn.textContent = '✅ Завершить анализ';
-        }
-    }
-});
-    
   <script>
     (function() {
       // === БЛОК КОНСТАНТ ===
-const ORIGINAL_IMAGE_WIDTH = 417;
-const ORIGINAL_IMAGE_HEIGHT = 436;
-
-// Координаты ключевых точек (в пикселях оригинального изображения)
-const ORIGINAL_GOAL_COORDS = { x: 208.5, y: 377 };     // центр ворот
-const ORIGINAL_CENTER_COORDS = { x: 208.5, y: 8 };     // центр площадки
-
-// Реальные размеры в метрах
-const DISTANCE_CENTER_TO_GOAL = 26.5;  // расстояние от центра площадки до ворот
-const RINK_WIDTH_METERS = 26;          // ширина всей площадки
-const GOAL_WIDTH_METERS = 1.83;        // ширина ворот
-
-// Вычисляем метры на пиксель для вертикали (Y)
-// От центра площадки (y=8) до ворот (y=377) = 369 пикселей = 26.5 метров
-const PIXELS_CENTER_TO_GOAL = ORIGINAL_GOAL_COORDS.y - ORIGINAL_CENTER_COORDS.y; // 369
-const METERS_PER_PIXEL_Y = DISTANCE_CENTER_TO_GOAL / PIXELS_CENTER_TO_GOAL;      // 26.5 / 369 = 0.0718 м/пикс
-
-// Вычисляем метры на пиксель для горизонтали (X)
-// Вся ширина изображения 417 пикселей = 26 метров
-const METERS_PER_PIXEL_X = RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;             // 26 / 417 = 0.06235 м/пикс
-
-// Для справки: координаты штанг (можно использовать для проверки)
-const LEFT_POST_X = ORIGINAL_GOAL_COORDS.x - (GOAL_WIDTH_METERS / 2) / METERS_PER_PIXEL_X;  // 208.5 - 14.68 = 193.82
-const RIGHT_POST_X = ORIGINAL_GOAL_COORDS.x + (GOAL_WIDTH_METERS / 2) / METERS_PER_PIXEL_X; // 208.5 + 14.68 = 223.18
-
-      // === ТАЙМЕРЫ ДЛЯ ИСЧЕЗАЮЩИХ ТАБЛИЧЕК ===
-      let videoTitleTimer = null;
-      let fieldTitleTimer = null;
-      let fieldInstructionTimer = null;
+      const ORIGINAL_IMAGE_WIDTH = 417;
+      const ORIGINAL_IMAGE_HEIGHT = 436;
+      const ORIGINAL_GOAL_COORDS = { x: 208.5, y: 377 };
+      const ORIGINAL_CENTER_COORDS = { x: 208.5, y: 8 };
+      const DISTANCE_CENTER_TO_GOAL = 26.5;
+      const RINK_WIDTH_METERS = 26;
+      const GOAL_WIDTH_METERS = 1.83;
+      const PIXELS_CENTER_TO_GOAL = ORIGINAL_GOAL_COORDS.y - ORIGINAL_CENTER_COORDS.y;
+      const METERS_PER_PIXEL_Y = DISTANCE_CENTER_TO_GOAL / PIXELS_CENTER_TO_GOAL;
+      const METERS_PER_PIXEL_X = RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;
 
       // === TELEGRAM ===
-let telegramAvailable = false;
-if (window.Telegram?.WebApp) {
-  telegramAvailable = true;
-  Telegram.WebApp.ready();
-  Telegram.WebApp.disableClosingConfirmation();
-  Telegram.WebApp.expand();
-  setTimeout(() => Telegram.WebApp.expand(), 300);
-  setTimeout(() => Telegram.WebApp.expand(), 1000);
-}
+      let telegramAvailable = false;
+      if (window.Telegram?.WebApp) {
+        telegramAvailable = true;
+        Telegram.WebApp.ready();
+        Telegram.WebApp.disableClosingConfirmation();
+        Telegram.WebApp.expand();
+        setTimeout(() => Telegram.WebApp.expand(), 300);
+        setTimeout(() => Telegram.WebApp.expand(), 1000);
+      }
 
-// Глобальные переменные для YouTube API (объявляем вне IIFE)
-window.player = null;
-window.videoUrl = null;
-
-// Загружаем YouTube IFrame API
-let tag = document.createElement('script');
-tag.src = "https://www.youtube.com/iframe_api";
-let firstScriptTag = document.getElementsByTagName('script')[0];
-firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-// Глобальная функция, вызываемая API
-window.onYouTubeIframeAPIReady = function() {
-  console.log('🎬 YouTube API готов');
-  if (window.videoUrl) {
-    initYouTubePlayer(window.videoUrl);
-  }
-};
-
-function initYouTubePlayer(url) {
-  let videoId = extractVideoId(url);
-  if (!videoId) {
-    console.error('❌ Не удалось извлечь ID видео');
-    return;
-  }
-  
-  console.log('🎬 Загружаю видео ID:', videoId);
-  
-  window.player = new YT.Player('youtube-player', {
-    height: '100%',
-    width: '100%',
-    videoId: videoId,
-    playerVars: {
-      'autoplay': 0,
-      'controls': 1,
-      'rel': 0,
-      'modestbranding': 1,
-      'playsinline': 1,
-      'enablejsapi': 1
-    },
-    events: {
-      'onReady': onPlayerReady,
-      'onStateChange': onPlayerStateChange,
-      'onError': onPlayerError
-    }
-  });
-}
-
-function extractVideoId(url) {
-  if (!url) return null;
-  
-  // Для youtube.com/live/...
-  if (url.includes('youtube.com/live/')) {
-    return url.split('youtube.com/live/')[1].split('?')[0].split('/')[0];
-  }
-  // Для youtu.be/...
-  else if (url.includes('youtu.be/')) {
-    return url.split('youtu.be/')[1].split('?')[0];
-  }
-  // Для youtube.com/watch?v=...
-  else if (url.includes('v=')) {
-    return url.split('v=')[1].split('&')[0];
-  }
-  // Если просто ID
-  else if (url.length === 11) {
-    return url;
-  }
-  
-  console.error('❌ Неизвестный формат URL:', url);
-  return null;
-}
-
-function onPlayerReady(event) {
-  console.log('✅ Плеер готов');
-  startBtn.disabled = false;
-  addDebugLog('✅ Видео загружено', 'success');
-}
-
-function onPlayerStateChange(event) {
-  // Обновляем текущее время
-  if (window.player && window.player.getCurrentTime) {
-    videoCurrentTime = window.player.getCurrentTime();
-    window.videoCurrentTime = videoCurrentTime;
-  }
-}
-
-function onPlayerError(event) {
-  console.error('❌ Ошибка плеера:', event.data);
-  addDebugLog(`❌ Ошибка видео: ${event.data}`, 'error');
-}
+      // === Глобальные переменные ===
+      window.player = null;
+      window.videoUrl = null;
       
-      // === DOM ЭЛЕМЕНТЫ ===
+      // DOM элементы
       const rotateScreen = document.getElementById('rotateScreen');
       const mainInterface = document.getElementById('mainInterface');
       const tabsPanel = document.getElementById('tabsPanel');
       const videoContainer = document.getElementById('videoContainer');
       const fieldContainer = document.getElementById('fieldContainer');
-      const videoFrame = document.getElementById('videoFrame');
       const startBtn = document.getElementById('startBtn');
       const stopBtn = document.getElementById('stopBtn');
       const fieldImage = document.getElementById('fieldImage');
@@ -892,21 +691,21 @@ function onPlayerError(event) {
       const cornerBtn = document.getElementById('cornerBtn');
       const reboundBtn = document.getElementById('reboundBtn');
       const controlBtn = document.getElementById('controlBtn');
-            const situationModal = document.getElementById('situationModal');
+      const situationModal = document.getElementById('situationModal');
       const generalSituation = document.getElementById('generalSituation');
       const goalAreaSituation = document.getElementById('goalAreaSituation');
       const situationConfirmBtn = document.getElementById('situationConfirmBtn');
-      
-      // Переменные для хранения временных данных
+      const debugToggle = document.getElementById('debugToggle');
+      const debugPanel = document.getElementById('debugPanel');
+      const finishAnalysisBtn = document.getElementById('finishAnalysisBtn');
+
+      // Переменные состояния
       let pendingEventType = null;
       let pendingSaveType = null;
       const currentTabTitle = document.getElementById('currentTabTitle');
       const shotInfo = document.getElementById('shotInfo');
       const tabs = document.querySelectorAll('.tab');
-      const debugToggle = document.getElementById('debugToggle');
-      const debugPanel = document.getElementById('debugPanel');
-
-      // === СОСТОЯНИЕ ===
+      
       let isRecording = false;
       let recordingStartTime = null;
       let timerInterval = null;
@@ -924,37 +723,27 @@ function onPlayerError(event) {
       window.recordingStartTime = null;
       window.videoCurrentTime = 0;
       
-                  // URL параметры
+      // URL параметры
       const urlParams = new URLSearchParams(window.location.search);
+      const videoUrlParam = urlParams.get('video');
+      window.videoUrl = videoUrlParam;
       
-      // Видео URL
-      const videoUrl = urlParams.get('video');  // ← ЗАПЯТАЯ ЗДЕСЬ!
-      window.videoUrl = videoUrl;  // Сохраняем для YouTube API
-      
-      // 🔥 Безопасное получение match_id с валидацией
       const rawMatchId = urlParams.get('match_id');
-      let matchId = '1'; // значение по умолчанию
+      let matchId = '1';
       
-      // Добавляем отладочный вывод
       console.log('🔍 Raw match_id из URL:', rawMatchId);
       
       if (rawMatchId && rawMatchId !== 'undefined' && rawMatchId !== 'null') {
-        // Убираем пробелы и лишние символы
         const cleaned = rawMatchId.toString().trim().replace(/\s+/g, '');
         const parsed = parseInt(cleaned, 10);
-        
         if (!isNaN(parsed) && parsed > 0) {
           matchId = parsed.toString();
           console.log('✅ match_id валидный:', matchId);
         } else {
-          console.error('❌ match_id некорректен:', rawMatchId, '→ используем 1');
+          console.error('❌ match_id некорректен:', rawMatchId);
         }
-      } else {
-        console.log('ℹ️ match_id отсутствует, используем 1');
       }
-      
-      // Финальная проверка
-      console.log('📌 Итоговый matchId:', matchId, 'тип:', typeof matchId);
+      console.log('📌 Итоговый matchId:', matchId);
 
       // === ДЕБАГ ===
       let debugLogs = [];
@@ -963,7 +752,6 @@ function onPlayerError(event) {
         const log = `[${timestamp}] ${message}`;
         debugLogs.push({ message: log, type });
         if (debugLogs.length > 20) debugLogs = debugLogs.slice(-20);
-        
         let html = '<strong>Debug Logs:</strong><br><br>';
         debugLogs.forEach(log => {
           const cls = log.type === 'error' ? 'debug-error' : 
@@ -979,25 +767,17 @@ function onPlayerError(event) {
         debugPanel.style.display = debugPanel.style.display === 'block' ? 'none' : 'block';
       });
 
-      // === ФУНКЦИЯ ДЛЯ ВРЕМЕННОГО ПОКАЗА ЭЛЕМЕНТОВ ===
+      // === ФУНКЦИЯ ДЛЯ ВРЕМЕННОГО ПОКАЗА ===
+      let videoTitleTimer = null, fieldInstructionTimer = null;
       function showTemporary(element, duration = 3000) {
         if (!element) return;
-        
         element.style.display = 'block';
-        
         if (element.id === 'currentTabTitle') {
           if (videoTitleTimer) clearTimeout(videoTitleTimer);
-          videoTitleTimer = setTimeout(() => {
-            element.style.display = 'none';
-            videoTitleTimer = null;
-          }, duration);
-        }
-        else if (element.id === 'fieldInstruction') {
+          videoTitleTimer = setTimeout(() => { element.style.display = 'none'; }, duration);
+        } else if (element.id === 'fieldInstruction') {
           if (fieldInstructionTimer) clearTimeout(fieldInstructionTimer);
-          fieldInstructionTimer = setTimeout(() => {
-            element.style.display = 'none';
-            fieldInstructionTimer = null;
-          }, duration);
+          fieldInstructionTimer = setTimeout(() => { element.style.display = 'none'; }, duration);
         }
       }
 
@@ -1011,7 +791,6 @@ function onPlayerError(event) {
       window.addEventListener('resize', checkOrientation);
       checkOrientation();
 
-      // === ОБНОВЛЕНИЕ МЕТРИК ИЗОБРАЖЕНИЯ ===
       function updateImageMetrics() {
         if (!isImageLoaded) return;
         const imageRect = fieldImage.getBoundingClientRect();
@@ -1021,10 +800,8 @@ function onPlayerError(event) {
           left: imageRect.left - containerRect.left,
           top: imageRect.top - containerRect.top
         };
-        addDebugLog(`Scale: ${scaleFactor.toFixed(3)}, Offset: ${imageOffset.left.toFixed(1)},${imageOffset.top.toFixed(1)}`);
       }
 
-      // === ФОРМАТИРОВАНИЕ ВРЕМЕНИ ===
       function formatTime(ms) {
         const totalSeconds = Math.floor(ms / 1000);
         const hours = Math.floor(totalSeconds / 3600);
@@ -1039,733 +816,114 @@ function onPlayerError(event) {
         }
       }
 
-      // === ВИДЕО ===
+      // === YouTube API ===
+      let tag = document.createElement('script');
+      tag.src = "https://www.youtube.com/iframe_api";
+      let firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+      window.onYouTubeIframeAPIReady = function() {
+        console.log('🎬 YouTube API готов');
+        if (window.videoUrl) {
+          initYouTubePlayer(window.videoUrl);
+        }
+      };
+
+      function initYouTubePlayer(url) {
+        let videoId = extractVideoId(url);
+        if (!videoId) {
+          console.error('❌ Не удалось извлечь ID видео');
+          return;
+        }
+        window.player = new YT.Player('youtube-player', {
+          height: '100%',
+          width: '100%',
+          videoId: videoId,
+          playerVars: {
+            'autoplay': 0,
+            'controls': 1,
+            'rel': 0,
+            'modestbranding': 1,
+            'playsinline': 1,
+            'enablejsapi': 1
+          },
+          events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange,
+            'onError': onPlayerError
+          }
+        });
+      }
+
+      function extractVideoId(url) {
+        if (!url) return null;
+        if (url.includes('youtube.com/live/')) return url.split('youtube.com/live/')[1].split('?')[0].split('/')[0];
+        if (url.includes('youtu.be/')) return url.split('youtu.be/')[1].split('?')[0];
+        if (url.includes('v=')) return url.split('v=')[1].split('&')[0];
+        if (url.length === 11) return url;
+        return null;
+      }
+
+      function onPlayerReady(event) {
+        console.log('✅ Плеер готов');
+        startBtn.disabled = false;
+        addDebugLog('✅ Видео загружено', 'success');
+      }
+
+      function onPlayerStateChange(event) {
+        if (window.player && window.player.getCurrentTime) {
+          videoCurrentTime = window.player.getCurrentTime();
+          window.videoCurrentTime = videoCurrentTime;
+        }
+      }
+
+      function onPlayerError(event) {
+        console.error('❌ Ошибка плеера:', event.data);
+        addDebugLog(`❌ Ошибка видео: ${event.data}`, 'error');
+      }
+
       function pauseYouTubeVideo() {
-  if (player && player.pauseVideo) {
-    player.pauseVideo();
-  }
-}
+        if (player && player.pauseVideo) player.pauseVideo();
+      }
+
       // === ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ===
       function switchTab(tabName) {
         currentTab = tabName;
         tabs.forEach(tab => {
           tab.classList.toggle('active', tab.getAttribute('data-tab') === tabName);
         });
-        
         if (tabName === 'video') {
           videoContainer.classList.add('active-tab');
           fieldContainer.classList.remove('active-tab');
           currentTabTitle.textContent = '🎥 Видео матча';
-          
-          // Показываем табличку и запускаем таймер
           showTemporary(currentTabTitle, 3000);
-          
           if (isVideoPaused) pauseYouTubeVideo();
-          
-          // Если переходим на видео, скрываем полевые таблички
-          if (fieldInstructionTimer) {
-            clearTimeout(fieldInstructionTimer);
-            fieldInstructionTimer = null;
-          }
+          if (fieldInstructionTimer) clearTimeout(fieldInstructionTimer);
           fieldInstruction.style.display = 'none';
         } else {
           videoContainer.classList.remove('active-tab');
           fieldContainer.classList.add('active-tab');
           currentTabTitle.textContent = '🏒 Схема поля';
-          
-          // Показываем обе таблички и запускаем таймеры
           showTemporary(currentTabTitle, 3000);
           showTemporary(fieldInstruction, 3000);
-          
           pauseYouTubeVideo();
           isVideoPaused = true;
           if (isImageLoaded) updateImageMetrics();
         }
       }
 
-      // === ФУНКЦИЯ РАСЧЕТА РАССТОЯНИЯ И УГЛА ===
-function calculateDistanceAndAngleFromOriginal(originalX, originalY) {
-  // Разница в пикселях относительно центра ворот
-  const dxOriginal = originalX - ORIGINAL_GOAL_COORDS.x;  // положительное = правее ворот
-  const dyOriginal = ORIGINAL_GOAL_COORDS.y - originalY;  // положительное = дальше от ворот
-  
-  // Переводим в метры
-  const dxMeters = dxOriginal * METERS_PER_PIXEL_X;
-  const dyMeters = dyOriginal * METERS_PER_PIXEL_Y;
-  
-  // Расстояние по теореме Пифагора
-  const distanceMeters = Math.sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
-  
-  // Угол: 0° = прямо на центр ворот, положительный = направо, отрицательный = налево
-  let angleDeg = Math.atan2(dxMeters, dyMeters) * (180 / Math.PI);
-  
-  // Округляем до 2 знаков для расстояния и 1 знака для угла
-  return {
-    distance: Math.round(distanceMeters * 100) / 100,
-    angle: Math.round(angleDeg * 10) / 10
-  };
-}
-
-      function getClickCoordinates(e, isTouch = false) {
-  let clientX, clientY;
-  if (isTouch) {
-    clientX = e.touches[0].clientX;
-    clientY = e.touches[0].clientY;
-  } else {
-    clientX = e.clientX;
-    clientY = e.clientY;
-  }
-  
-  const imageRect = fieldImage.getBoundingClientRect();
-  
-  // ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА (на всякий случай)
-  if (clientX < imageRect.left || clientX > imageRect.right ||
-      clientY < imageRect.top || clientY > imageRect.bottom) {
-    return null;
-  }
-  
-  const containerRect = fieldContainer.getBoundingClientRect();
-  
-  // Координаты относительно контейнера (для маркера)
-  const containerX = clientX - containerRect.left;
-  const containerY = clientY - containerRect.top;
-  
-  // Координаты относительно изображения
-  const imageX = clientX - imageRect.left;
-  const imageY = clientY - imageRect.top;
-  
-  // Пересчет в оригинальные координаты
-  const scaleX = imageRect.width / ORIGINAL_IMAGE_WIDTH;
-  const scaleY = imageRect.height / ORIGINAL_IMAGE_HEIGHT;
-  
-  const originalX = imageX / scaleX;
-  const originalY = imageY / scaleY;
-  
-  return {
-    container: { x: containerX, y: containerY },
-    image: { x: imageX, y: imageY },
-    original: { x: originalX, y: originalY }
-  };
-}
-
-      function createMarker(coords) {
-  if (!coords) {
-    addDebugLog('❌ Нет координат для маркера (клик вне изображения)', 'error');
-    return;
-  }
-  
-  if (currentMarker) currentMarker.remove();
-  
-  // Создаем маркер
-  currentMarker = document.createElement('div');
-  currentMarker.className = 'marker-point';
-  currentMarker.style.left = coords.container.x + 'px';
-  currentMarker.style.top = coords.container.y + 'px';
-  
-  currentMarker.addEventListener('mousedown', startDrag);
-  currentMarker.addEventListener('touchstart', startDragTouch, { passive: false });
-  
-  fieldContainer.appendChild(currentMarker);
-  
-  // Рассчитываем результат
-  const result = calculateDistanceAndAngleFromOriginal(coords.original.x, coords.original.y);
-  
-  lastShotData = {
-    originalX: coords.original.x,
-    originalY: coords.original.y,
-    distance: result.distance,
-    angle: result.angle
-  };
-  
-  addDebugLog(`✅ Бросок: ориг(${coords.original.x.toFixed(1)},${coords.original.y.toFixed(1)}) → ${result.distance}м, ${result.angle}°`);
-  
-  setTimeout(() => choiceModal.classList.add('visible'), 300);
-}
-      function handleFieldClick(e) {
-  if (e.target.classList.contains('marker-point')) return;
-  
-  // ПОЛУЧАЕМ КООРДИНАТЫ КЛИКА
-  const rect = fieldImage.getBoundingClientRect();
-  
-  // ПРОВЕРКА: клик строго внутри изображения
-  if (e.clientX >= rect.left && 
-      e.clientX <= rect.right && 
-      e.clientY >= rect.top && 
-      e.clientY <= rect.bottom) {
-    
-    const coords = getClickCoordinates(e, false);
-    createMarker(coords);
-  } else {
-    addDebugLog('❌ Клик вне изображения', 'error');
-  }
-}
-
-function handleFieldTouch(e) {
-  if (e.touches.length !== 1) return;
-  e.preventDefault();
-  
-  const touch = e.touches[0];
-  const element = document.elementFromPoint(touch.clientX, touch.clientY);
-  if (element?.classList.contains('marker-point')) return;
-  
-  // ТА ЖЕ ПРОВЕРКА ДЛЯ ТАЧА
-  const rect = fieldImage.getBoundingClientRect();
-  
-  if (touch.clientX >= rect.left && 
-      touch.clientX <= rect.right && 
-      touch.clientY >= rect.top && 
-      touch.clientY <= rect.bottom) {
-    
-    const coords = getClickCoordinates(e, true);
-    createMarker(coords);
-  } else {
-    addDebugLog('❌ Тач вне изображения', 'error');
-  }
-}
-
-            function handleImageClick(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const rect = fieldImage.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        
-        createMarkerFromImageCoords(x, y);
-      }
-
-      function handleImageTouch(e) {
-        if (e.touches.length !== 1) return;
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const touch = e.touches[0];
-        const rect = fieldImage.getBoundingClientRect();
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
-        
-        createMarkerFromImageCoords(x, y);
-      }
-
-      function createMarkerFromImageCoords(imageX, imageY) {
-        // Проверка, что координаты внутри изображения
-        if (imageX < 0 || imageX > fieldImage.clientWidth || 
-            imageY < 0 || imageY > fieldImage.clientHeight) {
-          addDebugLog('❌ Координаты вне изображения', 'error');
-          return;
-        }
-        
-        // Удаляем старый маркер
-        if (currentMarker) currentMarker.remove();
-        
-        // Получаем координаты относительно контейнера для маркера
-        const imageRect = fieldImage.getBoundingClientRect();
-        const containerRect = fieldContainer.getBoundingClientRect();
-        
-        const containerX = imageRect.left - containerRect.left + imageX;
-        const containerY = imageRect.top - containerRect.top + imageY;
-        
-        // Создаем маркер
-        currentMarker = document.createElement('div');
-        currentMarker.className = 'marker-point';
-        currentMarker.style.left = containerX + 'px';
-        currentMarker.style.top = containerY + 'px';
-        
-        currentMarker.addEventListener('mousedown', startDrag);
-        currentMarker.addEventListener('touchstart', startDragTouch, { passive: false });
-        
-        fieldContainer.appendChild(currentMarker);
-        
-        // Пересчет в оригинальные координаты
-        const scaleX = imageRect.width / ORIGINAL_IMAGE_WIDTH;
-        const scaleY = imageRect.height / ORIGINAL_IMAGE_HEIGHT;
-        
-        const originalX = imageX / scaleX;
-        const originalY = imageY / scaleY;
-        
-        const result = calculateDistanceAndAngleFromOriginal(originalX, originalY);
-        
-        lastShotData = {
-          originalX, originalY,
-          distance: result.distance,
-          angle: result.angle
-        };
-        
-        addDebugLog(`✅ Бросок: ориг(${originalX.toFixed(1)},${originalY.toFixed(1)}) → ${result.distance}м, ${result.angle}°`);
-        
-        setTimeout(() => choiceModal.classList.add('visible'), 300);
-      }
-      
-      // === DRAG LOGIC ===
-      function startDrag(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        isDragging = true;
-        currentMarker.classList.add('dragging');
-        dragStartX = e.clientX;
-        dragStartY = e.clientY;
-        markerStartX = currentMarker.offsetLeft;
-        markerStartY = currentMarker.offsetTop;
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', stopDrag);
-      }
-
-      function startDragTouch(e) {
-        if (e.touches.length !== 1) return;
-        e.preventDefault();
-        e.stopPropagation();
-        isDragging = true;
-        currentMarker.classList.add('dragging');
-        const touch = e.touches[0];
-        dragStartX = touch.clientX;
-        dragStartY = touch.clientY;
-        markerStartX = currentMarker.offsetLeft;
-        markerStartY = currentMarker.offsetTop;
-        document.addEventListener('touchmove', dragTouch, { passive: false });
-        document.addEventListener('touchend', stopDragTouch);
-      }
-
-            function drag(e) {
-        if (!isDragging) return;
-        
-        const deltaX = e.clientX - dragStartX;
-        const deltaY = e.clientY - dragStartY;
-        let newX = markerStartX + deltaX;
-        let newY = markerStartY + deltaY;
-        
-        // Границы изображения относительно контейнера
-        const imageRect = fieldImage.getBoundingClientRect();
-        const containerRect = fieldContainer.getBoundingClientRect();
-        
-        const minX = imageRect.left - containerRect.left;
-        const maxX = imageRect.right - containerRect.left;
-        const minY = imageRect.top - containerRect.top;
-        const maxY = imageRect.bottom - containerRect.top;
-        
-        // Ограничиваем
-        newX = Math.max(minX, Math.min(maxX, newX));
-        newY = Math.max(minY, Math.min(maxY, newY));
-        
-        currentMarker.style.left = newX + 'px';
-        currentMarker.style.top = newY + 'px';
-        
-        // Обновляем координаты для расчета
-        const markerWindowX = containerRect.left + newX;
-        const markerWindowY = containerRect.top + newY;
-        
-        const imageX = markerWindowX - imageRect.left;
-        const imageY = markerWindowY - imageRect.top;
-        
-        const scaleX = imageRect.width / ORIGINAL_IMAGE_WIDTH;
-        const scaleY = imageRect.height / ORIGINAL_IMAGE_HEIGHT;
-        const originalX = imageX / scaleX;
-        const originalY = imageY / scaleY;
-        
-        const result = calculateDistanceAndAngleFromOriginal(originalX, originalY);
-        
-        lastShotData = {
-          originalX, originalY,
-          distance: result.distance,
-          angle: result.angle
+      // === РАСЧЕТ РАССТОЯНИЯ И УГЛА ===
+      function calculateDistanceAndAngleFromOriginal(originalX, originalY) {
+        const dxOriginal = originalX - ORIGINAL_GOAL_COORDS.x;
+        const dyOriginal = ORIGINAL_GOAL_COORDS.y - originalY;
+        const dxMeters = dxOriginal * METERS_PER_PIXEL_X;
+        const dyMeters = dyOriginal * METERS_PER_PIXEL_Y;
+        const distanceMeters = Math.sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
+        let angleDeg = Math.atan2(dxMeters, dyMeters) * (180 / Math.PI);
+        return {
+          distance: Math.round(distanceMeters * 100) / 100,
+          angle: Math.round(angleDeg * 10) / 10
         };
       }
 
-function dragTouch(e) {
-  if (!isDragging || e.touches.length !== 1) return;
-  e.preventDefault();
-  
-  const touch = e.touches[0];
-  const deltaX = touch.clientX - dragStartX;
-  const deltaY = touch.clientY - dragStartY;
-  let newX = markerStartX + deltaX;
-  let newY = markerStartY + deltaY;
-  
-  // Границы изображения относительно контейнера
-  const imageRect = fieldImage.getBoundingClientRect();
-  const containerRect = fieldContainer.getBoundingClientRect();
-  
-  const minX = imageRect.left - containerRect.left;
-  const maxX = imageRect.right - containerRect.left;
-  const minY = imageRect.top - containerRect.top;
-  const maxY = imageRect.bottom - containerRect.top;
-  
-  // Ограничиваем
-  newX = Math.max(minX, Math.min(maxX, newX));
-  newY = Math.max(minY, Math.min(maxY, newY));
-  
-  currentMarker.style.left = newX + 'px';
-  currentMarker.style.top = newY + 'px';
-  
-  // Обновляем координаты для расчета
-  const markerWindowX = containerRect.left + newX;
-  const markerWindowY = containerRect.top + newY;
-  
-  const imageX = markerWindowX - imageRect.left;
-  const imageY = markerWindowY - imageRect.top;
-  
-  const scaleX = imageRect.width / ORIGINAL_IMAGE_WIDTH;
-  const scaleY = imageRect.height / ORIGINAL_IMAGE_HEIGHT;
-  const originalX = imageX / scaleX;
-  const originalY = imageY / scaleY;
-  
-  const result = calculateDistanceAndAngleFromOriginal(originalX, originalY);
-  
-  lastShotData = {
-    originalX, originalY,
-    distance: result.distance,
-    angle: result.angle
-  };
-}
-
-      function stopDrag() {
-        isDragging = false;
-        currentMarker?.classList.remove('dragging');
-        document.removeEventListener('mousemove', drag);
-        document.removeEventListener('mouseup', stopDrag);
-      }
-
-      function stopDragTouch() {
-        isDragging = false;
-        currentMarker?.classList.remove('dragging');
-        document.removeEventListener('touchmove', dragTouch);
-        document.removeEventListener('touchend', stopDragTouch);
-      }
-
-      // === ЗАПИСЬ МОМЕНТОВ (БЕЗ ВИДЕО) ===
-function startRecording() {
-  if (isRecording) return;
-  
-  isRecording = true;
-  recordingStartTime = Date.now();
-  window.recordingStartTime = recordingStartTime;
-  
-  // Меняем кнопки
-  startBtn.style.display = 'none';
-  stopBtn.style.display = 'block';
-  
-  updateTimer();
-  timerInterval = setInterval(updateTimer, 1000);
-  
-  console.log('⏺ Запись начата');
-  addDebugLog('⏺ Запись начата', 'success');
-}
-
-function stopRecording() {
-  if (!isRecording) return;
-  
-  isRecording = false;
-  if (timerInterval) clearInterval(timerInterval);
-  
-  // Меняем кнопки обратно
-  startBtn.style.display = 'block';
-  stopBtn.style.display = 'none';
-  
-  // Сбрасываем таймер
-  recordingTimer.textContent = '00:00:00';
-  
-  // Переключаем на схему поля
-  pauseYouTubeVideo();
-  isVideoPaused = true;
-  tabsPanel.classList.add('visible');
-  switchTab('field');
-  
-  showTemporary(currentTabTitle, 3000);
-  showTemporary(fieldInstruction, 3000);
-  
-  console.log('⏹ Запись остановлена');
-  addDebugLog('⏹ Запись остановлена', 'info');
-}
-
-      
-    // === ОТПРАВКА НА СЕРВЕРНУЮ БД ===
-async function sendToServer(eventData) {
-  const serverUrl = 'https://shutoutlab.boats/api/save_event';
-  
-  addDebugLog(`🔵 ОТПРАВКА НА СЕРВЕР: ${serverUrl}`);
-  
-  try {
-    const response = await fetch(serverUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(eventData)
-    });
-    
-    const result = await response.json();
-    
-    if (result.success) {
-      addDebugLog(`✅ Данные сохранены на сервере! ID: ${result.event_id}`, 'success');
-      return true;
-    } else {
-      addDebugLog(`❌ Ошибка сервера: ${result.error}`, 'error');
-      return false;
-    }
-  } catch (error) {
-    addDebugLog(`❌ Ошибка отправки на сервер: ${error.message}`, 'error');
-    return false;
-  }
-}
-      
-      
-                  function showShotResult(eventType, distance, angle) {
-        let eventName = '';
-        let eventColor = '';
-        
-        // Проверяем, есть ли в строке ситуация (формат: тип|general|goalArea)
-        let baseType = eventType;
-        let situationText = '';
-        
-        if (eventType.includes('|')) {
-          const parts = eventType.split('|');
-          baseType = parts[0];
-          situationText = ` (${parts[1]}, ${parts[2]})`;
-        }
-        
-        switch(baseType) {
-          case 'goal':
-            eventName = 'Гол' + situationText;
-            eventColor = 'shot-info-goal';
-            break;
-          case 'miss':
-            eventName = 'Мимо' + situationText;
-            eventColor = 'shot-info-miss';
-            break;
-          case 'save_corner':
-            eventName = 'Сэйв (в угол)' + situationText;
-            eventColor = 'shot-info-save';
-            break;
-          case 'save_rebound':
-            eventName = 'Сэйв (на пятак)' + situationText;
-            eventColor = 'shot-info-danger';
-            break;
-          case 'save_control':
-            eventName = 'Сэйв (фиксация)' + situationText;
-            eventColor = 'shot-info-control';
-            break;
-          default:
-            eventName = eventType;
-            eventColor = 'shot-info-save';
-        }
-        
-        shotInfo.innerHTML = `
-          <div class="shot-info-header">✅ Событие сохранено</div>
-          <div class="shot-info-row">
-            <span class="shot-info-label">Тип:</span>
-            <span class="shot-info-value ${eventColor}">${eventName}</span>
-          </div>
-          <div class="shot-info-row">
-            <span class="shot-info-label">Дистанция:</span>
-            <span class="shot-info-value">${distance} м</span>
-          </div>
-          <div class="shot-info-row">
-            <span class="shot-info-label">Угол:</span>
-            <span class="shot-info-value">${angle}°</span>
-          </div>
-          <div class="shot-info-footer">Исчезнет через 6 сек</div>
-        `;
-        shotInfo.style.display = 'block';
-        setTimeout(() => { shotInfo.style.display = 'none'; }, 6000);
-      }
-
-                        function handleChoice(type) {
-        choiceModal.classList.remove('visible');
-        
-        // Сохраняем тип события
-        pendingEventType = type;
-        pendingSaveType = null;
-        
-        if (type === 'save') {
-          // Показываем выбор типа сэйва
-          saveTypeModal.classList.add('visible');
-        } else {
-          // Для гола или мимо сразу показываем выбор ситуации
-          situationModal.classList.add('visible');
-        }
-      }
-
-                 function handleSaveType(saveType) {
-        saveTypeModal.classList.remove('visible');
-        
-        // Сохраняем тип сэйва
-        pendingSaveType = saveType;
-        
-        // Показываем выбор ситуации
-        situationModal.classList.add('visible');
-      }
-
-            function handleSituationConfirm() {
-  console.log('🔥 handleSituationConfirm');
-  
-  situationModal.classList.remove('visible');
-  
-  const general = generalSituation.value;
-  const goalArea = goalAreaSituation.value;
-  
-  let eventType = pendingEventType;
-  if (pendingEventType === 'save' && pendingSaveType) {
-    eventType = `save_${pendingSaveType}`;
-  }
-  
-  if (lastShotData) {
-    const fullEventType = `${eventType}|${general}|${goalArea}`;
-    showShotResult(fullEventType, lastShotData.distance, lastShotData.angle);
-    
-    // Получаем текущее время видео
-    const currentTime = window.player && window.player.getCurrentTime ? window.player.getCurrentTime() : 0;
-    
-    // ОТПРАВЛЯЕМ ДАННЫЕ НА СЕРВЕР
-    const eventData = {
-      match_id: parseInt(matchId, 10),
-      event_type: eventType,
-      timestamp: Date.now() - (window.recordingStartTime || Date.now()),
-      video_time: currentTime,
-      distance: lastShotData.distance,
-      angle: lastShotData.angle,
-      goal_type: 'half_rink',
-      general_situation: general,
-      goal_area_situation: goalArea,
-      original_x: Math.round(lastShotData.originalX * 10) / 10,
-      original_y: Math.round(lastShotData.originalY * 10) / 10,
-      start_time: currentTime,
-      end_time: currentTime + 5
-    };
-    
-    // ОТПРАВЛЯЕМ fetch НА СЕРВЕР
-    fetch('https://shutoutlab.boats/api/save_event', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(eventData)
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        console.log('✅ Данные сохранены на сервере, ID:', data.event_id);
-        addDebugLog(`✅ Данные сохранены на сервере (ID: ${data.event_id})`);
-        
-        // После сохранения - пытаемся обрезать фрагмент (если видео уже скачано)
-        cutFragmentIfNeeded(matchId, data.event_id);
-      }
-    })
-    .catch(err => {
-      console.error('❌ Ошибка отправки:', err);
-      addDebugLog('❌ Ошибка отправки на сервер');
-    });
-  }
-  
-  // ОЧИЩАЕМ ВСЁ
-  pendingEventType = null;
-  pendingSaveType = null;
-  generalSituation.value = '5x5';
-  goalAreaSituation.value = 'normal';
-  
-  if (currentMarker) {
-    currentMarker.remove();
-    currentMarker = null;
-  }
-  
-  // ВОЗВРАЩАЕМСЯ НА ВИДЕО
-  switchTab('video');
-  fieldContainer.classList.remove('active-tab');
-  videoContainer.classList.add('active-tab');
-  
-  // Убираем панель вкладок
-  tabsPanel.classList.remove('visible');
-  
-  // СБРАСЫВАЕМ СОСТОЯНИЕ ЗАПИСИ
-  isRecording = false;
-  recordingStartTime = null;
-  if (timerInterval) clearInterval(timerInterval);
-  recordingIndicator.style.display = 'none';
-  recordingTimer.style.display = 'none';
-  startBtn.style.display = 'block';
-  stopBtn.style.display = 'none';
-}
-
-// Функция для обрезки фрагмента после сохранения
-async function cutFragmentIfNeeded(match_id, event_id) {
-    try {
-        const response = await fetch('https://shutoutlab.boats/api/cut_fragment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ match_id: match_id, event_id: event_id })
-        });
-        const result = await response.json();
-        if (result.success) {
-            console.log('✅ Фрагмент обрезан:', result.video_url);
-            addDebugLog(`✅ Фрагмент обрезан: event_${event_id}`);
-        } else {
-            console.log('⚠️ Фрагмент не обрезан:', result.error);
-        }
-    } catch (error) {
-        // Видео еще скачивается - это нормально
-        console.log('⏳ Видео еще скачивается, фрагмент будет обрезан позже');
-        addDebugLog(`⏳ Фрагмент для event_${event_id} будет обрезан после скачивания видео`);
-    }
-}
-      
-     function clearMarkerAndReturn() {
-  if (currentMarker) {
-    currentMarker.remove();
-    currentMarker = null;
-  }
-  
-  // ✅ ВОЗВРАЩАЕМСЯ НА ВИДЕО!
-  switchTab('video');
-  
-  showTemporary(currentTabTitle, 3000);
-}
-
-
-     
-
-      setTimeout(() => { startBtn.disabled = false; }, 3000);
-
-      // === ПОДПИСКИ ===
-            situationConfirmBtn.addEventListener('click', handleSituationConfirm);
-startBtn.addEventListener('click', startRecording);
-stopBtn.addEventListener('click', stopRecording);
-      
-      tabs.forEach(tab => {
-        tab.addEventListener('click', () => switchTab(tab.getAttribute('data-tab')));
-      });
-      
-     imageWrapper.addEventListener('click', handleImageClick);
-      imageWrapper.addEventListener('touchstart', handleImageTouch, { passive: false });
-      
-            goalBtn.addEventListener('click', () => handleChoice('goal'));
-      saveBtn.addEventListener('click', () => handleChoice('save'));
-      missBtn.addEventListener('click', () => handleChoice('miss'));
-      
-      cornerBtn.addEventListener('click', () => handleSaveType('corner'));
-      reboundBtn.addEventListener('click', () => handleSaveType('rebound'));
-      controlBtn.addEventListener('click', () => handleSaveType('control'));
-      
-      window.addEventListener('resize', () => {
-        if (isImageLoaded) updateImageMetrics();
-      });
-
-      // Показываем табличку видео при загрузке
-      setTimeout(() => {
-        showTemporary(currentTabTitle, 3000);
-      }, 500);
-
-      addDebugLog('✅ Инициализация завершена', 'success');
-    })();
-  </script>
-</body>
-</html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      function getClickCoordinates(e, isTouch = false
