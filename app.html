@@ -691,6 +691,13 @@
 const finishAnalysisBtn = document.getElementById('finishAnalysisBtn');
 
 finishAnalysisBtn.addEventListener('click', async () => {
+    console.log('🔘 Кнопка нажата, matchId:', matchId);
+    
+    if (!matchId || matchId === '1') {
+        alert('Ошибка: ID матча не определен');
+        return;
+    }
+    
     if (confirm('Завершить анализ матча? Полное видео будет удалено с сервера.')) {
         finishAnalysisBtn.disabled = true;
         finishAnalysisBtn.textContent = '⏳ Обработка...';
@@ -703,16 +710,16 @@ finishAnalysisBtn.addEventListener('click', async () => {
             });
             
             const result = await response.json();
+            console.log('Ответ сервера:', result);
             
             if (result.success) {
                 alert('✅ Анализ завершен! Полное видео удалено. Фрагменты сохранены.');
                 finishAnalysisBtn.textContent = '✅ Завершено';
                 finishAnalysisBtn.style.background = '#999';
                 
-                // Закрыть WebApp через 2 секунды
                 setTimeout(() => {
-                    if (telegramAvailable) {
-                        Telegram.WebApp.close();
+                    if (window.Telegram?.WebApp) {
+                        window.Telegram.WebApp.close();
                     }
                 }, 2000);
             } else {
@@ -721,6 +728,7 @@ finishAnalysisBtn.addEventListener('click', async () => {
                 finishAnalysisBtn.textContent = '✅ Завершить анализ';
             }
         } catch (error) {
+            console.error('Ошибка:', error);
             alert('❌ Ошибка: ' + error.message);
             finishAnalysisBtn.disabled = false;
             finishAnalysisBtn.textContent = '✅ Завершить анализ';
