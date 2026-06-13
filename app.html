@@ -638,7 +638,10 @@
     <button id="debugToggle">🐛</button>
     <div id="debugPanel"></div>
     <button id="finishAnalysisBtn" 
-        onclick="window.Telegram.WebApp.sendData(JSON.stringify({action: 'finish_analysis', match_id: matchId}))">
+    onclick="if(window.Telegram?.WebApp) window.Telegram.WebApp.sendData(JSON.stringify({
+        action: 'finish_analysis', 
+        match_id: parseInt(matchId)
+    })); else alert('Telegram WebApp не инициализирован')">
     ✅ Завершить анализ
 </button>
   </div>
