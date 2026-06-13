@@ -1555,19 +1555,24 @@ async function sendToServer(eventData) {
     const fullEventType = `${eventType}|${general}|${goalArea}`;
     showShotResult(fullEventType, lastShotData.distance, lastShotData.angle);
     
+    // Получаем текущее время видео
+    const currentTime = window.player && window.player.getCurrentTime ? window.player.getCurrentTime() : 0;
+    
     // ОТПРАВЛЯЕМ ДАННЫЕ НА СЕРВЕР
     const eventData = {
       match_id: parseInt(matchId, 10),
       event_type: eventType,
       timestamp: Date.now() - (window.recordingStartTime || Date.now()),
-      video_time: window.videoCurrentTime || 0,
+      video_time: currentTime,
       distance: lastShotData.distance,
       angle: lastShotData.angle,
       goal_type: 'half_rink',
       general_situation: general,
       goal_area_situation: goalArea,
       original_x: Math.round(lastShotData.originalX * 10) / 10,
-      original_y: Math.round(lastShotData.originalY * 10) / 10
+      original_y: Math.round(lastShotData.originalY * 10) / 10,
+      start_time: currentTime,           // ← ДОБАВИТЬ
+      end_time: currentTime + 5          // ← ДОБАВИТЬ (+5 секунд)
     };
     
     // ОТПРАВЛЯЕМ fetch НА СЕРВЕР
@@ -1581,8 +1586,6 @@ async function sendToServer(eventData) {
       if (data.success) {
         console.log('✅ Данные сохранены на сервере, ID:', data.event_id);
         addDebugLog(`✅ Данные сохранены на сервере (ID: ${data.event_id})`);
-        
-    
       }
     })
     .catch(err => {
@@ -1604,11 +1607,11 @@ async function sendToServer(eventData) {
   
   // ВОЗВРАЩАЕМСЯ НА ВИДЕО
   switchTab('video');
-fieldContainer.classList.remove('active-tab');
-videoContainer.classList.add('active-tab');
-
-// Убираем панель вкладок
-tabsPanel.classList.remove('visible');
+  fieldContainer.classList.remove('active-tab');
+  videoContainer.classList.add('active-tab');
+  
+  // Убираем панель вкладок
+  tabsPanel.classList.remove('visible');
   
   // СБРАСЫВАЕМ СОСТОЯНИЕ ЗАПИСИ
   isRecording = false;
