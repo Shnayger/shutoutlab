@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
   <title>Анализ матча</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
@@ -60,6 +61,7 @@
       align-items: center;
       gap: 8px;
       backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
     .recordingDot {
@@ -88,6 +90,8 @@
       font-weight: bold;
       z-index: 50;
       display: none;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     #videoContainer {
@@ -96,6 +100,14 @@
       background: #000;
       position: relative;
       display: none;
+    }
+
+    #videoFrame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+      background: #000;
     }
 
     #controls {
@@ -173,6 +185,10 @@
       border: 2px solid transparent;
     }
 
+    .tab:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
     .tab.active {
       background: rgba(59, 130, 246, 0.8);
       border-color: rgba(255, 255, 255, 0.3);
@@ -183,6 +199,7 @@
       font-size: 20px;
     }
 
+    /* Общие стили для всех устройств */
     #fieldContainer {
       width: 100%;
       height: 100%;
@@ -206,6 +223,13 @@
       pointer-events: auto;
     }
 
+    @media (min-width: 768px) {
+      #fieldImage {
+        max-width: 100vw;
+        max-height: 100vh;
+      }
+    }
+
     @media (max-width: 767px) {
       #fieldImage {
         max-width: 100%;
@@ -224,10 +248,12 @@
       transform: translate(-50%, -50%);
       z-index: 30;
       cursor: move;
+      transition: transform 0.1s;
     }
 
     .marker-point.dragging {
       transform: translate(-50%, -50%) scale(1.4);
+      z-index: 31;
       box-shadow: 0 0 30px rgba(255, 0, 0, 1);
     }
 
@@ -257,6 +283,7 @@
       max-width: 350px;
       width: 95%;
       border: 1px solid rgba(255, 255, 255, 0.2);
+      box-sizing: border-box;
     }
 
     .modal-title {
@@ -283,7 +310,11 @@
       cursor: pointer;
       color: white;
       flex: 1 1 auto;
+      transition: all 0.2s;
       min-width: 90px;
+      white-space: nowrap;
+      text-align: center;
+      box-sizing: border-box;
     }
 
     .choice-btn:active {
@@ -314,6 +345,9 @@
       font-weight: 500;
       z-index: 45;
       backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      text-align: center;
+      max-width: 90%;
       white-space: nowrap;
     }
 
@@ -330,6 +364,28 @@
       font-weight: 500;
       z-index: 45;
       backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    #tempInfo {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.95);
+      color: white;
+      padding: 20px 30px;
+      border-radius: 18px;
+      font-size: 16px;
+      font-weight: 500;
+      z-index: 250;
+      display: none;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 5px 30px rgba(0, 0, 0, 0.8);
+      min-width: 250px;
+      max-width: 90%;
     }
 
     #shotInfo {
@@ -342,11 +398,15 @@
       padding: 20px 30px;
       border-radius: 15px;
       font-size: 15px;
+      font-weight: 500;
       z-index: 9999;
       backdrop-filter: blur(15px);
       border: 2px solid rgba(255, 255, 255, 0.4);
       text-align: center;
+      max-width: 85%;
       display: none;
+      animation: fadeIn 0.3s ease;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
       min-width: 280px;
     }
 
@@ -360,6 +420,7 @@
       font-weight: bold;
       color: #4fc3f7;
       margin-bottom: 15px;
+      text-align: center;
     }
 
     .shot-info-row {
@@ -374,9 +435,66 @@
     .shot-info-value { color: white; font-weight: bold; }
     .shot-info-goal { color: #4caf50; font-weight: bold; }
     .shot-info-save { color: #2196f3; font-weight: bold; }
-    .shot-info-footer { margin-top: 15px; font-size: 12px; color: #888; }
+    .shot-info-footer { margin-top: 15px; font-size: 12px; color: #888; text-align: center; }
 
     .active-tab { display: block !important; }
+
+    #debugToggle {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #4fc3f7;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 9999;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      display: block !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+
+    #debugPanel {
+      position: fixed;
+      top: 60px;
+      right: 10px;
+      background: rgba(0,0,0,0.95);
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      z-index: 9998;
+      width: 300px;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+      border: 2px solid #4fc3f7;
+      font-size: 12px;
+      font-family: monospace;
+      backdrop-filter: blur(10px);
+    }
+
+    .debug-log {
+      margin: 5px 0;
+      padding: 3px;
+      border-left: 3px solid #4fc3f7;
+      background: rgba(79, 195, 247, 0.1);
+    }
+
+    .debug-error {
+      border-left-color: #ff4444;
+      background: rgba(255, 68, 68, 0.1);
+      color: #ff8888;
+    }
+
+    .debug-success {
+      border-left-color: #4caf50;
+      background: rgba(76, 175, 80, 0.1);
+      color: #a5d6a7;
+    }
 
     .situation-select {
       width: 100%;
@@ -388,6 +506,7 @@
       border-radius: 10px;
       font-size: 15px;
       cursor: pointer;
+      backdrop-filter: blur(5px);
     }
     
     .situation-select option {
@@ -403,39 +522,46 @@
     }
 
     #finishAnalysisBtn {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #666;
-      color: white;
-      border: none;
-      border-radius: 20px;
-      padding: 12px 24px;
-      font-size: 16px;
-      cursor: pointer;
-      z-index: 9999;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-      font-weight: bold;
-      transition: all 0.3s;
-      disabled: true;
-    }
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 12px 24px;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 9999;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    font-weight: bold;
+}
   </style>
 </head>
 <body>
+  <video id="bg-video" autoplay loop muted playsinline style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; opacity: 0.3;">
+    <source src="https://shutoutlab.boats/videos/5.mp4" type="video/mp4">
+  </video>
+  
   <div id="rotateScreen">
     <svg viewBox="0 0 24 24" fill="white" width="60" height="60">
       <path d="M19 12h-1.5c-.82 0-1.5-.68-1.5-1.5V5.5C16 4.67 16.67 4 17.5 4H19c.83 0 1.5.67 1.5 1.5v3.5c0 .83-.67 1.5-1.5 1.5H1L1.01 21c0 1.1.89 2 2 2H21c1.1 0 2-.9 2-2L22.99 14H19zm-5.5-9H8.5V8h4V4zm6 14H2v2h18v-2z"/>
     </svg>
-    <p style="margin-top: 20px;">Пожалуйста, поверните устройство в горизонтальное положение</p>
+    <p style="margin-top: 20px;">Пожалуйста, поверните устройство в горизонтальное положение.</p>
   </div>
 
   <div id="mainInterface">
     <div id="tabsPanel">
-      <div class="tab active" data-tab="video"><div class="tab-icon">🎥</div></div>
-      <div class="tab" data-tab="field"><div class="tab-icon">🏒</div></div>
+      <div class="tab active" data-tab="video">
+        <div class="tab-icon">🎥</div>
+      </div>
+      <div class="tab" data-tab="field">
+        <div class="tab-icon">🏒</div>
+      </div>
     </div>
 
     <div id="currentTabTitle">🎥 Видео матча</div>
+    <div id="tempInfo"></div>
     <div id="shotInfo"></div>
 
     <div id="recordingIndicator">
@@ -459,6 +585,7 @@
       <div id="fieldInstruction">Отметьте точку броска на поле</div>
     </div>
 
+    <!-- Модальные окна -->
     <div id="choiceModal" class="modal">
       <div class="modal-content">
         <div class="modal-title">Выберите тип события</div>
@@ -508,18 +635,21 @@
       </div>
     </div>
     
-    <button id="finishAnalysisBtn">⏳ Ожидание видео...</button>
+    <button id="debugToggle">🐛</button>
+    <div id="debugPanel"></div>
+    <button id="finishAnalysisBtn">✅ Завершить анализ</button>
   </div>
 
   <script>
     (function() {
-      // === КОНСТАНТЫ ===
+      // === БЛОК КОНСТАНТ ===
       const ORIGINAL_IMAGE_WIDTH = 417;
       const ORIGINAL_IMAGE_HEIGHT = 436;
       const ORIGINAL_GOAL_COORDS = { x: 208.5, y: 377 };
       const ORIGINAL_CENTER_COORDS = { x: 208.5, y: 8 };
       const DISTANCE_CENTER_TO_GOAL = 26.5;
       const RINK_WIDTH_METERS = 26;
+      const GOAL_WIDTH_METERS = 1.83;
       const PIXELS_CENTER_TO_GOAL = ORIGINAL_GOAL_COORDS.y - ORIGINAL_CENTER_COORDS.y;
       const METERS_PER_PIXEL_Y = DISTANCE_CENTER_TO_GOAL / PIXELS_CENTER_TO_GOAL;
       const METERS_PER_PIXEL_X = RINK_WIDTH_METERS / ORIGINAL_IMAGE_WIDTH;
@@ -531,9 +661,15 @@
         Telegram.WebApp.ready();
         Telegram.WebApp.disableClosingConfirmation();
         Telegram.WebApp.expand();
+        setTimeout(() => Telegram.WebApp.expand(), 300);
+        setTimeout(() => Telegram.WebApp.expand(), 1000);
       }
 
-      // === DOM элементы ===
+      // === Глобальные переменные ===
+      window.player = null;
+      window.videoUrl = null;
+      
+      // DOM элементы
       const rotateScreen = document.getElementById('rotateScreen');
       const mainInterface = document.getElementById('mainInterface');
       const tabsPanel = document.getElementById('tabsPanel');
@@ -558,14 +694,17 @@
       const generalSituation = document.getElementById('generalSituation');
       const goalAreaSituation = document.getElementById('goalAreaSituation');
       const situationConfirmBtn = document.getElementById('situationConfirmBtn');
+      const debugToggle = document.getElementById('debugToggle');
+      const debugPanel = document.getElementById('debugPanel');
       const finishAnalysisBtn = document.getElementById('finishAnalysisBtn');
+
+      // Переменные состояния
+      let pendingEventType = null;
+      let pendingSaveType = null;
       const currentTabTitle = document.getElementById('currentTabTitle');
       const shotInfo = document.getElementById('shotInfo');
       const tabs = document.querySelectorAll('.tab');
-
-      // === Переменные состояния ===
-      let pendingEventType = null;
-      let pendingSaveType = null;
+      
       let isRecording = false;
       let recordingStartTime = null;
       let timerInterval = null;
@@ -578,30 +717,72 @@
       let isVideoPaused = false;
       let isImageLoaded = false;
       let lastShotData = null;
-      let progressInterval = null;
-      
-      window.player = null;
+      let scaleFactor = 1;
+      let imageOffset = { left: 0, top: 0 };
       window.recordingStartTime = null;
-
-      // === URL параметры ===
+      window.videoCurrentTime = 0;
+      
+      // URL параметры
       const urlParams = new URLSearchParams(window.location.search);
       const videoUrlParam = urlParams.get('video');
       window.videoUrl = videoUrlParam;
       
-      let rawMatchId = urlParams.get('match_id');
+      const rawMatchId = urlParams.get('match_id');
       let matchId = '1';
       
+      console.log('🔍 Raw match_id из URL:', rawMatchId);
+      
       if (rawMatchId && rawMatchId !== 'undefined' && rawMatchId !== 'null') {
-        let cleaned = rawMatchId.toString().trim();
-        let parsed = parseInt(cleaned, 10);
+        const cleaned = rawMatchId.toString().trim().replace(/\s+/g, '');
+        const parsed = parseInt(cleaned, 10);
         if (!isNaN(parsed) && parsed > 0) {
           matchId = parsed.toString();
+          console.log('✅ match_id валидный:', matchId);
+        } else {
+          console.error('❌ match_id некорректен:', rawMatchId);
+        }
+      }
+      console.log('📌 Итоговый matchId:', matchId);
+
+      // === ДЕБАГ ===
+      let debugLogs = [];
+      function addDebugLog(message, type = 'info') {
+        const timestamp = new Date().toLocaleTimeString();
+        const log = `[${timestamp}] ${message}`;
+        debugLogs.push({ message: log, type });
+        if (debugLogs.length > 20) debugLogs = debugLogs.slice(-20);
+        let html = '<strong>Debug Logs:</strong><br><br>';
+        debugLogs.forEach(log => {
+          const cls = log.type === 'error' ? 'debug-error' : 
+                     log.type === 'success' ? 'debug-success' : 'debug-log';
+          html += `<div class="${cls}">${log.message}</div>`;
+        });
+        debugPanel.innerHTML = html;
+        debugPanel.scrollTop = debugPanel.scrollHeight;
+        console.log(`[${type}] ${message}`);
+      }
+      
+      debugToggle.addEventListener('click', () => {
+        debugPanel.style.display = debugPanel.style.display === 'block' ? 'none' : 'block';
+      });
+
+      // === ФУНКЦИЯ ДЛЯ ВРЕМЕННОГО ПОКАЗА ===
+      let videoTitleTimer = null, fieldInstructionTimer = null;
+      function showTemporary(element, duration = 3000) {
+        if (!element) return;
+        element.style.display = 'block';
+        if (element.id === 'currentTabTitle') {
+          if (videoTitleTimer) clearTimeout(videoTitleTimer);
+          videoTitleTimer = setTimeout(() => { element.style.display = 'none'; }, duration);
+        } else if (element.id === 'fieldInstruction') {
+          if (fieldInstructionTimer) clearTimeout(fieldInstructionTimer);
+          fieldInstructionTimer = setTimeout(() => { element.style.display = 'none'; }, duration);
         }
       }
 
-      // === Ориентация ===
+      // === ОРИЕНТАЦИЯ ===
       function checkOrientation() {
-        let isLandscape = window.innerWidth > window.innerHeight;
+        const isLandscape = window.innerWidth > window.innerHeight;
         rotateScreen.style.display = isLandscape ? 'none' : 'flex';
         mainInterface.style.display = isLandscape ? 'block' : 'none';
         if (isLandscape && isImageLoaded) updateImageMetrics();
@@ -611,20 +792,20 @@
 
       function updateImageMetrics() {
         if (!isImageLoaded) return;
-        let imageRect = fieldImage.getBoundingClientRect();
-        let containerRect = fieldContainer.getBoundingClientRect();
-        window.scaleFactor = imageRect.width / ORIGINAL_IMAGE_WIDTH;
-        window.imageOffset = {
+        const imageRect = fieldImage.getBoundingClientRect();
+        const containerRect = fieldContainer.getBoundingClientRect();
+        scaleFactor = imageRect.width / ORIGINAL_IMAGE_WIDTH;
+        imageOffset = {
           left: imageRect.left - containerRect.left,
           top: imageRect.top - containerRect.top
         };
       }
 
       function formatTime(ms) {
-        let totalSeconds = Math.floor(ms / 1000);
-        let hours = Math.floor(totalSeconds / 3600);
-        let minutes = Math.floor((totalSeconds % 3600) / 60);
-        let seconds = totalSeconds % 60;
+        const totalSeconds = Math.floor(ms / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
         return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
       }
 
@@ -641,72 +822,107 @@
       firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
       window.onYouTubeIframeAPIReady = function() {
-        if (window.videoUrl) initYouTubePlayer(window.videoUrl);
+        console.log('🎬 YouTube API готов');
+        if (window.videoUrl) {
+          initYouTubePlayer(window.videoUrl);
+        }
       };
+
+      function initYouTubePlayer(url) {
+        let videoId = extractVideoId(url);
+        if (!videoId) {
+          console.error('❌ Не удалось извлечь ID видео');
+          return;
+        }
+        window.player = new YT.Player('youtube-player', {
+          height: '100%',
+          width: '100%',
+          videoId: videoId,
+          playerVars: {
+            'autoplay': 0,
+            'controls': 1,
+            'rel': 0,
+            'modestbranding': 1,
+            'playsinline': 1,
+            'enablejsapi': 1
+          },
+          events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange,
+            'onError': onPlayerError
+          }
+        });
+      }
 
       function extractVideoId(url) {
         if (!url) return null;
+        if (url.includes('youtube.com/live/')) return url.split('youtube.com/live/')[1].split('?')[0].split('/')[0];
         if (url.includes('youtu.be/')) return url.split('youtu.be/')[1].split('?')[0];
         if (url.includes('v=')) return url.split('v=')[1].split('&')[0];
         if (url.length === 11) return url;
         return null;
       }
 
-      function initYouTubePlayer(url) {
-        let videoId = extractVideoId(url);
-        if (!videoId) return;
-        
-        window.player = new YT.Player('youtube-player', {
-          height: '100%',
-          width: '100%',
-          videoId: videoId,
-          playerVars: { 'autoplay': 0, 'controls': 1, 'rel': 0, 'modestbranding': 1, 'playsinline': 1, 'enablejsapi': 1 },
-          events: { 'onReady': () => { startBtn.disabled = false; } }
-        });
+      function onPlayerReady(event) {
+        console.log('✅ Плеер готов');
+        startBtn.disabled = false;
+        addDebugLog('✅ Видео загружено', 'success');
+      }
+
+      function onPlayerStateChange(event) {
+        if (window.player && window.player.getCurrentTime) {
+          videoCurrentTime = window.player.getCurrentTime();
+          window.videoCurrentTime = videoCurrentTime;
+        }
+      }
+
+      function onPlayerError(event) {
+        console.error('❌ Ошибка плеера:', event.data);
+        addDebugLog(`❌ Ошибка видео: ${event.data}`, 'error');
       }
 
       function pauseYouTubeVideo() {
-        if (window.player && window.player.pauseVideo) window.player.pauseVideo();
+        if (player && player.pauseVideo) player.pauseVideo();
       }
 
-      // === Переключение вкладок ===
+      // === ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ===
       function switchTab(tabName) {
         currentTab = tabName;
         tabs.forEach(tab => {
           tab.classList.toggle('active', tab.getAttribute('data-tab') === tabName);
         });
-        
         if (tabName === 'video') {
           videoContainer.classList.add('active-tab');
           fieldContainer.classList.remove('active-tab');
           currentTabTitle.textContent = '🎥 Видео матча';
-          currentTabTitle.style.display = 'block';
-          setTimeout(() => { currentTabTitle.style.display = 'none'; }, 3000);
+          showTemporary(currentTabTitle, 3000);
           if (isVideoPaused) pauseYouTubeVideo();
+          if (fieldInstructionTimer) clearTimeout(fieldInstructionTimer);
           fieldInstruction.style.display = 'none';
         } else {
           videoContainer.classList.remove('active-tab');
           fieldContainer.classList.add('active-tab');
           currentTabTitle.textContent = '🏒 Схема поля';
-          currentTabTitle.style.display = 'block';
-          setTimeout(() => { currentTabTitle.style.display = 'none'; }, 3000);
-          fieldInstruction.style.display = 'block';
-          setTimeout(() => { fieldInstruction.style.display = 'none'; }, 3000);
+          showTemporary(currentTabTitle, 3000);
+          showTemporary(fieldInstruction, 3000);
           pauseYouTubeVideo();
           isVideoPaused = true;
           if (isImageLoaded) updateImageMetrics();
         }
       }
 
-      // === Расчет расстояния и угла ===
+      // === РАСЧЕТ РАССТОЯНИЯ И УГЛА ===
       function calculateDistanceAndAngleFromOriginal(originalX, originalY) {
-        let dxOriginal = originalX - ORIGINAL_GOAL_COORDS.x;
-        let dyOriginal = ORIGINAL_GOAL_COORDS.y - originalY;
-        let dxMeters = dxOriginal * METERS_PER_PIXEL_X;
-        let dyMeters = dyOriginal * METERS_PER_PIXEL_Y;
-        let distanceMeters = Math.sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
+        const dxOriginal = originalX - ORIGINAL_GOAL_COORDS.x;
+        const dyOriginal = ORIGINAL_GOAL_COORDS.y - originalY;
+        const dxMeters = dxOriginal * METERS_PER_PIXEL_X;
+        const dyMeters = dyOriginal * METERS_PER_PIXEL_Y;
+        const distanceMeters = Math.sqrt(dxMeters * dxMeters + dyMeters * dyMeters);
         let angleDeg = Math.atan2(dxMeters, dyMeters) * (180 / Math.PI);
-        return { distance: Math.round(distanceMeters * 100) / 100, angle: Math.round(angleDeg * 10) / 10 };
+        return {
+          distance: Math.round(distanceMeters * 100) / 100,
+          angle: Math.round(angleDeg * 10) / 10
+        };
       }
 
       function getClickCoordinates(e, isTouch = false) {
@@ -718,83 +934,127 @@
           clientX = e.clientX;
           clientY = e.clientY;
         }
-        
-        let imageRect = fieldImage.getBoundingClientRect();
-        if (clientX < imageRect.left || clientX > imageRect.right || clientY < imageRect.top || clientY > imageRect.bottom) return null;
-        
-        let containerRect = fieldContainer.getBoundingClientRect();
-        let containerX = clientX - containerRect.left;
-        let containerY = clientY - containerRect.top;
-        let imageX = clientX - imageRect.left;
-        let imageY = clientY - imageRect.top;
-        let scaleX = imageRect.width / ORIGINAL_IMAGE_WIDTH;
-        let scaleY = imageRect.height / ORIGINAL_IMAGE_HEIGHT;
-        let originalX = imageX / scaleX;
-        let originalY = imageY / scaleY;
-        
-        return { container: { x: containerX, y: containerY }, original: { x: originalX, y: originalY } };
+        const imageRect = fieldImage.getBoundingClientRect();
+        if (clientX < imageRect.left || clientX > imageRect.right ||
+            clientY < imageRect.top || clientY > imageRect.bottom) {
+          return null;
+        }
+        const containerRect = fieldContainer.getBoundingClientRect();
+        const containerX = clientX - containerRect.left;
+        const containerY = clientY - containerRect.top;
+        const imageX = clientX - imageRect.left;
+        const imageY = clientY - imageRect.top;
+        const scaleX = imageRect.width / ORIGINAL_IMAGE_WIDTH;
+        const scaleY = imageRect.height / ORIGINAL_IMAGE_HEIGHT;
+        const originalX = imageX / scaleX;
+        const originalY = imageY / scaleY;
+        return {
+          container: { x: containerX, y: containerY },
+          image: { x: imageX, y: imageY },
+          original: { x: originalX, y: originalY }
+        };
       }
 
       function createMarker(coords) {
-        if (!coords) return;
+        if (!coords) {
+          addDebugLog('❌ Нет координат для маркера', 'error');
+          return;
+        }
         if (currentMarker) currentMarker.remove();
-        
         currentMarker = document.createElement('div');
         currentMarker.className = 'marker-point';
         currentMarker.style.left = coords.container.x + 'px';
         currentMarker.style.top = coords.container.y + 'px';
-        
         currentMarker.addEventListener('mousedown', startDrag);
         currentMarker.addEventListener('touchstart', startDragTouch, { passive: false });
         fieldContainer.appendChild(currentMarker);
         
-        let result = calculateDistanceAndAngleFromOriginal(coords.original.x, coords.original.y);
+        const result = calculateDistanceAndAngleFromOriginal(coords.original.x, coords.original.y);
         lastShotData = {
           originalX: coords.original.x,
           originalY: coords.original.y,
           distance: result.distance,
           angle: result.angle
         };
-        
+        addDebugLog(`✅ Бросок: дист=${result.distance}м, угол=${result.angle}°`);
         setTimeout(() => choiceModal.classList.add('visible'), 300);
       }
 
-      function handleImageClick(e) {
-        let rect = fieldImage.getBoundingClientRect();
-        let x = e.clientX - rect.left;
-        let y = e.clientY - rect.top;
-        if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
-          let scaleX = rect.width / ORIGINAL_IMAGE_WIDTH;
-          let scaleY = rect.height / ORIGINAL_IMAGE_HEIGHT;
-          let originalX = x / scaleX;
-          let originalY = y / scaleY;
-          let containerRect = fieldContainer.getBoundingClientRect();
-          let containerX = rect.left - containerRect.left + x;
-          let containerY = rect.top - containerRect.top + y;
-          createMarker({ container: { x: containerX, y: containerY }, original: { x: originalX, y: originalY } });
+      // === ОБРАБОТЧИКИ ПОЛЯ ===
+      function handleFieldClick(e) {
+        if (e.target.classList.contains('marker-point')) return;
+        const rect = fieldImage.getBoundingClientRect();
+        if (e.clientX >= rect.left && e.clientX <= rect.right && 
+            e.clientY >= rect.top && e.clientY <= rect.bottom) {
+          const coords = getClickCoordinates(e, false);
+          createMarker(coords);
         }
+      }
+
+      function handleFieldTouch(e) {
+        if (e.touches.length !== 1) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        const rect = fieldImage.getBoundingClientRect();
+        if (touch.clientX >= rect.left && touch.clientX <= rect.right && 
+            touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+          const coords = getClickCoordinates(e, true);
+          createMarker(coords);
+        }
+      }
+
+      function handleImageClick(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const rect = fieldImage.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        createMarkerFromImageCoords(x, y);
       }
 
       function handleImageTouch(e) {
         if (e.touches.length !== 1) return;
         e.preventDefault();
-        let touch = e.touches[0];
-        let rect = fieldImage.getBoundingClientRect();
-        let x = touch.clientX - rect.left;
-        let y = touch.clientY - rect.top;
-        if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
-          let scaleX = rect.width / ORIGINAL_IMAGE_WIDTH;
-          let scaleY = rect.height / ORIGINAL_IMAGE_HEIGHT;
-          let originalX = x / scaleX;
-          let originalY = y / scaleY;
-          let containerRect = fieldContainer.getBoundingClientRect();
-          let containerX = rect.left - containerRect.left + x;
-          let containerY = rect.top - containerRect.top + y;
-          createMarker({ container: { x: containerX, y: containerY }, original: { x: originalX, y: originalY } });
-        }
+        const touch = e.touches[0];
+        const rect = fieldImage.getBoundingClientRect();
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        createMarkerFromImageCoords(x, y);
       }
 
-      // === Drag logic ===
+      function createMarkerFromImageCoords(imageX, imageY) {
+        if (imageX < 0 || imageX > fieldImage.clientWidth || 
+            imageY < 0 || imageY > fieldImage.clientHeight) {
+          return;
+        }
+        if (currentMarker) currentMarker.remove();
+        const imageRect = fieldImage.getBoundingClientRect();
+        const containerRect = fieldContainer.getBoundingClientRect();
+        const containerX = imageRect.left - containerRect.left + imageX;
+        const containerY = imageRect.top - containerRect.top + imageY;
+        currentMarker = document.createElement('div');
+        currentMarker.className = 'marker-point';
+        currentMarker.style.left = containerX + 'px';
+        currentMarker.style.top = containerY + 'px';
+        currentMarker.addEventListener('mousedown', startDrag);
+        currentMarker.addEventListener('touchstart', startDragTouch, { passive: false });
+        fieldContainer.appendChild(currentMarker);
+        
+        const scaleX = imageRect.width / ORIGINAL_IMAGE_WIDTH;
+        const scaleY = imageRect.height / ORIGINAL_IMAGE_HEIGHT;
+        const originalX = imageX / scaleX;
+        const originalY = imageY / scaleY;
+        const result = calculateDistanceAndAngleFromOriginal(originalX, originalY);
+        lastShotData = {
+          originalX, originalY,
+          distance: result.distance,
+          angle: result.angle
+        };
+        addDebugLog(`✅ Бросок: дист=${result.distance}м, угол=${result.angle}°`);
+        setTimeout(() => choiceModal.classList.add('visible'), 300);
+      }
+
+      // === DRAG LOGIC ===
       function startDrag(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -811,9 +1071,10 @@
       function startDragTouch(e) {
         if (e.touches.length !== 1) return;
         e.preventDefault();
+        e.stopPropagation();
         isDragging = true;
         currentMarker.classList.add('dragging');
-        let touch = e.touches[0];
+        const touch = e.touches[0];
         dragStartX = touch.clientX;
         dragStartY = touch.clientY;
         markerStartX = currentMarker.offsetLeft;
@@ -824,18 +1085,16 @@
 
       function drag(e) {
         if (!isDragging) return;
-        let deltaX = e.clientX - dragStartX;
-        let deltaY = e.clientY - dragStartY;
+        const deltaX = e.clientX - dragStartX;
+        const deltaY = e.clientY - dragStartY;
         let newX = markerStartX + deltaX;
         let newY = markerStartY + deltaY;
-        
-        let imageRect = fieldImage.getBoundingClientRect();
-        let containerRect = fieldContainer.getBoundingClientRect();
-        let minX = imageRect.left - containerRect.left;
-        let maxX = imageRect.right - containerRect.left;
-        let minY = imageRect.top - containerRect.top;
-        let maxY = imageRect.bottom - containerRect.top;
-        
+        const imageRect = fieldImage.getBoundingClientRect();
+        const containerRect = fieldContainer.getBoundingClientRect();
+        const minX = imageRect.left - containerRect.left;
+        const maxX = imageRect.right - containerRect.left;
+        const minY = imageRect.top - containerRect.top;
+        const maxY = imageRect.bottom - containerRect.top;
         newX = Math.max(minX, Math.min(maxX, newX));
         newY = Math.max(minY, Math.min(maxY, newY));
         currentMarker.style.left = newX + 'px';
@@ -846,19 +1105,17 @@
       function dragTouch(e) {
         if (!isDragging || e.touches.length !== 1) return;
         e.preventDefault();
-        let touch = e.touches[0];
-        let deltaX = touch.clientX - dragStartX;
-        let deltaY = touch.clientY - dragStartY;
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - dragStartX;
+        const deltaY = touch.clientY - dragStartY;
         let newX = markerStartX + deltaX;
         let newY = markerStartY + deltaY;
-        
-        let imageRect = fieldImage.getBoundingClientRect();
-        let containerRect = fieldContainer.getBoundingClientRect();
-        let minX = imageRect.left - containerRect.left;
-        let maxX = imageRect.right - containerRect.left;
-        let minY = imageRect.top - containerRect.top;
-        let maxY = imageRect.bottom - containerRect.top;
-        
+        const imageRect = fieldImage.getBoundingClientRect();
+        const containerRect = fieldContainer.getBoundingClientRect();
+        const minX = imageRect.left - containerRect.left;
+        const maxX = imageRect.right - containerRect.left;
+        const minY = imageRect.top - containerRect.top;
+        const maxY = imageRect.bottom - containerRect.top;
         newX = Math.max(minX, Math.min(maxX, newX));
         newY = Math.max(minY, Math.min(maxY, newY));
         currentMarker.style.left = newX + 'px';
@@ -867,20 +1124,24 @@
       }
 
       function updateLastShotFromMarker() {
-        let containerRect = fieldContainer.getBoundingClientRect();
-        let imageRect = fieldImage.getBoundingClientRect();
-        let markerX = parseFloat(currentMarker.style.left);
-        let markerY = parseFloat(currentMarker.style.top);
-        let markerWindowX = containerRect.left + markerX;
-        let markerWindowY = containerRect.top + markerY;
-        let imageX = markerWindowX - imageRect.left;
-        let imageY = markerWindowY - imageRect.top;
-        let scaleX = imageRect.width / ORIGINAL_IMAGE_WIDTH;
-        let scaleY = imageRect.height / ORIGINAL_IMAGE_HEIGHT;
-        let originalX = imageX / scaleX;
-        let originalY = imageY / scaleY;
-        let result = calculateDistanceAndAngleFromOriginal(originalX, originalY);
-        lastShotData = { originalX, originalY, distance: result.distance, angle: result.angle };
+        const containerRect = fieldContainer.getBoundingClientRect();
+        const imageRect = fieldImage.getBoundingClientRect();
+        const markerX = parseFloat(currentMarker.style.left);
+        const markerY = parseFloat(currentMarker.style.top);
+        const markerWindowX = containerRect.left + markerX;
+        const markerWindowY = containerRect.top + markerY;
+        const imageX = markerWindowX - imageRect.left;
+        const imageY = markerWindowY - imageRect.top;
+        const scaleX = imageRect.width / ORIGINAL_IMAGE_WIDTH;
+        const scaleY = imageRect.height / ORIGINAL_IMAGE_HEIGHT;
+        const originalX = imageX / scaleX;
+        const originalY = imageY / scaleY;
+        const result = calculateDistanceAndAngleFromOriginal(originalX, originalY);
+        lastShotData = {
+          originalX, originalY,
+          distance: result.distance,
+          angle: result.angle
+        };
       }
 
       function stopDrag() {
@@ -897,7 +1158,7 @@
         document.removeEventListener('touchend', stopDragTouch);
       }
 
-      // === Запись моментов ===
+      // === ЗАПИСЬ МОМЕНТОВ ===
       function startRecording() {
         if (isRecording) return;
         isRecording = true;
@@ -905,10 +1166,9 @@
         window.recordingStartTime = recordingStartTime;
         startBtn.style.display = 'none';
         stopBtn.style.display = 'block';
-        recordingIndicator.style.display = 'flex';
-        recordingTimer.style.display = 'block';
         updateTimer();
         timerInterval = setInterval(updateTimer, 1000);
+        addDebugLog('⏺ Запись начата', 'success');
       }
 
       function stopRecording() {
@@ -917,28 +1177,27 @@
         if (timerInterval) clearInterval(timerInterval);
         startBtn.style.display = 'block';
         stopBtn.style.display = 'none';
-        recordingIndicator.style.display = 'none';
-        recordingTimer.style.display = 'none';
         recordingTimer.textContent = '00:00:00';
         pauseYouTubeVideo();
         isVideoPaused = true;
         tabsPanel.classList.add('visible');
         switchTab('field');
+        showTemporary(currentTabTitle, 3000);
+        showTemporary(fieldInstruction, 3000);
+        addDebugLog('⏹ Запись остановлена', 'info');
       }
 
-      // === Отправка на сервер ===
+      // === ОТПРАВКА НА СЕРВЕР ===
       function showShotResult(eventType, distance, angle) {
         let eventName = '';
         let eventColor = '';
         let baseType = eventType;
         let situationText = '';
-        
         if (eventType.includes('|')) {
-          let parts = eventType.split('|');
+          const parts = eventType.split('|');
           baseType = parts[0];
           situationText = ` (${parts[1]}, ${parts[2]})`;
         }
-        
         switch(baseType) {
           case 'goal': eventName = 'Гол' + situationText; eventColor = 'shot-info-goal'; break;
           case 'miss': eventName = 'Мимо' + situationText; eventColor = 'shot-info-miss'; break;
@@ -947,7 +1206,6 @@
           case 'save_control': eventName = 'Сэйв (фиксация)' + situationText; eventColor = 'shot-info-control'; break;
           default: eventName = eventType; eventColor = 'shot-info-save';
         }
-        
         shotInfo.innerHTML = `
           <div class="shot-info-header">✅ Событие сохранено</div>
           <div class="shot-info-row"><span class="shot-info-label">Тип:</span><span class="shot-info-value ${eventColor}">${eventName}</span></div>
@@ -959,9 +1217,30 @@
         setTimeout(() => { shotInfo.style.display = 'none'; }, 6000);
       }
 
+      async function cutFragmentIfNeeded(match_id, event_id) {
+        try {
+          const response = await fetch('https://shutoutlab.boats/api/cut_fragment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ match_id: match_id, event_id: event_id })
+          });
+          const result = await response.json();
+          if (result.success) {
+            console.log('✅ Фрагмент обрезан:', result.video_url);
+            addDebugLog(`✅ Фрагмент обрезан: event_${event_id}`);
+          } else {
+            console.log('⚠️ Фрагмент не обрезан:', result.error);
+          }
+        } catch (error) {
+          console.log('⏳ Видео еще скачивается, фрагмент будет обрезан позже');
+          addDebugLog(`⏳ Фрагмент для event_${event_id} будет обрезан после скачивания видео`);
+        }
+      }
+
       function handleChoice(type) {
         choiceModal.classList.remove('visible');
         pendingEventType = type;
+        pendingSaveType = null;
         if (type === 'save') {
           saveTypeModal.classList.add('visible');
         } else {
@@ -976,21 +1255,19 @@
       }
 
       function handleSituationConfirm() {
+        console.log('🔥 handleSituationConfirm');
         situationModal.classList.remove('visible');
-        let general = generalSituation.value;
-        let goalArea = goalAreaSituation.value;
+        const general = generalSituation.value;
+        const goalArea = goalAreaSituation.value;
         let eventType = pendingEventType;
-        
         if (pendingEventType === 'save' && pendingSaveType) {
           eventType = `save_${pendingSaveType}`;
         }
-        
         if (lastShotData) {
-          let fullEventType = `${eventType}|${general}|${goalArea}`;
+          const fullEventType = `${eventType}|${general}|${goalArea}`;
           showShotResult(fullEventType, lastShotData.distance, lastShotData.angle);
-          let currentTime = window.player && window.player.getCurrentTime ? window.player.getCurrentTime() : 0;
-          
-          let eventData = {
+          const currentTime = window.player && window.player.getCurrentTime ? window.player.getCurrentTime() : 0;
+          const eventData = {
             match_id: parseInt(matchId, 10),
             event_type: eventType,
             timestamp: Date.now() - (window.recordingStartTime || Date.now()),
@@ -1005,32 +1282,32 @@
             start_time: currentTime,
             end_time: currentTime + 5
           };
-          
           fetch('https://shutoutlab.boats/api/save_event', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(eventData)
-          }).then(res => res.json()).then(data => {
+          })
+          .then(res => res.json())
+          .then(data => {
             if (data.success) {
-              fetch('https://shutoutlab.boats/api/cut_fragment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ match_id: matchId, event_id: data.event_id })
-              }).catch(err => console.log('Fragment will be cut later'));
+              console.log('✅ Данные сохранены, ID:', data.event_id);
+              addDebugLog(`✅ Данные сохранены (ID: ${data.event_id})`);
+              cutFragmentIfNeeded(matchId, data.event_id);
             }
-          }).catch(err => console.error(err));
+          })
+          .catch(err => {
+            console.error('❌ Ошибка:', err);
+            addDebugLog('❌ Ошибка отправки');
+          });
         }
-        
         pendingEventType = null;
         pendingSaveType = null;
         generalSituation.value = '5x5';
         goalAreaSituation.value = 'normal';
-        
         if (currentMarker) {
           currentMarker.remove();
           currentMarker = null;
         }
-        
         switchTab('video');
         fieldContainer.classList.remove('active-tab');
         videoContainer.classList.add('active-tab');
@@ -1044,97 +1321,59 @@
         stopBtn.style.display = 'none';
       }
 
-      // === НОВАЯ ЛОГИКА КНОПКИ ЗАВЕРШЕНИЯ С ПРОГРЕССОМ ===
-      function updateFinishButton() {
-        if (!finishAnalysisBtn) return;
-        
-        fetch(`https://shutoutlab.boats/api/download_progress/${matchId}`)
-          .then(res => res.json())
-          .then(data => {
-            if (data.ready === true || data.status === 'completed') {
-              finishAnalysisBtn.disabled = false;
-              finishAnalysisBtn.style.background = '#4caf50';
-              finishAnalysisBtn.style.backgroundImage = 'none';
-              finishAnalysisBtn.innerHTML = '✅ Завершить анализ';
-              if (progressInterval) {
-                clearInterval(progressInterval);
-                progressInterval = null;
-              }
-            } 
-            else if (data.status === 'downloading') {
-              finishAnalysisBtn.disabled = true;
-              let percent = data.progress || 0;
-              finishAnalysisBtn.style.background = `linear-gradient(90deg, #4caf50 ${percent}%, #555 ${percent}%)`;
-              finishAnalysisBtn.innerHTML = `⏳ Скачивание... ${percent}%`;
-            }
-            else if (data.status === 'error') {
-              finishAnalysisBtn.disabled = true;
-              finishAnalysisBtn.style.background = '#f44336';
-              finishAnalysisBtn.style.backgroundImage = 'none';
-              finishAnalysisBtn.innerHTML = '❌ Ошибка';
-            }
-            else {
-              finishAnalysisBtn.disabled = true;
-              finishAnalysisBtn.style.background = '#666';
-              finishAnalysisBtn.style.backgroundImage = 'none';
-              finishAnalysisBtn.innerHTML = '⏳ Ожидание видео...';
-            }
-          })
-          .catch(err => {
-            console.error('Progress check error:', err);
-          });
+      function clearMarkerAndReturn() {
+        if (currentMarker) {
+          currentMarker.remove();
+          currentMarker = null;
+        }
+        switchTab('video');
+        showTemporary(currentTabTitle, 3000);
       }
 
-      // === Обработчик кнопки завершения ===
+      // === КНОПКА ЗАВЕРШЕНИЯ АНАЛИЗА ===
       if (finishAnalysisBtn) {
-        finishAnalysisBtn.addEventListener('click', async () => {
-          if (!matchId || matchId === '1') {
+    finishAnalysisBtn.addEventListener('click', async () => {
+        console.log('🔘 Кнопка "Завершить анализ" нажата, matchId:', matchId);
+        if (!matchId || matchId === '1') {
             alert('Ошибка: ID матча не определен');
             return;
-          }
-          
-          if (!confirm('Завершить анализ матча? Видео будет удалено с сервера.')) {
-            return;
-          }
-          
-          finishAnalysisBtn.disabled = true;
-          finishAnalysisBtn.innerHTML = '⏳ Завершение...';
-          
-          try {
-            let response = await fetch('https://shutoutlab.boats/api/finish_analysis', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ match_id: parseInt(matchId) })
-            });
-            
-            let result = await response.json();
-            
-            if (result.success) {
-              alert('✅ Анализ завершен!');
-              finishAnalysisBtn.innerHTML = '✅ Завершено';
-              finishAnalysisBtn.style.background = '#999';
-              if (progressInterval) clearInterval(progressInterval);
-              setTimeout(() => {
-                if (telegramAvailable && window.Telegram?.WebApp) {
-                  window.Telegram.WebApp.close();
+        }
+        if (confirm('Завершить анализ матча? Видео будет удалено с сервера (даже если не скачалось).')) {
+            finishAnalysisBtn.disabled = true;
+            finishAnalysisBtn.textContent = '⏳ Обработка...';
+            try {
+                const response = await fetch('https://shutoutlab.boats/api/finish_analysis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ match_id: parseInt(matchId) })
+                });
+                const result = await response.json();
+                console.log('Ответ сервера:', result);
+                if (result.success) {
+                    alert('✅ Анализ завершен! Видео удалено. Фрагменты сохранены.');
+                    finishAnalysisBtn.textContent = '✅ Завершено';
+                    finishAnalysisBtn.style.background = '#999';
+                    setTimeout(() => {
+                        if (telegramAvailable && window.Telegram?.WebApp) {
+                            window.Telegram.WebApp.close();
+                        }
+                    }, 2000);
+                } else {
+                    alert('❌ Ошибка: ' + (result.error || 'Неизвестная ошибка'));
+                    finishAnalysisBtn.disabled = false;
+                    finishAnalysisBtn.textContent = '✅ Завершить анализ';
                 }
-              }, 1500);
-            } else {
-              alert('❌ Ошибка: ' + (result.error || 'Неизвестная ошибка'));
-              finishAnalysisBtn.disabled = false;
-              finishAnalysisBtn.innerHTML = '✅ Завершить анализ';
-              finishAnalysisBtn.style.background = '#4caf50';
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('❌ Ошибка: ' + error.message);
+                finishAnalysisBtn.disabled = false;
+                finishAnalysisBtn.textContent = '✅ Завершить анализ';
             }
-          } catch (error) {
-            alert('❌ Ошибка: ' + error.message);
-            finishAnalysisBtn.disabled = false;
-            finishAnalysisBtn.innerHTML = '✅ Завершить анализ';
-            finishAnalysisBtn.style.background = '#4caf50';
-          }
-        });
-      }
+        }
+    });
+}
 
-      // === Подписки ===
+      // === ПОДПИСКИ ===
       situationConfirmBtn.addEventListener('click', handleSituationConfirm);
       startBtn.addEventListener('click', startRecording);
       stopBtn.addEventListener('click', stopRecording);
@@ -1149,19 +1388,13 @@
       cornerBtn.addEventListener('click', () => handleSaveType('corner'));
       reboundBtn.addEventListener('click', () => handleSaveType('rebound'));
       controlBtn.addEventListener('click', () => handleSaveType('control'));
-      
-      fieldImage.onload = () => {
-        isImageLoaded = true;
-        updateImageMetrics();
-      };
-      
-      // Запускаем проверку прогресса
-      if (matchId && matchId !== '1') {
-        updateFinishButton();
-        progressInterval = setInterval(updateFinishButton, 2000);
-      }
-      
+      window.addEventListener('resize', () => {
+        if (isImageLoaded) updateImageMetrics();
+      });
+
       setTimeout(() => { startBtn.disabled = false; }, 3000);
+      setTimeout(() => { showTemporary(currentTabTitle, 3000); }, 500);
+      addDebugLog('✅ Инициализация завершена', 'success');
     })();
   </script>
 </body>
