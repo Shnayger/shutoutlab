@@ -1332,46 +1332,46 @@
 
       // === КНОПКА ЗАВЕРШЕНИЯ АНАЛИЗА ===
       if (finishAnalysisBtn) {
-        finishAnalysisBtn.addEventListener('click', async () => {
-          console.log('🔘 Кнопка "Завершить анализ" нажата, matchId:', matchId);
-          if (!matchId || matchId === '1') {
+    finishAnalysisBtn.addEventListener('click', async () => {
+        console.log('🔘 Кнопка "Завершить анализ" нажата, matchId:', matchId);
+        if (!matchId || matchId === '1') {
             alert('Ошибка: ID матча не определен');
             return;
-          }
-          if (confirm('Завершить анализ матча? Полное видео будет удалено с сервера.')) {
+        }
+        if (confirm('Завершить анализ матча? Видео будет удалено с сервера (даже если не скачалось).')) {
             finishAnalysisBtn.disabled = true;
             finishAnalysisBtn.textContent = '⏳ Обработка...';
             try {
-              const response = await fetch('https://shutoutlab.boats/api/finish_analysis', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ match_id: parseInt(matchId) })
-              });
-              const result = await response.json();
-              console.log('Ответ сервера:', result);
-              if (result.success) {
-                alert('✅ Анализ завершен! Полное видео удалено. Фрагменты сохранены.');
-                finishAnalysisBtn.textContent = '✅ Завершено';
-                finishAnalysisBtn.style.background = '#999';
-                setTimeout(() => {
-                  if (telegramAvailable && window.Telegram?.WebApp) {
-                    window.Telegram.WebApp.close();
-                  }
-                }, 2000);
-              } else {
-                alert('❌ Ошибка: ' + (result.error || 'Неизвестная ошибка'));
+                const response = await fetch('https://shutoutlab.boats/api/finish_analysis', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ match_id: parseInt(matchId) })
+                });
+                const result = await response.json();
+                console.log('Ответ сервера:', result);
+                if (result.success) {
+                    alert('✅ Анализ завершен! Видео удалено. Фрагменты сохранены.');
+                    finishAnalysisBtn.textContent = '✅ Завершено';
+                    finishAnalysisBtn.style.background = '#999';
+                    setTimeout(() => {
+                        if (telegramAvailable && window.Telegram?.WebApp) {
+                            window.Telegram.WebApp.close();
+                        }
+                    }, 2000);
+                } else {
+                    alert('❌ Ошибка: ' + (result.error || 'Неизвестная ошибка'));
+                    finishAnalysisBtn.disabled = false;
+                    finishAnalysisBtn.textContent = '✅ Завершить анализ';
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('❌ Ошибка: ' + error.message);
                 finishAnalysisBtn.disabled = false;
                 finishAnalysisBtn.textContent = '✅ Завершить анализ';
-              }
-            } catch (error) {
-              console.error('Ошибка:', error);
-              alert('❌ Ошибка: ' + error.message);
-              finishAnalysisBtn.disabled = false;
-              finishAnalysisBtn.textContent = '✅ Завершить анализ';
             }
-          }
-        });
-      }
+        }
+    });
+}
 
       // === ПОДПИСКИ ===
       situationConfirmBtn.addEventListener('click', handleSituationConfirm);
