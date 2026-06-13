@@ -493,20 +493,24 @@
     }
 
     #debugToggle {
-      position: fixed;
-      top: 10px;
-      right: 10px;
-      background: #4fc3f7;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      font-size: 20px;
-      cursor: pointer;
-      z-index: 9999;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    }
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: #4fc3f7;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 9999;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    /* Добавить эти строки для видимости в любом режиме */
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
 
     #debugPanel {
       position: fixed;
