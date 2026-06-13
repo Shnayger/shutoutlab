@@ -1615,8 +1615,8 @@ async function sendToServer(eventData) {
       goal_area_situation: goalArea,
       original_x: Math.round(lastShotData.originalX * 10) / 10,
       original_y: Math.round(lastShotData.originalY * 10) / 10,
-      start_time: currentTime,           // ← ДОБАВИТЬ
-      end_time: currentTime + 5          // ← ДОБАВИТЬ (+5 секунд)
+      start_time: currentTime,
+      end_time: currentTime + 5
     };
     
     // ОТПРАВЛЯЕМ fetch НА СЕРВЕР
@@ -1630,6 +1630,9 @@ async function sendToServer(eventData) {
       if (data.success) {
         console.log('✅ Данные сохранены на сервере, ID:', data.event_id);
         addDebugLog(`✅ Данные сохранены на сервере (ID: ${data.event_id})`);
+        
+        // После сохранения - пытаемся обрезать фрагмент (если видео уже скачано)
+        cutFragmentIfNeeded(matchId, data.event_id);
       }
     })
     .catch(err => {
@@ -1665,6 +1668,28 @@ async function sendToServer(eventData) {
   recordingTimer.style.display = 'none';
   startBtn.style.display = 'block';
   stopBtn.style.display = 'none';
+}
+
+// Функция для обрезки фрагмента после сохранения
+async function cutFragmentIfNeeded(match_id, event_id) {
+    try {
+        const response = await fetch('https://shutoutlab.boats/api/cut_fragment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ match_id: match_id, event_id: event_id })
+        });
+        const result = await response.json();
+        if (result.success) {
+            console.log('✅ Фрагмент обрезан:', result.video_url);
+            addDebugLog(`✅ Фрагмент обрезан: event_${event_id}`);
+        } else {
+            console.log('⚠️ Фрагмент не обрезан:', result.error);
+        }
+    } catch (error) {
+        // Видео еще скачивается - это нормально
+        console.log('⏳ Видео еще скачивается, фрагмент будет обрезан позже');
+        addDebugLog(`⏳ Фрагмент для event_${event_id} будет обрезан после скачивания видео`);
+    }
 }
       
      function clearMarkerAndReturn() {
