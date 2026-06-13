@@ -513,23 +513,23 @@
 }
 
     #debugPanel {
-      position: fixed;
-      top: 60px;
-      right: 10px;
-      background: rgba(0,0,0,0.95);
-      color: white;
-      padding: 15px;
-      border-radius: 10px;
-      z-index: 9998;
-      width: 300px;
-      max-height: 400px;
-      overflow-y: auto;
-      display: none;
-      border: 2px solid #4fc3f7;
-      font-size: 12px;
-      font-family: monospace;
-    }
-
+    position: fixed;
+    top: 60px;
+    right: 10px;
+    background: rgba(0,0,0,0.95);
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    z-index: 9998;
+    width: 300px;
+    max-height: 200px;  /* Ограничиваем высоту примерно на 5 строк */
+    overflow-y: auto;   /* Добавляем скролл */
+    display: none;
+    border: 2px solid #4fc3f7;
+    font-size: 12px;
+    font-family: monospace;
+    backdrop-filter: blur(10px);
+}
     .debug-log {
       margin: 5px 0;
       padding: 3px;
