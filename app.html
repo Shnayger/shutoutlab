@@ -1399,6 +1399,41 @@
       setTimeout(() => { showTemporary(currentTabTitle, 3000); }, 500);
       addDebugLog('✅ Инициализация завершена', 'success');
     })();
+
+    if (window.Telegram?.WebApp) {
+    Telegram.WebApp.ready();
+    
+    // Скрываем стандартную кнопку, используем свою
+    Telegram.WebApp.MainButton.hide();
+    
+    // Обработка нажатия на кнопку "Завершить анализ"
+    window.finishAnalysis = function(matchId) {
+        console.log('🔘 Завершение анализа, matchId:', matchId);
+        
+        if (!matchId || matchId === '1') {
+            alert('❌ Ошибка: ID матча не определен');
+            return;
+        }
+        
+        // Отправляем событие в Telegram бот
+        if (Telegram.WebApp.initDataUnsafe?.user?.id) {
+            Telegram.WebApp.sendData(JSON.stringify({
+                action: 'finish_analysis',
+                match_id: matchId,
+                user_id: Telegram.WebApp.initDataUnsafe.user.id
+            }));
+        } else {
+            // Если не в Telegram (прямой доступ), отправляем через API
+            fetch('https://shutoutlab.boats/api/finish_analysis_direct', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ match_id: parseInt(matchId) })
+            }).then(() => {
+                alert('✅ Анализ завершен!');
+            });
+        }
+    };
+}
   </script>
 </body>
 </html>
