@@ -637,16 +637,10 @@
     
     <button id="debugToggle">🐛</button>
     <div id="debugPanel"></div>
-    <button id="finishAnalysisBtn" 
-    onclick="if(window.Telegram?.WebApp) window.Telegram.WebApp.sendData(JSON.stringify({
-        action: 'finish_analysis', 
-        match_id: parseInt(matchId)
-    })); else alert('Telegram WebApp не инициализирован')">
-    ✅ Завершить анализ
-</button>
+    <button id="finishAnalysisBtn">✅ Завершить анализ</button>
   </div>
 
-    <script>
+  <script>
     (function() {
       // === БЛОК КОНСТАНТ ===
       const ORIGINAL_IMAGE_WIDTH = 417;
@@ -669,9 +663,6 @@
         Telegram.WebApp.expand();
         setTimeout(() => Telegram.WebApp.expand(), 300);
         setTimeout(() => Telegram.WebApp.expand(), 1000);
-        
-        // Скрываем стандартную кнопку
-        Telegram.WebApp.MainButton.hide();
       }
 
       // === Глобальные переменные ===
@@ -1339,47 +1330,17 @@
         showTemporary(currentTabTitle, 3000);
       }
 
-      // === НОВАЯ ФУНКЦИЯ ЗАВЕРШЕНИЯ АНАЛИЗА (ОТПРАВКА В БОТ) ===
-      async function finishAnalysisAndSendToBot() {
-        console.log('🔘 Завершение анализа, matchId:', matchId);
-        
+      // === КНОПКА ЗАВЕРШЕНИЯ АНАЛИЗА ===
+      if (finishAnalysisBtn) {
+    finishAnalysisBtn.addEventListener('click', async () => {
+        console.log('🔘 Кнопка "Завершить анализ" нажата, matchId:', matchId);
         if (!matchId || matchId === '1') {
-            alert('❌ Ошибка: ID матча не определен');
+            alert('Ошибка: ID матча не определен');
             return;
         }
-        
-        if (!confirm('Завершить анализ матча? Бот создаст отчет с видеофрагментами.')) {
-            return;
-        }
-        
-        // Отправляем событие в Telegram бот
-        if (window.Telegram?.WebApp && window.Telegram.WebApp.initDataUnsafe?.user?.id) {
-            // Показываем сообщение об отправке
-            const originalText = finishAnalysisBtn.textContent;
-            finishAnalysisBtn.disabled = true;
-            finishAnalysisBtn.textContent = '⏳ Отправка...';
-            
-            try {
-                // Отправляем данные в бот через WebApp
-                window.Telegram.WebApp.sendData(JSON.stringify({
-                    action: 'finish_analysis',
-                    match_id: parseInt(matchId),
-                    user_id: window.Telegram.WebApp.initDataUnsafe.user.id
-                }));
-                
-                alert('✅ Отчет создается! Бот пришлет вам ссылку в Telegram.');
-            } catch (error) {
-                console.error('Ошибка:', error);
-                alert('❌ Ошибка: ' + error.message);
-            } finally {
-                finishAnalysisBtn.disabled = false;
-                finishAnalysisBtn.textContent = originalText;
-            }
-        } else {
-            // Если не в Telegram (прямой доступ), используем старый метод
+        if (confirm('Завершить анализ матча? Видео будет удалено с сервера (даже если не скачалось).')) {
             finishAnalysisBtn.disabled = true;
             finishAnalysisBtn.textContent = '⏳ Обработка...';
-            
             try {
                 const response = await fetch('https://shutoutlab.boats/api/finish_analysis', {
                     method: 'POST',
@@ -1387,10 +1348,16 @@
                     body: JSON.stringify({ match_id: parseInt(matchId) })
                 });
                 const result = await response.json();
+                console.log('Ответ сервера:', result);
                 if (result.success) {
-                    alert('✅ Анализ завершен! Фрагменты сохранены.');
+                    alert('✅ Анализ завершен! Видео удалено. Фрагменты сохранены.');
                     finishAnalysisBtn.textContent = '✅ Завершено';
                     finishAnalysisBtn.style.background = '#999';
+                    setTimeout(() => {
+                        if (telegramAvailable && window.Telegram?.WebApp) {
+                            window.Telegram.WebApp.close();
+                        }
+                    }, 2000);
                 } else {
                     alert('❌ Ошибка: ' + (result.error || 'Неизвестная ошибка'));
                     finishAnalysisBtn.disabled = false;
@@ -1403,17 +1370,8 @@
                 finishAnalysisBtn.textContent = '✅ Завершить анализ';
             }
         }
-      }
-
-      // === ПРИВЯЗЫВАЕМ НОВУЮ ФУНКЦИЮ К КНОПКЕ ===
-      if (finishAnalysisBtn) {
-        // Убираем старый обработчик и вешаем новый
-        const newBtn = finishAnalysisBtn.cloneNode(true);
-        finishAnalysisBtn.parentNode.replaceChild(newBtn, finishAnalysisBtn);
-        window.finishAnalysisBtn = newBtn;
-        
-        newBtn.addEventListener('click', finishAnalysisAndSendToBot);
-      }
+    });
+}
 
       // === ПОДПИСКИ ===
       situationConfirmBtn.addEventListener('click', handleSituationConfirm);
